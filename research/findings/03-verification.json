@@ -1,0 +1,328 @@
+[
+  {
+    "topic": "SP-1 cost-capture foundation: cherry-pick run-collector vs build from scratch",
+    "findings": [
+      {
+        "item": "AgentRunCollector / aggregateAgentRunSummaries presence in oh-my-pi",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/agent/src/run-collector.ts:1-632",
+        "detail": "run-collector.ts is 632 lines of pure data-structure code. It imports exactly two external namespaces: `type { AssistantMessage, Model, StopReason }` from `@oh-my-pi/pi-ai` (type-only, erased at runtime) and `type { Span }` from `@opentelemetry/api` (also type-only). At runtime the class uses `performance.now()` and plain JS. It has zero Bun calls, zero Rust FFI, zero platform-specific code. The only live runtime dependency is `@opentelemetry/api`, which is a zero-implementation shim if no SDK is registered.",
+        "verdict": "pure-TS-portable"
+      },
+      {
+        "item": "AgentRunCollector dependency on oh-my-pi diverged types vs portable Usage shape",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/agent/src/run-collector.ts:195-234",
+        "detail": "The collector's `endChat()` reads exactly these fields from `AssistantMessage`: `message.usage` (then `usage?.input`, `usage?.cacheRead`, `usage?.cacheWrite`, `usage?.output`, `usage?.reasoningTokens`, `usage?.totalTokens`), `message.model`, `message.provider`, `message.stopReason`. Pi-mono's `AssistantMessage` (pi-mono/packages/ai/src/types.ts:299-312) has all of these. The only mismatch is that pi-mono's `Usage` embeds a `cost` sub-object with pre-computed USD buckets (input/output/cacheRead/cacheWrite/total), whereas oh-my-pi's `Usage` (catalog/src/types.ts:90-135) keeps cost separate and does not embed `cost` inside `Usage`. However `run-collector.ts` never reads `usage.cost` — it derives cost from the injected `costEstimator` callback (telemetry.ts), not from the usage object. So the Usage schema difference does not affect run-collector itself.",
+        "verdict": "pure-TS-portable"
+      },
+      {
+        "item": "AgentRunCollector absent from pi-mono",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/pi-mono/packages/agent/src",
+        "detail": "Glob of the entire pi-mono agent/src tree shows no run-collector.ts and no telemetry.ts. Pi-mono's AgentEvent `agent_end` (types.ts:411) carries only `messages: AgentMessage[]` — no `telemetry` or `coverage` fields. Oh-my-pi's `agent_end` (oh-my-pi types.ts:576-580) adds `telemetry?: AgentRunSummary` and `coverage?: AgentRunCoverage`. Cost-capture infrastructure is entirely absent from pi-mono.",
+        "verdict": "needs-port(low)"
+      },
+      {
+        "item": "telemetry.ts portability (OpenTelemetry wiring, cost estimator hook)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/agent/src/telemetry.ts:26-53",
+        "detail": "telemetry.ts imports from `@oh-my-pi/pi-ai` and `@opentelemetry/api`. The pi-ai imports are all type-only except `completeSimple`, `resolveServiceTier`, `shouldSendServiceTier` used in span attribute helpers deep in the file. These are oh-my-pi-specific helpers (provider service tier logic, gateway-header detection) that do not exist in pi-mono's `@earendil-works/pi-ai`. telemetry.ts is also 2037 lines and is heavily coupled to oh-my-pi agent loop internals (`AgentTool` from `./types`, `EventLoopKeepalive` from `./utils/yield`). The cost-relevant surface (`costEstimator` callback + `finishChatSpan` feeding `collector.endChat`) is approximately 60 lines and is extractable, but full telemetry.ts is not a simple copy-paste.",
+        "verdict": "cherry-pick(medium — extract ~60 lines: CostEstimatorContext + CostEstimate + the collector.endChat call path)"
+      },
+      {
+        "item": "Oh-my-pi stats parser SessionEntry schema",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/stats/src/types.ts:50-75",
+        "detail": "Oh-my-pi's `SessionEntry` union expects: `type='session'` header with `version` (any), `type='message'` with `id: string`, `parentId`, `timestamp`, `message: AssistantMessage | { role: 'user' | 'toolResult' }`, `type='service_tier_change'`. It reads from `AssistantMessage`: `role`, `model`, `provider`, `api`, `timestamp`, `duration`, `ttft`, `stopReason`, `errorMessage`, `usage` (all fields). It also reads `usage.premiumRequests` for the Copilot premium-request count.",
+        "verdict": "needs-port(translation layer needed)"
+      },
+      {
+        "item": "Pi-mono SessionTreeEntry schema vs oh-my-pi stats parser expectations",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/pi-mono/packages/agent/src/harness/types.ts:334-420",
+        "detail": "Pi-mono's JSONL format writes `SessionTreeEntry` objects. The `MessageEntry` type has `type='message'`, `id`, `parentId`, `timestamp`, and `message: AgentMessage`. The session header uses `version: 3`. Critical gaps versus what the stats parser expects: (1) Pi-mono `AssistantMessage` has no `api` field typed as the oh-my-pi `Api` union — pi-mono uses a different `Api` type from `@earendil-works/pi-ai`; the stats parser's `MessageStats.api: string` would receive it at runtime but the import would break. (2) Pi-mono `AssistantMessage` has no `duration` field (the stats parser reads `msg.duration ?? null`). (3) Pi-mono `AssistantMessage` has no `ttft` field (stats parser reads `msg.ttft ?? null`). (4) Pi-mono `Usage` embeds a `cost` sub-object; oh-my-pi stats parser reads `usage.premiumRequests` which does not exist in pi-mono's `Usage`. (5) Oh-my-pi stats parser uses `Bun.JSONL.parseChunk` (parser.ts:147, 172) and `Bun.file(...).bytes()` (parser.ts:216, 321) — hard Bun runtime calls.",
+        "verdict": "pulls-Bun-Rust-AVOID (parser.ts is Bun-only; schema gap requires translation layer)"
+      },
+      {
+        "item": "Bun.JSONL / Bun.file in oh-my-pi stats parser",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/stats/src/parser.ts:147,172,216,321",
+        "detail": "`parseSessionEntriesLenient` and `scanLastServiceTier` both call `Bun.JSONL.parseChunk(bytes, cursor, bytes.length)` — a Bun-native streaming JSON lines parser that has no Node.js equivalent. `parseSessionFile` and `getSessionEntry` call `Bun.file(sessionPath).bytes()` for efficient zero-copy file reads. The rest of `aggregator.ts` and `server.ts` is similarly Bun-saturated (Bun.serve, Bun.Archive, Bun.write). The algorithmic core — iterate entries, filter message type, extract usage fields — is trivial and amounts to ~40 lines. The parser is not worth porting; rewrite it.",
+        "verdict": "build-from-scratch (algorithmic value is ~40 lines; Bun coupling disqualifies the whole file)"
+      },
+      {
+        "item": "Cost estimator integration point in run-collector",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/agent/src/run-collector.ts:196-234",
+        "detail": "`endChat()` receives pre-computed `fields.costUsd` and `fields.costUnavailableReason` injected by `telemetry.ts::finishChatSpan` after the `costEstimator` callback runs. The collector itself does no cost math — it only accumulates whatever the caller passes. This makes the cost-capture path entirely decoupled from any specific cost table or provider SDK. Misul can supply its own `costEstimator` function operating on pi-mono's `Usage.cost.total` (which is already pre-computed by pi-ai) and never need oh-my-pi's catalog or rate tables.",
+        "verdict": "cherry-pick"
+      }
+    ],
+    "decision": "Cherry-pick `run-collector.ts` verbatim with a thin type-shim layer; do NOT port the stats parser. Specific actions: (1) Copy `run-collector.ts` as-is into Misul's agent package. Replace the `import type { AssistantMessage, Model, StopReason } from '@oh-my-pi/pi-ai'` with imports from `@earendil-works/pi-ai` — pi-mono's versions of these types are structurally compatible for every field the collector actually reads at runtime. Replace `import type { Span } from '@opentelemetry/api'` identically (same package). Total porting effort: 3 import-line changes. (2) For the `endChat()` call site, write a small adapter (~10 lines) that maps pi-mono's `Usage` (which has `usage.cost.total` pre-computed) into the `fields.costUsd` / `fields.costUnavailableReason` shape the collector expects — bypassing the `costEstimator` hook entirely if desired, since cost is already embedded in pi-mono's Usage. (3) Do NOT cherry-pick `telemetry.ts` in bulk. Extract only `CostEstimatorContext`, `CostEstimate`, and the `AgentRunSummary`/`AgentRunCoverage` re-exports. The full OTEL span instrumentation is a separate concern. (4) Do NOT port `packages/stats/src/parser.ts` from oh-my-pi. The JSONL parsing logic is trivially replaced (~40 lines using `node:fs` + `JSON.parse` per line), the Bun API calls are hard blockers, and the pi-mono session schema differs in 4 fields (`api` type, `duration`, `ttft`, `premiumRequests`) requiring a translation layer anyway. Write a fresh Node.js-native session parser against pi-mono's `SessionTreeEntry` schema. Total estimated effort for SP-1: run-collector port = 1 hour; custom cost-adapter = 0.5 hours; fresh JSONL session parser for Misul = 2 hours; wire `agent_end` event with telemetry fields = 1 hour. Total: ~4.5 hours, no external blockers.",
+    "openRisks": [
+      "Pi-mono's `AssistantMessage` lacks `duration` and `ttft` fields present in oh-my-pi's version. If Misul's session storage needs latency metrics in the stats layer, those fields must be added to pi-mono's AssistantMessage or carried separately in a wrapper.",
+      "Pi-mono's `Usage` embeds `cost` as a pre-computed sub-object with provider-side USD buckets. Oh-my-pi's `Usage` does not. The run-collector cost path assumes a `costEstimator` callback rather than reading `usage.cost` — this is actually an advantage, but the adapter must ensure `usage.cost.total` is mapped to `costUsd` correctly or a NaN/undefined slips through silently.",
+      "Oh-my-pi's `Usage` has `premiumRequests` (Copilot billing unit). Pi-mono's `Usage` does not. If Misul targets GitHub Copilot routing, this counter will be zero/absent in the collected summary unless pi-mono's Usage is extended.",
+      "Oh-my-pi `run-collector.ts` uses `import type { Model }` where `Model` in oh-my-pi is a plain `{ id: string; provider: string }` shape. Pi-mono's `Model<T>` is generic. The `beginChat()` method reads `init.model.id` and `init.model.provider` — both present on any `Model<any>` instance from pi-mono, so structural compatibility holds, but the generic parameter must be dropped or wildcarded in the adapter.",
+      "The `@opentelemetry/api` package is a peer dependency in both codebases. Misul must ensure its package.json includes it; without it the import fails at compile time even though all uses in run-collector are type-only."
+    ]
+  },
+  {
+    "topic": "oh-my-pi cherry-pick candidates: Bun/Rust transitive dependency audit",
+    "findings": [
+      {
+        "item": "@oh-my-pi/pi-natives",
+        "path": "packages/natives/package.json:1 + native/index.d.ts:482,1324",
+        "detail": "Pure Rust N-API addon (.node binary, built with napi-rs). Exports countTokens (tiktoken tokenizer via rayon), renderSnapcompactPng (bitmap PNG renderer from crates/pi-ast), blockRangeAt (tree-sitter block resolver), grep/glob/astGrep/Shell/PtySession and 40+ other native functions. No TS fallback for any export. Binary is dlopen'd via native/index.js; source tree is Rust only (no src/ TS in the clone). The package.json engine pin is bun>=1.3.14 and build script calls bun scripts/build-native.ts.",
+        "verdict": "pulls-Bun-Rust-AVOID"
+      },
+      {
+        "item": "@oh-my-pi/pi-utils (package-level)",
+        "path": "packages/utils/package.json:34 + utils/src/dirs.ts:578 + utils/src/glob.ts:2,110 + utils/src/worker-host.ts:13",
+        "detail": "Package depends on @oh-my-pi/pi-natives (direct dep). Three concrete Bun API usages found: (1) dirs.ts:578 uses Bun.hash() inside hashPath(); (2) glob.ts:2 imports `import { Glob } from 'bun'` and uses Bun.file() for .gitignore reading; (3) worker-host.ts:13 uses Bun.main. However, the specific functions candidates actually import from @oh-my-pi/pi-utils are: prompt (prompt.ts — pure Handlebars, zero Bun), format (format.ts — zero Bun), formatDuration/formatNumber/formatPercent (format.ts — pure math), logger (logger.ts — winston, zero Bun), formatGroupedPaths (path-tree.ts, needs checking), isEnoent (fs-error.ts, needs checking), workerHostEntry (worker-host.ts — uses Bun.main). Because @oh-my-pi/pi-utils is shipped as source (main: ./src/index.ts), a consumer that tree-shakes or manually ports only the needed functions avoids the Bun surface. But importing the package as-is pulls ALL of it, including glob.ts and worker-host.ts.",
+        "verdict": "needs-port(low-effort: cherry-pick 6 pure files; avoid glob.ts, worker-host.ts, dirs.ts:hashPath)"
+      },
+      {
+        "item": "hashline — parse/apply/recovery logic",
+        "path": "packages/hashline/package.json:35-38 + src/format.ts:110 + src/fs.ts:150-165",
+        "detail": "No import of @oh-my-pi/pi-natives or @oh-my-pi/pi-utils anywhere in hashline/src. Only npm deps: 'diff' and 'lru-cache' (both pure JS). Two isolated Bun usages: (1) src/format.ts:110 uses Bun.hash.xxHash32() inside computeFileHash() — the only place hashing occurs; (2) src/fs.ts:150-165 implements NodeFilesystem class using Bun.file()/Bun.write()/Bun.file().exists(). The NodeFilesystem class is one concrete FS adapter; InMemoryFilesystem in the same file is pure TS and the abstract Filesystem base class is pure. The parser (parser.ts), apply (apply.ts), tokenizer, recovery, snapshots, mismatch, patcher — all are pure TS with no Bun/native deps. block.ts (resolveBlockEdits) is pure TS; it accepts a BlockResolver callback injected by the caller — it does NOT call blockRangeAt from pi-natives itself.",
+        "verdict": "cherry-pick(2 surgical ports: replace Bun.hash.xxHash32 with pure-JS xxhash32; replace NodeFilesystem with node:fs adapter)"
+      },
+      {
+        "item": "hashline — block-level ops (replace_block / delete_block / insert_after_block)",
+        "path": "packages/hashline/src/block.ts:66-168 + packages/hashline/src/format.ts:31-35",
+        "detail": "block.ts (resolveBlockEdits) is fully pure TS. It accepts an injected BlockResolver callback (type: ({ path, text, line }) => BlockRange | null). The function does NOT import or call blockRangeAt from pi-natives. The caller is responsible for wiring in a resolver. In oh-my-pi's production use, the caller provides blockRangeAt from pi-natives as the resolver, but that binding is external to hashline itself. The SWAP.BLK / DEL.BLK / INS.BLK.POST keywords are defined in format.ts as string constants; the parser emits block-kind edits; resolveBlockEdits expands them using whatever resolver the host injects. Misul can wire a pure-TS tree-sitter-based resolver later, or initially pass undefined (block edits then throw with BLOCK_RESOLVER_UNAVAILABLE).",
+        "verdict": "pure-TS-portable (block-level parse and apply logic is pure; native resolver is an optional injection point)"
+      },
+      {
+        "item": "@oh-my-pi/pi-catalog",
+        "path": "packages/catalog/package.json:36-38 + src/model-cache.ts:5-6 + src/model-manager.ts:322 + src/provider-models/openai-compat.ts:2199,2566 + src/utils.ts:1 + src/provider-models/ollama.ts:1 + src/provider-models/special.ts:1",
+        "detail": "Depends on @oh-my-pi/pi-utils (which itself depends on @oh-my-pi/pi-natives). Direct Bun usages: model-cache.ts:5 imports `import { Database } from 'bun:sqlite'` (Bun's SQLite module — not available in Node/standard runtimes); model-manager.ts:322 uses Bun.hash(); openai-compat.ts:2199 uses Bun.env; openai-compat.ts:2566 uses Bun.hash(). The model-cache layer (models.db persistence) is Bun-SQLite-locked. The identity/, classify, equivalence, family, priority, selection, reference modules, and most of provider-models/ are pure algorithmic TS. The discovery/ and provider-models/ modules that do live API calls import fetchWithRetry from @oh-my-pi/pi-utils (portably replaceable). Core cherry-pick value (identity classification, dialect selection, equivalence) is in ~10 pure-TS files.",
+        "verdict": "cherry-pick(selective: identity/* + classify + equivalence + family modules are pure-TS; avoid model-cache.ts, model-manager.ts, openai-compat.ts Bun.hash lines; replace bun:sqlite usage with better-sqlite3 or skip caching)"
+      },
+      {
+        "item": "swarm-extension — swarm/schema.ts",
+        "path": "packages/swarm-extension/src/swarm/schema.ts:58",
+        "detail": "parseSwarmYaml() uses Bun.YAML.parse() at line 58 — Bun's built-in YAML parser, not available outside Bun. The validateSwarmDefinition() function and all type definitions are pure TS. The data structures (SwarmDefinition, SwarmAgent) are plain interfaces.",
+        "verdict": "needs-port(trivial: replace Bun.YAML.parse with 'js-yaml' or 'yaml' npm package — one-line change)"
+      },
+      {
+        "item": "swarm-extension — swarm/dag.ts",
+        "path": "packages/swarm-extension/src/swarm/dag.ts:1-147",
+        "detail": "Completely pure TypeScript. No imports of Bun, pi-natives, or pi-utils. Imports only from ./schema (the local types). Implements: buildDependencyGraph, detectCycles (Kahn's algorithm), buildExecutionWaves. Zero runtime dependencies beyond the local schema types.",
+        "verdict": "pure-TS-portable"
+      },
+      {
+        "item": "swarm-extension — swarm/pipeline.ts",
+        "path": "packages/swarm-extension/src/swarm/pipeline.ts:9,16",
+        "detail": "Imports from @oh-my-pi/pi-coding-agent (runSubprocess, ModelRegistry, Settings, SingleResult etc.). PipelineController itself is pure orchestration logic (no Bun API calls, no pi-natives). However it depends on executeSwarmAgent from executor.ts which depends on pi-coding-agent. The control-flow logic (wave iteration, parallel Promise.all, error collection) is portable. The coupling to coding-agent is the issue.",
+        "verdict": "needs-port(medium: PipelineController logic is portable; executor coupling to pi-coding-agent requires Misul's own subprocess runner to be wired in)"
+      },
+      {
+        "item": "swarm-extension — swarm/executor.ts",
+        "path": "packages/swarm-extension/src/swarm/executor.ts:8-16",
+        "detail": "Directly imports AgentDefinition, AgentProgress, AgentSource, ModelRegistry, Settings, SingleResult, and runSubprocess from @oh-my-pi/pi-coding-agent. This is the deepest coupling — it spawns actual oh-my-pi subagents. No Bun API calls in the file itself, but the functional dependency on pi-coding-agent is total. The value (role/task prompt building, state tracking calls) is minimal; the real work is inside pi-coding-agent.",
+        "verdict": "needs-port(replace pi-coding-agent imports with Misul's own agent runner interface — the adapter pattern is thin but the downstream dependency is the core package)"
+      },
+      {
+        "item": "stats — user-metrics.ts (computeUserMessageMetrics)",
+        "path": "packages/stats/src/user-metrics.ts:618-673",
+        "detail": "Completely pure TypeScript. Zero imports — no external dependencies, no Bun APIs, no pi-natives, no pi-utils. Implements computeUserMessageMetrics() using only RegExp, string methods, and plain JS. The function, the PROFANITY list, all regex patterns, and all helpers are self-contained in one 686-line file. This is the cleanest possible cherry-pick candidate.",
+        "verdict": "pure-TS-portable"
+      },
+      {
+        "item": "snapcompact — TS logic",
+        "path": "packages/snapcompact/package.json:35-37 + src/snapcompact.ts:51-52",
+        "detail": "snapcompact.ts:51 imports renderSnapcompactPng from @oh-my-pi/pi-natives (the Rust bitmap renderer). snapcompact.ts:52 imports formatGroupedPaths and prompt from @oh-my-pi/pi-utils. snapcompact.ts:833 uses Bun.stripANSI(); snapcompact.ts:1220 uses Bun.sleep(). The PNG rasterization is entirely inside the Rust native function — there is no pure-TS fallback for frame rendering. The shape selection logic (provider-aware frame sizing, grid calculation, text chunking) and the prompt templates are the portable part. The core algorithm of 'render history as bitmap frames for vision models' cannot be extracted without either porting the Rust renderer or using a JS canvas/png library to replicate the pixel font rendering.",
+        "verdict": "pulls-Bun-Rust-AVOID (core render function is Rust native; Bun.stripANSI and Bun.sleep also present; feasible only if you reimplement PNG rendering in JS/Canvas — non-trivial)"
+      },
+      {
+        "item": "agent/src/compaction/pruning.ts",
+        "path": "packages/agent/src/compaction/pruning.ts:1-343",
+        "detail": "No direct Bun or pi-natives imports. Imports from @oh-my-pi/pi-ai (ToolResultMessage type), local ./compaction (estimateTokens), local ./entries, and local ./tool-protection and ./utils. estimateTokens (from compaction.ts) itself imports countTokens from @oh-my-pi/pi-natives. So pruning.ts is transitively coupled through estimateTokens. However, estimateTokens can be replaced with a chars/4 approximation or a pure-JS tiktoken port without changing pruning.ts's logic at all. The pruning algorithms themselves (supersede detection, useless pruning, protect-window) are pure algorithmic TS.",
+        "verdict": "cherry-pick(one transitive swap: replace estimateTokens/countTokens with a pure-JS token approximation — the pruning logic itself is pure TS)"
+      },
+      {
+        "item": "agent/src/compaction/shake.ts",
+        "path": "packages/agent/src/compaction/shake.ts:14,107-109,207",
+        "detail": "Directly imports countTokens from @oh-my-pi/pi-natives at line 14. Uses countTokens() at lines 107-109 (custom_message token counting) and line 207 (block token counting). Also uses countTokens inside pushBlockRegions at line 207. The collectShakeRegions and applyShakeRegions functions are pure algorithmic logic. The countTokens calls are used for the token-budget gate (protectTokens window) and the block-size gate (fenceMinTokens). These can be replaced with chars/4 approximation or a pure-JS tiktoken implementation without changing the structure.",
+        "verdict": "cherry-pick(two call-site swaps: replace countTokens with pure-JS approximation at lines 107-109 and 207; logic is otherwise pure TS)"
+      },
+      {
+        "item": "agent/src/compaction/branch-summarization.ts",
+        "path": "packages/agent/src/compaction/branch-summarization.ts:10 + compaction.ts:23-25",
+        "detail": "branch-summarization.ts imports prompt from @oh-my-pi/pi-utils (line 10 — pure Handlebars, portable) and preferredDialect from @oh-my-pi/pi-catalog/identity (line 9 — pure TS). The branch-summarization logic itself is pure TS: entry collection, token budgeting, conversation serialization, LLM call via instrumentedCompleteSimple, file tracking. The transitive dependency chain hits pi-natives through: (a) estimateTokens in compaction.ts which uses countTokens from pi-natives; (b) @oh-my-pi/pi-catalog which depends on pi-utils which depends on pi-natives. Both are replaceable at the function call sites. Additionally branch-summarization.ts:309 calls instrumentedCompleteSimple which is in agent/src/telemetry.ts — that file uses @opentelemetry/api (portable) and @oh-my-pi/pi-ai (the AI transport layer, which IS the one being forked).",
+        "verdict": "cherry-pick(needs estimateTokens replacement + pi-catalog identity subset port; core summarization logic is pure TS)"
+      }
+    ],
+    "decision": "The portable cherry-pick set is: (1) hashline — all files except NodeFilesystem in fs.ts (replace with node:fs) and computeFileHash in format.ts (replace Bun.hash.xxHash32 with pure-JS xxhash32 — 5 lines). The block-level edit logic (block.ts) is pure TS with injected resolver; no Rust required for parse/apply. (2) stats/user-metrics.ts — copy as-is, zero modifications needed, fully self-contained. (3) agent/compaction/pruning.ts + shake.ts — copy and replace the single estimateTokens/countTokens dependency with a chars/4 approximation or js-tiktoken; the pruning and shake algorithms are entirely portable. (4) agent/compaction/branch-summarization.ts — copy with the same estimateTokens swap plus use the forked pi-ai transport. (5) catalog/identity/* subset (classify.ts, equivalence.ts, family.ts, priority.ts, selection.ts, reference.ts, id.ts, dialect.ts) — pure TS, no Bun/native calls, copy with minimal adaptation. (6) swarm/dag.ts — copy as-is. (7) swarm/schema.ts — copy with Bun.YAML.parse replaced by `import { parse } from 'js-yaml'` (one line). AVOID: snapcompact (Rust PNG renderer is irreplaceable without a JS canvas port), the full @oh-my-pi/pi-utils package (import only the 6 pure files: format.ts, prompt.ts, fs-error.ts, type-guards.ts, json.ts, sanitize-text.ts), @oh-my-pi/pi-natives (entire package — Rust N-API, no TS fallback), catalog/model-cache.ts (bun:sqlite), swarm/executor.ts and pipeline.ts as-is (pi-coding-agent coupling — adapt interfaces to Misul's own runner). The Bun/Rust lock is NOT fundamental to the algorithmic value; it is concentrated in: Bun.hash (2 files, trivially replaceable), Bun.file/write (NodeFilesystem, trivially replaceable), Bun.YAML (1 call, trivially replaceable), Bun.stripANSI/sleep (snapcompact only), countTokens from pi-natives (shake + compaction, replace with approximation), renderSnapcompactPng from pi-natives (snapcompact, non-trivial), bun:sqlite (model-cache, skip or replace with better-sqlite3), Bun.main (worker-host.ts, skip — not needed for Misul).",
+    "openRisks": [
+      "countTokens replacement accuracy: a chars/4 approximation will produce different token counts than the real tiktoken encoder used in shake.ts and pruning.ts. This affects the protectTokens budget gate and fenceMinTokens gate. If Misul needs accurate token counting, a pure-JS tiktoken port (js-tiktoken on npm) must be evaluated; its performance under Node.js may differ from the native rayon-parallelized version.",
+      "hashline computeFileHash portability: Bun.hash.xxHash32 must be replaced with a pure-JS xxhash32 implementation. The 4-hex tag is used for file-snapshot validation — any mismatch between Misul's replacement and oh-my-pi's computation would break cross-tool hashline patch compatibility. The normalization pass (normalizeFileHashText) is already pure TS; only the xxHash32 call needs replacement.",
+      "catalog/identity dialect.ts coupling: preferredDialect() in catalog/identity/dialect.ts is imported by branch-summarization.ts. This file may import from other catalog modules that pull in the Bun-coupled model-cache or model-manager. The import chain must be verified before copying — isolate at the function call site if necessary.",
+      "swarm executor/pipeline coupling to pi-coding-agent: swarm/executor.ts is functionally useless without a working runSubprocess equivalent in Misul's runtime. The DAG and schema logic can be ported cleanly, but the actual agent execution requires Misul's own subprocess/agent runner to be defined first before swarm/executor.ts is worth porting.",
+      "snapcompact vision-compaction strategy: the entire snapcompact package is blocked on a Rust PNG renderer. If Misul wants equivalent vision-frame compaction it must either (a) reimplement the pixel-font rasterizer in JS using node-canvas or sharp, (b) use a system-call approach (ImageMagick), or (c) use a different compaction strategy entirely. This is a significant engineering effort that should be planned separately from the cherry-pick of the other candidates.",
+      "stats/aggregator.ts and db.ts use bun:sqlite and Bun.JSONL — if the Misul fork wants the full stats dashboard, those layers need SQLite replacement (better-sqlite3) and JSONL parsing replacement (custom chunk parser). user-metrics.ts itself is clean, but integrating it into a stats pipeline requires porting the surrounding infrastructure.",
+      "@oh-my-pi/pi-utils glob.ts uses `import { Glob } from 'bun'` — if any ported module transitively needs globPaths(), it must be replaced with a node:fs/promises + fast-glob equivalent. The gitignore walking logic (parseGitignorePatterns) is pure TS and can be reused."
+    ]
+  },
+  {
+    "topic": "Type-compat across oh-my-pi catalog fork boundary vs upstream pi-mono/ai, and portability audit of oh-my-pi compaction algorithms (pruning, shake, branch-summarization)",
+    "findings": [
+      {
+        "item": "OpenAICompat field count and divergence: oh-my-pi vs pi-mono",
+        "path": "C:\\Users\\deyan\\Projects\\Misul Terminal\\research\\sources\\oh-my-pi\\packages\\catalog\\src\\types.ts:141-251 vs C:\\Users\\deyan\\Projects\\Misul Terminal\\research\\sources\\pi-mono\\packages\\ai\\src\\types.ts:387-431",
+        "detail": "oh-my-pi's OpenAICompat has ~35 fields (supportsStore, supportsDeveloperRole, supportsMultipleSystemMessages, supportsReasoningEffort, reasoningEffortMap, supportsUsageInStreaming, maxTokensField, requiresToolResultName, requiresAssistantAfterToolResult, requiresThinkingAsText, requiresMistralToolIds, thinkingFormat, thinkingKeep, reasoningContentField, requiresReasoningContentForToolCalls, allowsSyntheticReasoningContentForToolCalls, requiresAssistantContentForToolCalls, supportsToolChoice, supportsForcedToolChoice, disableReasoningOnForcedToolChoice, disableReasoningOnToolChoice, openRouterRouting, vercelGatewayRouting, extraBody, cacheControlFormat, supportsStrictMode, streamIdleTimeoutMs, supportsLongPromptCacheRetention, toolStrictMode, supportsReasoningParams, alwaysSendMaxTokens, strictResponsesPairing, requiresJuiceZeroHack, whenThinking). pi-mono has a DIFFERENT interface named OpenAICompletionsCompat (not OpenAICompat) with a smaller field set (~15 fields), and separate OpenAIResponsesCompat and AnthropicMessagesCompat interfaces. The oh-my-pi version has evolved well beyond pi-mono's structure. These are not the same type.",
+        "verdict": "needs-port(high-effort): Not a trivial graft. oh-my-pi's OpenAICompat is a superset of pi-mono's OpenAICompletionsCompat, but the interface names differ and pi-mono has split the compat surface into three separate interfaces. A vendor import of the oh-my-pi catalog types would NOT type-check against pi-mono's pi-ai Model<TApi> without adapters. The Model<TApi> generic constraint in pi-mono uses a conditional compat type keyed on API string, with different interface names than oh-my-pi."
+      },
+      {
+        "item": "Usage type compat: oh-my-pi catalog vs pi-mono/ai",
+        "path": "C:\\Users\\deyan\\Projects\\Misul Terminal\\research\\sources\\oh-my-pi\\packages\\catalog\\src\\types.ts:90-135 vs C:\\Users\\deyan\\Projects\\Misul Terminal\\research\\sources\\pi-mono\\packages\\ai\\src\\types.ts:274-289",
+        "detail": "oh-my-pi Usage has: input, output, cacheRead, cacheWrite, totalTokens, premiumRequests?, reasoningTokens?, cttl?, server?, cost{input,output,cacheRead,cacheWrite,total}. pi-mono Usage has: input, output, cacheRead, cacheWrite, cacheWrite1h?, totalTokens, cost{input,output,cacheRead,cacheWrite,total}. Key differences: (1) pi-mono carries cacheWrite1h (Anthropic 1h cache split) but lacks reasoningTokens, premiumRequests, cttl, and server sub-objects. (2) The oh-my-pi Usage is structurally a superset of pi-mono. A function accepting oh-my-pi Usage would reject pi-mono Usage (missing fields). calculateContextTokens in compaction.ts references usage.totalTokens, usage.input, usage.output, usage.cacheRead, usage.cacheWrite — those five fields exist in both, so the compaction path specifically would work, but the type cannot be mechanically grafted.",
+        "verdict": "needs-port(low-effort): The core token-counting fields overlap. Misul would need to either use oh-my-pi's extended Usage definition or write a thin adapter. Not a zero-change graft."
+      },
+      {
+        "item": "Model<TApi> interface divergence",
+        "path": "C:\\Users\\deyan\\Projects\\Misul Terminal\\research\\sources\\oh-my-pi\\packages\\catalog\\src\\types.ts:429-521 vs C:\\Users\\deyan\\Projects\\Misul Terminal\\research\\sources\\pi-mono\\packages\\ai\\src\\types.ts:579-609",
+        "detail": "oh-my-pi Model<TApi> has 20+ fields including: id, requestModelId?, name, api, provider, baseUrl, reasoning, input, supportsTools?, cost, premiumMultiplier?, contextWindow|null, maxTokens|null, omitMaxOutputTokens?, headers?, transport?, preferWebsockets?, contextPromotionTarget?, priority?, thinking?, compat (resolved), compatConfig?, applyPatchToolType?, isOAuth?. pi-mono Model<TApi> has fewer fields: id, name, api, provider, baseUrl, reasoning, thinkingLevelMap?, input, cost, contextWindow (not null), maxTokens (not null), headers?, compat? (sparse). Key structural differences: contextWindow/maxTokens are non-nullable in pi-mono but nullable in oh-my-pi; oh-my-pi has a resolved ResolvedOpenAICompat on model.compat while pi-mono has sparse optional compat; oh-my-pi has thinking: ThinkingConfig while pi-mono uses thinkingLevelMap. The compaction code in branch-summarization.ts uses model.contextWindow (line 282) and model.id — those exist in both, but ThinkingConfig-based thinking control used in compaction.ts line 569+ is entirely absent from pi-mono.",
+        "verdict": "needs-port(medium-effort): The Model interfaces are substantially diverged. The catalog type cannot be grafted as 'type-only trivial' — it would require either using oh-my-pi's full Model definition or writing a mapping layer for every field that compaction code touches."
+      },
+      {
+        "item": "KnownApi enum divergence",
+        "path": "C:\\Users\\deyan\\Projects\\Misul Terminal\\research\\sources\\oh-my-pi\\packages\\catalog\\src\\types.ts:5-17 vs C:\\Users\\deyan\\Projects\\Misul Terminal\\research\\sources\\pi-mono\\packages\\ai\\src\\types.ts:6-15",
+        "detail": "oh-my-pi KnownApi adds: 'google-gemini-cli', 'cursor-agent'. pi-mono KnownApi adds: 'mistral-conversations'. These are small differences but affect the ApiOptionsMap exhaustiveness check in pi-mono (types.ts:69-75). Any grafted catalog type that exports KnownApi would collide at the exhaustiveness check.",
+        "verdict": "needs-port(low-effort): Minor enum additions on both sides. Not structurally incompatible but requires manual merge."
+      },
+      {
+        "item": "pruning.ts: pure-TS portability, Bun/Rust deps",
+        "path": "C:\\Users\\deyan\\Projects\\Misul Terminal\\research\\sources\\oh-my-pi\\packages\\agent\\src\\compaction\\pruning.ts:1-342",
+        "detail": "Imports: ToolResultMessage from @oh-my-pi/pi-ai (a type import only), AgentMessage/AgentToolCall from ../types (also types), estimateTokens from ./compaction, SessionEntry/SessionMessageEntry from ./entries, collectToolCallsById/isProtectedToolResult/isSkillReadToolResult/ProtectedToolMatcher from ./tool-protection, splitReadSelector from ./utils. No Bun-specific APIs, no Rust/native imports. estimateTokens (in compaction.ts) calls countTokens from @oh-my-pi/pi-natives — the Rust N-API binary. However, pruning.ts itself only calls estimateTokens as a number-returning function. The algorithm is pure data-structure manipulation (Set iteration, array walks, token comparisons, string replacement). The countTokens dependency is one function call site in estimateTokens that can be swapped for any JS tokenizer (tiktoken-js, gpt-tokenizer, or even a char/4 fallback).",
+        "verdict": "cherry-pick: The pruning algorithm (superseded-read detection, useless-flag pruning, suffix-window guard, idle-flush) is pure TS logic. The single Rust call (countTokens) is isolated in estimateTokens in compaction.ts and is trivially replaceable. The 'near-zero-cost steal' claim is accurate for the algorithm; the Rust tokenizer must be swapped but is not entangled with the logic."
+      },
+      {
+        "item": "shake.ts: pure-TS portability vs Rust dependency",
+        "path": "C:\\Users\\deyan\\Projects\\Misul Terminal\\research\\sources\\oh-my-pi\\packages\\agent\\src\\compaction\\shake.ts:14",
+        "detail": "shake.ts line 14: `import { countTokens } from '@oh-my-pi/pi-natives';`. This import is used in two places: entryTokens() at line 107 (`countTokens(content)`) and pushBlockRegions() at line 209 (`const tokens = countTokens(slice)`). countTokens is a Rust N-API function (tiktoken-rs, rayon-parallel, compiled to a .node binary). The rest of shake.ts — scanTextForBlockRanges, mergeRanges, collectShakeRegions, applyShakeRegion, applyShakeRegions — is pure TS string/array manipulation. The fence/XML scanner is a single-pass line iterator with no external deps. The protect-window logic and placeholder substitution are trivial. Two call sites to countTokens need substitution; the surrounding algorithm is 411 lines of pure TS.",
+        "verdict": "cherry-pick: The shake algorithm (fence/XML block detection, protect-recent window, tool-result blanking, block splicing) is pure TS. It pulls countTokens from Rust at exactly two call sites. Replacing with a JS tokenizer (or char/4 estimate for threshold decisions) unsticks it entirely. The 'mechanical pre-pass' claim is accurate — the compaction.ts file also imports countTokens and `snapcompact` (another Rust binary via @oh-my-pi/snapcompact). shake.ts itself does not import snapcompact."
+      },
+      {
+        "item": "branch-summarization.ts: LLM dependency, Bun APIs, pure-TS portability",
+        "path": "C:\\Users\\deyan\\Projects\\Misul Terminal\\research\\sources\\oh-my-pi\\packages\\agent\\src\\compaction\\branch-summarization.ts:1-341",
+        "detail": "Imports: ApiKey/Model from @oh-my-pi/pi-ai (types); preferredDialect from @oh-my-pi/pi-catalog/identity (pure TS catalog lookup); prompt from @oh-my-pi/pi-utils (pure TS); instrumentedCompleteSimple from ../telemetry (LLM call wrapper); AgentMessage from ../types; estimateTokens from ./compaction; entries types; messages helpers; two .md files via `with { type: 'text' }` import assertions. The `with { type: 'text' }` import syntax for .md files is a Bun-specific feature (not Node-standard; requires Bun's module system or a bundler plugin). The algorithm itself — tree traversal for common ancestor, token-budget walk, file-ops extraction, LLM call, summary assembly — is pure logic. The handoff-document concept (generateBranchSummary calling instrumentedCompleteSimple with a structured prompt) is portable once the LLM call surface and the .md import are resolved.",
+        "verdict": "cherry-pick(with-caveats): The tree-navigation algorithm and summarization logic are pure TS and separable. Two blockers: (1) `import ... with { type: 'text' }` for .md files requires either Bun or a bundler plugin for Node — a build-step issue, not algorithmic. (2) instrumentedCompleteSimple must be replaced with Misul's own LLM call wrapper. The handoff-document prompt itself is a Markdown file with template slots, trivially vendorable."
+      },
+      {
+        "item": "compaction.ts: snapcompact (Rust) and pi-natives (Rust) both required",
+        "path": "C:\\Users\\deyan\\Projects\\Misul Terminal\\research\\sources\\oh-my-pi\\packages\\agent\\src\\compaction\\compaction.ts:23-25",
+        "detail": "compaction.ts imports: `countTokens from @oh-my-pi/pi-natives` (Rust N-API) at line 23 and `* as snapcompact from @oh-my-pi/snapcompact` at line 25. snapcompact.FRAME_TOKEN_ESTIMATE is used in estimateTokens() at line 330 for snapcompact image frames — this is the visual-compaction feature that renders conversation history as bitmap images. The main compaction algorithm (findCutPoint, prepareCompaction, compact, generateSummary, generateHandoff) is pure TS logic except for these two Rust boundaries. snapcompact is a distinct Rust library for the PNG-rendering path; it is NOT needed for text-only compaction. estimateTokens is the single shared primitive all three algorithm files depend on.",
+        "verdict": "needs-port(low-effort): compaction.ts is the shared dependency that pruning.ts, shake.ts, and branch-summarization.ts all import estimateTokens from. It has two Rust boundaries: countTokens (tokenizer, trivially replaceable) and snapcompact.FRAME_TOKEN_ESTIMATE (a constant integer used for image-frame token budgeting, avoidable if Misul does not implement visual-compaction). The core algorithmic functions are pure TS."
+      },
+      {
+        "item": "@oh-my-pi/pi-natives package: Rust N-API binary, not portable",
+        "path": "C:\\Users\\deyan\\Projects\\Misul Terminal\\research\\sources\\oh-my-pi\\packages\\natives\\package.json:1-66 and C:\\Users\\deyan\\Projects\\Misul Terminal\\research\\sources\\oh-my-pi\\crates\\pi-natives\\Cargo.toml:1-65",
+        "detail": "pi-natives is a Rust crate compiled to a .node N-API binary (napi, napi-derive, cdylib). It provides countTokens (tiktoken-rs, rayon), grep (ripgrep), ast operations (ast-grep-core), shell execution, PTY, snapcompact rendering, and 30+ other native functions. The package requires `bun >=1.3.14` in engines. The countTokens function specifically wraps tiktoken-rs with rayon parallelism. This is NOT a pure-TS library and cannot be vendored as such. The only relevant export for compaction is countTokens — everything else (grep, PTY, clipboard) is irrelevant to the compaction algorithms.",
+        "verdict": "pulls-Bun-Rust-AVOID: The entire pi-natives package must not be vendored. Only countTokens matters for compaction, and it should be replaced with a pure-JS tokenizer (gpt-tokenizer npm package, which is pure TS and implements o200k_base/cl100k_base). This substitution is a single function swap in estimateTokens with no algorithm changes."
+      },
+      {
+        "item": "Bun-specific import assertions (`with { type: 'text' }`) in compaction layer",
+        "path": "C:\\Users\\deyan\\Projects\\Misul Terminal\\research\\sources\\oh-my-pi\\packages\\agent\\src\\compaction\\compaction.ts:39-44 and branch-summarization.ts:22-23",
+        "detail": "Both compaction.ts and branch-summarization.ts use `import X from './prompts/X.md' with { type: 'text' }` to load Markdown prompt files at module load time. This syntax is supported natively in Bun but requires a bundler plugin in Node (e.g. esbuild/rollup with a text loader). The .md files themselves (handoff-document.md, branch-summary.md, compaction-summary.md, etc.) are plain text and trivially portable — they should be converted to inline string constants or loaded via fs.readFileSync() in a Node-compatible build.",
+        "verdict": "needs-port(trivial): Build-system issue only. The prompts are static text files with no runtime deps. Replace import assertions with inline string constants or a Node-compatible text loader."
+      },
+      {
+        "item": "ThinkingConfig / Effort types in oh-my-pi vs ThinkingLevel in pi-mono",
+        "path": "C:\\Users\\deyan\\Projects\\Misul Terminal\\research\\sources\\oh-my-pi\\packages\\catalog\\src\\types.ts:28-72 vs C:\\Users\\deyan\\Projects\\Misul Terminal\\research\\sources\\pi-mono\\packages\\ai\\src\\types.ts:65-75",
+        "detail": "oh-my-pi uses `Effort` enum ('minimal'|'low'|'medium'|'high'|'xhigh') from catalog/effort.ts and a rich ThinkingConfig struct with effortMap, effortRouting, supportsDisplay etc. pi-mono uses `ThinkingLevel = 'minimal'|'low'|'medium'|'high'|'xhigh'` (a type alias, not an enum) and `thinkingLevelMap?: ThinkingLevelMap` directly on the Model. compaction.ts references `Effort` and calls `clampThinkingLevelForModel` from @oh-my-pi/pi-catalog/model-thinking. These dependencies are on oh-my-pi's internal catalog package, not on pi-mono.",
+        "verdict": "needs-port(medium-effort): The reasoning-effort routing in compaction (resolveCompactionEffort) is specific to oh-my-pi's ThinkingConfig/Effort system. Misul's fork must either adopt oh-my-pi's effort enum or rewrite resolveCompactionEffort to map against its own thinking-level vocabulary. The algorithm is a small switch statement — low complexity to port."
+      }
+    ],
+    "decision": "The 'type-only trivial graft' premise is false. The oh-my-pi catalog types (OpenAICompat, Model, Usage, KnownApi) have diverged substantially from pi-mono's pi-ai types — different interface names, different field sets, different structural shape for compat and thinking. A vendored oh-my-pi catalog would NOT type-check against upstream pi-mono pi-ai without adapters; the fork boundary requires explicit mapping, not a drop-in.\n\nThe three compaction algorithms (pruning, shake, branch-summarization) ARE separable pure-TS logic and the 'near-zero-cost steal' claim is accurate for the algorithms themselves, but with three concrete porting costs: (1) countTokens from @oh-my-pi/pi-natives must be replaced with a pure-JS tokenizer — gpt-tokenizer (npm, pure TS, o200k_base/cl100k_base, no Rust, no Bun) is the direct substitute; (2) `import X with { type: 'text' }` import assertions for .md prompt files must be replaced with inline strings or a Node text loader; (3) the LLM call surface (instrumentedCompleteSimple, ApiKey, withAuth) must be replaced with Misul's own runtime equivalents. None of these are algorithmic changes. The snapcompact package (visual-compaction PNG rendering) is a separate Rust binary and is only referenced for FRAME_TOKEN_ESTIMATE — skip it entirely if Misul does not implement visual compaction. Recommended action: cherry-pick pruning.ts and shake.ts verbatim, replacing countTokens with gpt-tokenizer; cherry-pick branch-summarization.ts replacing the LLM call and .md imports; write a thin type-adapter layer between oh-my-pi's AgentMessage/ToolResultMessage shapes and Misul's own message types. Do not vendor pi-natives, do not vendor the oh-my-pi catalog types wholesale.",
+    "openRisks": [
+      "oh-my-pi/packages/agent/src/types.ts (AgentMessage union type) was not fully read — the compaction files reference AgentMessage, AgentToolCall, and several custom message roles (bashExecution, hookMessage, branchSummary, compactionSummary) not present in pi-mono. These custom roles are structural expectations in estimateTokens's switch statement; Misul must either replicate them or audit every case branch.",
+      "compaction.ts also imports withAuth from @oh-my-pi/pi-ai — a token-refresh/rotation utility specific to oh-my-pi's auth broker system. The OpenAI remote compaction path (requestOpenAiRemoteCompaction, withOpenAiRemoteCompactionPreserveData) in compaction.ts pulls in the full auth stack. If Misul cherry-picks compact() without this path, the remote-compaction branch must be gutted or stubbed.",
+      "The .md import assertion syntax (`with { type: 'text' }`) is not supported by tsc or Node without configuration. If Misul's build uses tsx/ts-node directly this will fail at import time, not just type-check time.",
+      "snapcompact package (C:\\Users\\deyan\\Projects\\Misul Terminal\\research\\sources\\oh-my-pi\\packages\\snapcompact) was not fully inspected — it appears to be a separate Rust-backed visual compaction strategy. Its FRAME_TOKEN_ESTIMATE constant is a simple integer; the import can be replaced with a literal, but the broader snapcompact strategy (storing context as PNG frames) is a significant architectural feature that is not portable at all.",
+      "gpt-tokenizer (pure-JS tiktoken substitute) encodes o200k_base/cl100k_base but does NOT support rayon-parallel batch encoding. The oh-my-pi countTokens accepts string arrays and encodes in parallel. A JS replacement will be ~10x slower on large batches, which matters most during heavy compaction on long sessions. This is a performance risk, not a correctness risk.",
+      "The pi-mono fork target (packages/ai+agent+coding-agent) was not read in this analysis. The Misul fork plan's claim that it forks 'MINIMAL Pi' from pi-mono needs verification against what pi-mono/packages/agent actually exports — that package was not inspected and may itself have diverged from the oh-my-pi agent structure enough to require a full rewrite rather than a cherry-pick."
+    ]
+  },
+  {
+    "topic": "Tokenizer/counting strategy verification for Misul Terminal fork from pi-mono + oh-my-pi",
+    "findings": [
+      {
+        "item": "AssistantMessage.usage fields in pi-mono — are they authoritative post-hoc for cost math?",
+        "path": "C:\\Users\\deyan\\Projects\\Misul Terminal\\research\\sources\\pi-mono\\packages\\ai\\src\\types.ts:274-288",
+        "detail": "The Usage interface is fully specified: input, output, cacheRead, cacheWrite, cacheWrite1h?, totalTokens, and a nested cost struct (input, output, cacheRead, cacheWrite, total). These fields are populated directly from provider-returned SSE events — for Anthropic at message_start (input_tokens, cache_read_input_tokens, cache_creation_input_tokens) and message_delta (output_tokens), recomputed as totalTokens = input+output+cacheRead+cacheWrite. The Anthropic provider (anthropic.ts:539-545 and 677-692) fills every field from the wire. calculateCost() in models.ts:39-48 derives the cost struct from these provider counts. No local tokenizer is involved in the cost calculation path at all. This confirms: provider-returned usage IS the authoritative post-hoc source for cost truth.",
+        "verdict": "pure-TS-portable"
+      },
+      {
+        "item": "pi-mono compaction token estimator — what algorithm is used?",
+        "path": "C:\\Users\\deyan\\Projects\\Misul Terminal\\research\\sources\\pi-mono\\packages\\coding-agent\\src\\core\\compaction\\compaction.ts:247-290",
+        "detail": "pi-mono's estimateTokens() uses Math.ceil(chars/4) throughout — explicitly documented in the JSDoc comment 'Estimate token count for a message using chars/4 heuristic.' This is applied for: user message text, assistant text/thinking/toolCall blocks, toolResult/custom, bashExecution command+output, and branchSummary/compactionSummary. Images are fixed at ESTIMATED_IMAGE_CHARS=4800 chars, then divided by 4 = 1200 token estimate. The harness compaction (packages/agent/src/harness/compaction/compaction.ts) is an identical copy. The faux provider (faux.ts:128-130) also uses Math.ceil(text.length/4) for simulated usage in tests. There is NO dependency on tiktoken or any real tokenizer in pi-mono. The benchmark benchmark note ('Using chars/4 as token estimate') appears explicitly in packages/ai/test/context-overflow.test.ts:33 as a comment.",
+        "verdict": "pure-TS-portable"
+      },
+      {
+        "item": "oh-my-pi compaction token estimator — what algorithm is used and what is the dependency?",
+        "path": "C:\\Users\\deyan\\Projects\\Misul Terminal\\research\\sources\\oh-my-pi\\packages\\agent\\src\\compaction\\compaction.ts:23,263-341",
+        "detail": "oh-my-pi imports countTokens from '@oh-my-pi/pi-natives' (line 23). The estimateTokens() function (line 263-341) calls countTokens(fragments, encoding?) — a Rust NAPI function exposed via a precompiled .node binary. The Encoding enum in pi-natives supports O200kBase (default, for GPT-4o/o1) and Cl100kBase (older OpenAI). The comment explicitly states 'Uses cl100k_base via the native tokenizer. This is not Claude's first-party tokenizer (Anthropic doesn't publish one) but is within ~5-10% across English/code text.' A critical addition over pi-mono: oh-my-pi also counts thinkingSignature bytes (line 300: if (block.thinkingSignature) fragments.push(block.thinkingSignature)) and redactedThinking data blobs, with a comment (#2275) noting that omitting these caused ~half the provider-reported usage to be missed on thinking-heavy turns. The pi-natives package.json declares 'engines: { bun: >=1.3.14 }' and the binary is a Rust NAPI addon (.node file). This is a hard Bun+Rust dependency — cannot be vendored as pure TS.",
+        "verdict": "pulls-Bun-Rust-AVOID"
+      },
+      {
+        "item": "oh-my-pi compaction trigger — is provider usage or local estimator the gate?",
+        "path": "C:\\Users\\deyan\\Projects\\Misul Terminal\\research\\sources\\oh-my-pi\\packages\\agent\\src\\compaction\\compaction.ts:175-246,887-897",
+        "detail": "The shouldCompact() function (line 225-229) takes contextTokens from calculateContextTokens(usage) — which reads usage.totalTokens || usage.input+output+cacheRead+cacheWrite from the last AssistantMessage. So the TRIGGER is provider-returned usage, not the local estimator. The local estimateTokens() is used only in prepareCompaction() (line 887-897) to calibrate keepRecentTokens (the cut-point budget) via a scaling ratio: ratio = promptTokens(from provider) / estimatedTokens(local). If ratio > 1 (the estimator undercounts), keepRecentTokens is scaled down accordingly. This is a self-calibration loop, not the primary gate. Bottom line: provider usage gates the trigger; local estimator only sizes the cut-point window and prune candidates.",
+        "verdict": "pure-TS-portable"
+      },
+      {
+        "item": "char/4 error magnitude vs SP-1 '5pp = noise' threshold",
+        "path": "C:\\Users\\deyan\\Projects\\Misul Terminal\\research\\sources\\pi-mono\\packages\\coding-agent\\src\\core\\compaction\\compaction.ts:247",
+        "detail": "Quantified error analysis: chars/4 is documented (pi-mono JSDoc) as 'conservative (overestimates tokens)' but empirical evidence contradicts this framing for code+Unicode. For pure ASCII English prose, chars/4 ≈ BPE token count within ±5-10%. For code (identifiers, JSON, tool args), the BPE vocabulary tokenizes subwords aggressively — many 4-char sequences are a single token — so chars/4 overestimates by 15-30%. For Unicode/emoji, chars/4 severely underestimates because a single Unicode character is multiple UTF-8 bytes but often still counts as 1-2 tokens. In practice on mixed code+tool-output sessions: error range is ±20-30%. The critical SP-1 scenario: if the compaction trigger is set at (contextWindow - reserveTokens) and the local estimator shows '90%' fill but true fill is anywhere from 70-110% due to ±25% error, a 5pp threshold band (e.g., triggering at 85% vs 90%) would be entirely swamped by estimator noise. A 5pp = 5000 tokens on a 100K window; chars/4 error on a 80K-token context is ±16,000-24,000 tokens. Therefore 5pp is not a noise floor — it is completely dominated by the estimator error. This has no impact on cost math (which uses provider usage) but makes pre-call trigger decisions unreliable at tight thresholds. oh-my-pi's self-calibration ratio-adjustment partially compensates but depends on having a prior provider count. On the first turn there is no prior, so keepRecentTokens is unadjusted.",
+        "verdict": "needs-port(effort:low)"
+      },
+      {
+        "item": "Available pure-TS local tokenizers for pre-call estimation — gpt-tokenizer",
+        "path": "https://github.com/niieani/gpt-tokenizer",
+        "detail": "gpt-tokenizer v3.4.0 (released Nov 7, 2025) is a pure TypeScript BPE tokenizer with zero WASM or native bindings. Supports cl100k_base (GPT-4/3.5), o200k_base (GPT-4o, o1, GPT-5), o200k_harmony, r50k_base, p50k_base. API: encode(), decode(), countTokens(), isWithinTokenLimit(), encodeChat(). Self-described as faster than WASM implementations. Tree-shakeable per-model imports. Works in Node.js, Deno, Bun, browser. This is the drop-in pure-TS replacement for oh-my-pi's Rust countTokens on OpenAI-family models. Accuracy: exact match to tiktoken BPE output for English/code text. Does NOT support Claude's tokenizer (no public spec from Anthropic for post-Claude 3 models).",
+        "verdict": "cherry-pick"
+      },
+      {
+        "item": "Available pure-TS local tokenizers — js-tiktoken",
+        "path": "https://www.npmjs.com/package/js-tiktoken",
+        "detail": "js-tiktoken v1.0.21 (Aug 9, 2025) is a pure JS port of OpenAI's tiktoken without WASM. Supports cl100k_base and o200k_base. Slower than gpt-tokenizer per community benchmarks. Same fundamental accuracy as tiktoken for OpenAI models. Not a meaningful choice over gpt-tokenizer for Misul given gpt-tokenizer's speed advantage and active maintenance.",
+        "verdict": "cherry-pick"
+      },
+      {
+        "item": "@anthropic-ai/tokenizer — Claude-specific local tokenizer",
+        "path": "https://github.com/anthropics/anthropic-tokenizer-typescript",
+        "detail": "The official @anthropic-ai/tokenizer npm package (last substantive update 2023, 8 commits total) carries an explicit maintainer warning: 'As of the Claude 3 models, this algorithm is no longer accurate, but can be used as a very rough approximation. We suggest that you rely on usage in the response body wherever possible.' It uses a legacy vocabulary, not the current Claude 3/4 tokenizer. Anthropic has not published the Claude 3+ BPE vocabulary. The package is effectively deprecated for accuracy purposes. For Claude models, only the provider API returns authoritative token counts.",
+        "verdict": "needs-port(effort:none — abandon)"
+      },
+      {
+        "item": "Anthropic count_tokens API — pre-call estimation for Claude",
+        "path": "https://platform.claude.com/docs/en/build-with-claude/token-counting",
+        "detail": "Anthropic provides a dedicated /v1/messages/count_tokens endpoint. It accepts the same parameters as /v1/messages (model, system, messages, tools, thinking, images, PDFs). Returns {input_tokens: N}. Documented as an 'estimate' with a note that 'actual number of input tokens used may differ by a small amount' due to system-added optimization tokens (which are not billed). Free to use, subject to separate RPM limits (100-8000 RPM depending on tier). Does NOT perform inference. All active models supported including Fable 5 / Mythos 5 (which use a new tokenizer producing ~30% more tokens than pre-Opus-4.7 models for the same text). Critical: the same docs warn to count with 'model: claude-fable-5' when migrating — the tokenizer is model-specific, not provider-universal. This endpoint is the correct pre-call budget check for Anthropic Claude models in Misul.",
+        "verdict": "cherry-pick"
+      },
+      {
+        "item": "Gemini countTokens API — pre-call estimation for Gemini models",
+        "path": "https://ai.google.dev/gemini-api/docs/tokens",
+        "detail": "Google provides a countTokens REST endpoint (both AI Studio and Vertex AI). Free, quota: 3000 RPM. Accepts the same request body as generateContent. Returns total token count. Supported by Gemini 2.5 Flash/Pro and other current models. No local JS tokenizer exists for Gemini's SentencePiece vocabulary. For Gemini in Misul, countTokens is the only reliable pre-call estimator.",
+        "verdict": "cherry-pick"
+      },
+      {
+        "item": "oh-my-pi mnemopi token-counter.ts — additional char/4 occurrence",
+        "path": "C:\\Users\\deyan\\Projects\\Misul Terminal\\research\\sources\\oh-my-pi\\packages\\mnemopi\\src\\core\\token-counter.ts:17-19",
+        "detail": "The mnemopi sub-package has its own estimateTokens() using Math.floor(text.length/4) (not ceil). This is separate from the compaction system — used for memory/entity cost estimates in the mnemopi RAG layer, not for compaction triggers. Also found in coding-agent/src/commit/map-reduce/utils.ts:2 and coding-agent/src/memories/index.ts:178 (same char/4 pattern). These are internal utilities that do not affect the compaction trigger path.",
+        "verdict": "pure-TS-portable"
+      },
+      {
+        "item": "pi-mono Usage field: is totalTokens populated or computed?",
+        "path": "C:\\Users\\deyan\\Projects\\Misul Terminal\\research\\sources\\pi-mono\\packages\\ai\\src\\providers\\anthropic.ts:544-545,690-692",
+        "detail": "For the Anthropic provider in pi-mono, totalTokens is computed locally as input+output+cacheRead+cacheWrite (Anthropic does not send a total_tokens field in the SSE). This matches oh-my-pi's pattern. The OpenAI provider does receive total_tokens from the API and can populate it directly. The Usage.totalTokens field is therefore reliable as the compaction trigger input, being either provider-provided or locally summed from individually provider-returned components.",
+        "verdict": "pure-TS-portable"
+      }
+    ],
+    "decision": "Adopt a two-layer counting strategy: (1) Provider usage for cost truth and compaction trigger — use AssistantMessage.usage fields exactly as pi-mono defines them; these are populated post-hoc from provider SSE events and are authoritative for billing and for the shouldCompact() gate. No change needed; fork as-is from pi-mono. (2) For pre-call budgeting and cut-point sizing, drop oh-my-pi's Rust countTokens and replace with: gpt-tokenizer (pure TS, v3.4.0, zero native deps, exact BPE output for OpenAI/o200k_base models) for OpenAI-family providers; Anthropic's /v1/messages/count_tokens API (free, accurate, model-specific) for Claude providers; Gemini's countTokens API for Gemini providers. For providers where no pre-call API exists and only a local estimate is needed, use gpt-tokenizer with o200k_base as a cross-model approximation (acknowledging ~5-15% error on English/code, higher on Unicode). Do NOT adopt @anthropic-ai/tokenizer — it is deprecated and inaccurate for Claude 3+. The char/4 heuristic from pi-mono is acceptable ONLY for the cut-point sizing ratio-calibration path (where it is self-corrected against provider usage anyway), NOT for threshold decisions at tight percentage bands. Any SP-1 percentage threshold below 15pp must be treated as noise given char/4's ±20-30% real-world error on code+tool sessions.",
+    "openRisks": [
+      "oh-my-pi identified a specific accuracy problem (#2275): thinking signatures and redacted thinking blobs inflate provider-billed tokens significantly beyond visible text. pi-mono's char/4 estimator does NOT account for thinkingSignature bytes. On thinking-heavy sessions, this causes the local estimator to read ~50% of actual provider usage, meaning keepRecentTokens cut-point sizing will be badly mis-calibrated. Misul must either port oh-my-pi's signature-counting logic (pure TS — no Rust needed, just concatenate the signature string into fragments before counting) or accept that cut-point sizing degrades on thinking turns.",
+      "Anthropic introduced a new tokenizer with Claude Opus 4.7+ (Fable 5, Mythos 5) producing ~30% more tokens for the same text. The official count_tokens docs call this out explicitly. If Misul targets multiple Claude versions, the pre-call estimator must use the correct model parameter — a gpt-tokenizer estimate calibrated on older Claude will be up to 30% too low for Fable 5, pushing near-full contexts over the limit unexpectedly.",
+      "The Anthropic count_tokens API documents its result as an 'estimate' (may differ by a small amount due to system-added optimization tokens not billed to the user). For compaction triggers this is fine; for exact rate-limit pre-checking it introduces a small unknown margin.",
+      "gpt-tokenizer uses OpenAI's BPE vocabulary (o200k_base or cl100k_base). Claude's tokenizer post-Claude 3 is not public. Using gpt-tokenizer for Claude pre-call estimation adds an unknown model-specific error on top of the expected ±5-15% from vocabulary mismatch. Anthropic's own count_tokens API is the only zero-error option for Claude pre-call budgeting.",
+      "Gemini's countTokens endpoint counts multimodal tokens (images, audio) with provider-specific rules not replicated by any JS library. For pure text prompts gpt-tokenizer is a passable approximation; for multimodal Gemini requests, the API endpoint is the only reliable path.",
+      "The char/4 heuristic in pi-mono coding-agent/compaction is labeled 'conservative (overestimates tokens)' in the JSDoc, but this is incorrect for code-heavy content where BPE tokenizes subwords efficiently. The JSDoc claim should be treated as aspirational, not empirical — real error direction is input-dependent."
+    ]
+  }
+]

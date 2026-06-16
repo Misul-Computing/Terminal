@@ -1,0 +1,538 @@
+[
+  {
+    "topic": "oh-my-pi tool inventory vs pi-mono base — gap-closure for Misul Terminal fork",
+    "findings": [
+      {
+        "item": "search (ripgrep text search)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/search.ts",
+        "detail": "Full regex search across files, directories, and globs using ripgrep via the @oh-my-pi/pi-natives Rust NAPI module. Supports pagination (skip), case-insensitive flag, gitignore control, per-file match caps, context lines before/after, archive member search (materializes to temp file), internal URL search, and line-range selectors. 1598 lines. The pi-natives `grep()` function is a Rust-compiled NAPI binding.",
+        "depsOrPortability": "Rust (pi-natives grep binding for ripgrep). The pure-JS fallback path (`searchVirtualResources`) in the same file is a self-contained regex engine over in-memory content and is pure-TS/Node. The filesystem grep path is hard-tied to the pi-natives native module.",
+        "recommendation": "reuse-from-base — pi-mono (the fork base) does NOT ship a search tool in its coding-agent package at all; the agent package only provides the harness. oh-my-pi's search.ts is the primary code-search capability. The native ripgrep binding cannot be ported to pure-TS; the tool itself must be rebuilt calling a system `rg` binary or a JS ripgrep wrapper. However, the virtual-resource search logic (pure-TS JS regex, ~500 lines) is portable as-is."
+      },
+      {
+        "item": "find (glob file finder)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/find.ts",
+        "detail": "Glob-based file and directory finder. Uses @oh-my-pi/pi-natives `glob()` (Rust/ignore crate via NAPI) for fast, gitignore-aware, mtime-sorted results with streaming progress updates. Supports multiple paths, timeout, hidden files, and pluggable FindOperations interface for remote delegation (SSH). 636 lines.",
+        "depsOrPortability": "Rust (pi-natives glob binding wrapping the `ignore` crate). The FindOperations interface is pure-TS and enables a drop-in replacement backend. Portability to Node: use `fast-glob` or `glob` npm package as the backend through FindOperations.",
+        "recommendation": "port-as-TS — the tool architecture (FindOperations pluggable interface) was explicitly designed for this. Replace the native glob with a pure-TS backend (`fast-glob`). The tool's schema, result formatting, TUI renderer, and pagination logic are all pure-TS and copy directly."
+      },
+      {
+        "item": "ast-grep (AST structural search)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/ast-grep.ts",
+        "detail": "Structural AST pattern search backed by `ast-grep-core` (Rust) with 40+ tree-sitter language grammars, all compiled into the pi-natives NAPI module. Searches files and directories by AST pattern, returns matches with metavariable bindings. 483 lines.",
+        "depsOrPortability": "Hard Rust dependency (ast-grep-core + every tree-sitter grammar, all in pi-natives). No TS fallback exists.",
+        "recommendation": "skip — the capability is deeply tied to Rust compiled grammars. A minimal Pi fork has no equivalent and forking this would require shipping the full pi-natives binary. The semantic value for a minimal harness is moderate; ripgrep regex search covers most practical use cases without AST awareness."
+      },
+      {
+        "item": "ast-edit (AST structural rewrite)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/ast-edit.ts",
+        "detail": "Structural AST rewrite using ast-grep patterns. Uses pi-natives `astEdit()` NAPI binding. Takes an ops array of {pat, out} rewrite rules and applies them across files/directories. Integrates with the file-snapshot store for conflict detection.",
+        "depsOrPortability": "Hard Rust dependency (same pi-natives binary as ast-grep). No TS fallback.",
+        "recommendation": "skip — same rationale as ast-grep. Building on top of the base `write` tool suffices for the minimal fork."
+      },
+      {
+        "item": "fetch (URL fetcher / web reader)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/fetch.ts",
+        "detail": "1938-line multi-backend web reader. Pipeline: special site handlers → HTTP fetch → binary dispatch (PDF/DOCX via markit, SQLite via bun:sqlite, archive via Bun.Archive, images with resize) → HTML-to-markdown via a ranked fallback chain: native (pi-natives htmlToMarkdown Rust), trafilatura (subprocess), lynx (subprocess), Parallel API, Jina API. Also handles llms.txt/llms.md discovery, content negotiation, RSS/Atom parsing, line-range URL selectors, and URL-suffix markdown probing. Bun.Archive, bun:sqlite, and Bun.write are used throughout. The pi-natives `htmlToMarkdown` is the highest-priority HTML converter. The 'read' tool delegates URL handling entirely to this module via `executeReadUrl`.",
+        "depsOrPortability": "Mixed: pi-natives (htmlToMarkdown — Rust NAPI, highest-priority backend), bun:sqlite (SQLite rendering of fetched .db files), Bun.Archive (archive listing), Bun.write (temp files). Pure-TS/Node portions: all HTTP logic, feed parsing (linkedom), JSON/text handling, fallback ordering, llms.txt discovery, markit subprocess, trafilatura/lynx subprocesses, Parallel/Jina API calls. The native htmlToMarkdown can fall through to trafilatura or lynx without code changes.",
+        "recommendation": "port-as-TS — the bulk of fetch.ts is pure-TS HTTP orchestration that requires no native deps. Drop the pi-natives htmlToMarkdown import and rely on trafilatura/lynx/Jina fallbacks, which already exist in the same file. Replace bun:sqlite with the `better-sqlite3` Node package. Replace Bun.Archive with a pure-JS zip/tar library (e.g. `fflate` + `tar`). This makes a prior recommendation to add an 'MCP browser fetch' redundant — the capability is already here."
+      },
+      {
+        "item": "browser (Puppeteer/CDP headless browser)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/browser.ts",
+        "detail": "Full stateful multi-tab browser control with open/close/run actions. Supports headless Puppeteer, spawned Electron apps (CDP attach), and a cmux multiplexer mode. The 'run' action executes JS in the page context with helper APIs (tab.observe, tab.screenshot, tab.fill, tab.click). Includes 14 stealth injection scripts. Discovery mode only (not always-on). 411 lines for the main class; the registry, tab-supervisor, launch, and workers are in the browser/ subdirectory.",
+        "depsOrPortability": "Pure-TS at the tool layer. Dependencies are puppeteer/puppeteer-core (npm) for headless mode and Bun.write for artifact saving. The cmux mode requires oh-my-pi's terminal multiplexer infrastructure. A fork targeting a minimal Node environment needs puppeteer-core and to strip the cmux paths.",
+        "recommendation": "port-as-TS — the tool itself is pure-TS. Replace Bun.write with fs.writeFile. Strip cmux references. A prior recommendation to 'add an external MCP for browser' is redundant; this capability is already built-in. The browser subtree (browser/, puppeteer stealth scripts) ports cleanly."
+      },
+      {
+        "item": "read (file / URL reader)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/read.ts",
+        "detail": "Unified file and URL reader. For local files: reads text, binary, images, SQLite schemas, archives, Jupyter notebooks, and directories (tree view). For URLs: delegates to fetch.ts `executeReadUrl`. Uses pi-natives `summarizeCode` for code summary mode, `glob` for directory listing, bun:sqlite for SQLite, and Bun.file for reads. Integrates deeply with the file-snapshot store for hashline editing support.",
+        "depsOrPortability": "Mixed: pi-natives (summarizeCode, glob — Rust), bun:sqlite, Bun.file/Bun.write. The core read-text-file, URL dispatch, and formatting logic are pure-TS.",
+        "recommendation": "port-as-TS — core functionality (text files, URLs via fetch.ts) ports easily. Substitute: fs.readFile for Bun.file, better-sqlite3 for bun:sqlite, drop summarizeCode or replace with a TS approximation. The hashline snapshot system is Bun-independent; it only needs fs."
+      },
+      {
+        "item": "write (file writer)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/write.ts",
+        "detail": "File writer with conflict detection, hashline-anchored patching, SQLite row upsert/delete, LSP diagnostics integration, and auto-generated file guard. Uses Bun.write for file output and bun:sqlite for SQLite writes. The conflict/hashline patching logic is pure-TS.",
+        "depsOrPortability": "Bun.write and bun:sqlite are the only Bun-specific calls. Everything else is Node fs or pure-TS.",
+        "recommendation": "port-as-TS — replace Bun.write with fs.writeFile and bun:sqlite with better-sqlite3. Strip the LSP writethrough (or keep the noop path). This is core functionality the fork cannot omit."
+      },
+      {
+        "item": "bash (shell executor)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/bash.ts",
+        "detail": "Shell command execution with PTY support (via pi-natives), interactive mode, streaming output, inline image protocol (sixels), bash command fixups, and critical-pattern safety guards. Uses pi-natives for PTY spawning (Rust) and for sixel detection.",
+        "depsOrPortability": "pi-natives PTY (Rust) for interactive mode, Bun APIs for process spawning in non-interactive mode. The pi-mono base agent harness has its own ExecutionEnv.exec() abstraction that a fork would use instead.",
+        "recommendation": "reuse-from-base — pi-mono's harness already provides shell execution via ExecutionEnv. The oh-my-pi bash.ts is the full-featured implementation behind the pi UX, but it cannot be cleanly ported without the pi-native PTY. For Misul Terminal, implement bash on top of pi-mono's ExecutionEnv.exec() or Node child_process directly."
+      },
+      {
+        "item": "gh (GitHub tool)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/gh.ts",
+        "detail": "GitHub CLI wrapper and GitHub REST/GraphQL API client. Supports issues, PRs, repos, comments, review, and code search. Uses bun:sqlite for a response cache (github-cache.ts), Bun.write for temp files and artifacts. The API logic itself is pure-TS fetch calls.",
+        "depsOrPortability": "bun:sqlite (github-cache.ts), Bun.write, Bun.hash. The core GitHub API logic is pure-TS.",
+        "recommendation": "port-as-TS — replace bun:sqlite with better-sqlite3 and Bun.write with fs.writeFile. The tool's ~3300 lines are mostly query formatting and response rendering, all pure-TS. This is a high-value tool to include."
+      },
+      {
+        "item": "todo (task tracker)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/todo.ts",
+        "detail": "In-session phased task list (init/start/done/rm/drop/append/view). Stores state in session entries (pure in-memory). No native deps, no Bun APIs.",
+        "depsOrPortability": "Pure-TS. Zero native or Bun dependencies.",
+        "recommendation": "port-as-TS — trivial port, high value for agent workflows. Copy as-is and strip oh-my-pi-specific session entry references, replacing with whatever session store the fork uses."
+      },
+      {
+        "item": "eval (Python/JS kernel REPL)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/eval.ts",
+        "detail": "Multi-cell REPL supporting Python (via Jupyter/IPython kernel subprocess) and JS (persistent V8 context). Python requires a local Python install with ipykernel. JS eval is implemented in pure-TS using a sandboxed VM. Significant infrastructure: eval/, eval/py/ (kernel management), eval/js/ (sandbox).",
+        "depsOrPortability": "The JS eval backend uses Node's `vm` module — pure-TS/Node. The Python backend manages an ipykernel subprocess — pure-TS/Node. No Bun or Rust deps in the tool layer itself; some Bun.write usage in output artifacts.",
+        "recommendation": "port-as-TS — replace Bun.write with fs.writeFile. Both eval backends are Node-compatible. This is a significant effort (eval/ subtree is large) but is a quality multiplier."
+      },
+      {
+        "item": "ssh (remote command execution)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/ssh.ts",
+        "detail": "SSH command execution via the ssh/ subsystem (connection manager, executor). Pure-TS wrapping native `ssh` binary via child_process. Enables remote file access and command execution; also used to back find/read/search tools via custom operations when an SSH capability is available.",
+        "depsOrPortability": "Pure-TS + system ssh binary. No Bun or native deps in the tool layer.",
+        "recommendation": "build-new — the ssh/ infrastructure is tightly coupled to oh-my-pi's capability discovery system. For the minimal Pi fork, implement SSH on top of the `ssh2` npm package if needed, or defer."
+      },
+      {
+        "item": "search_tool_bm25 (tool discovery via BM25 search)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/search-tool-bm25.ts",
+        "detail": "BM25-scored search over the catalog of discoverable tools (built-ins + MCP). On match, activates the matched tools into the session. Backed by tool-discovery/tool-index.ts which holds the BM25 index logic (pure-TS). This is oh-my-pi's answer to tool-discovery in large MCP catalogs.",
+        "depsOrPortability": "Pure-TS. The BM25 index is pure-TS in tool-discovery/tool-index.ts. No native or Bun deps.",
+        "recommendation": "port-as-TS — the BM25 tool-discovery system is pure-TS and directly solves the 'MCP catalog too large' problem. Copy search-tool-bm25.ts and tool-discovery/ as a unit. This makes any prior recommendation to add an external 'MCP tool discovery' MCP redundant."
+      },
+      {
+        "item": "memory-retain / memory-recall / memory-reflect / memory-edit (long-term memory)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/memory-retain.ts",
+        "detail": "Four-tool memory subsystem: retain (store facts), recall (retrieve), reflect (generate new memories from session), edit (update stored memories). Backed by either the 'hindsight' or 'mnemopi' backends. Both backends use the session/storage layer, not native deps.",
+        "depsOrPortability": "Pure-TS. No native or Bun deps in the tool files. The backends (hindsight/, mnemopi/) are pure-TS.",
+        "recommendation": "port-as-TS — the memory tooling is pure-TS and provides meaningful quality-per-dollar value through persistent context. Extract retain/recall/reflect/edit plus whichever backend (hindsight is simpler) as a vendored unit."
+      },
+      {
+        "item": "checkpoint / rewind (session checkpointing)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/checkpoint.ts",
+        "detail": "Git-based session checkpoint and rewind. Creates git commits as named checkpoints; rewind restores working tree to a checkpoint. Pure shell/git operations via bash.",
+        "depsOrPortability": "Pure-TS wrapping git CLI via bash/child_process. No native or Bun deps.",
+        "recommendation": "port-as-TS — straightforward port. High value for agentic workflows to recover from bad edits."
+      },
+      {
+        "item": "image-gen (AI image generation)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/image-gen.ts",
+        "detail": "Image generation via multiple providers: Gemini Imagen, xAI Grok, OpenAI DALL-E, and Stability AI. Uses Bun.file/Bun.write for saving generated images. Pure-TS HTTP calls otherwise.",
+        "depsOrPortability": "Bun.file, Bun.write. Otherwise pure-TS API calls.",
+        "recommendation": "skip — not relevant to a coding-agent harness focused on quality-per-dollar for code tasks."
+      },
+      {
+        "item": "tts (text-to-speech)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/tts.ts",
+        "detail": "Text-to-speech output via xAI or local Kokoro TTS model. Writes WAV output to disk.",
+        "depsOrPortability": "Pure-TS HTTP calls + wav encoder. No native deps.",
+        "recommendation": "skip — out of scope for a coding harness."
+      },
+      {
+        "item": "irc (IRC client)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/irc.ts",
+        "detail": "IRC chat client tool. Pure-TS network code.",
+        "depsOrPortability": "Pure-TS. No native or Bun deps.",
+        "recommendation": "skip — out of scope."
+      },
+      {
+        "item": "inspect-image (image inspection / vision)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/inspect-image.ts",
+        "detail": "Reads an image file and sends it to the model as a vision input. Uses pi-natives for image resizing/format conversion (Rust). Pure-TS otherwise.",
+        "depsOrPortability": "pi-natives image processing (Rust). Otherwise pure-TS.",
+        "recommendation": "build-new — if vision input is needed, implement via a pure-JS image library (sharp) or simply pass raw base64. The pi-natives resize logic improves token efficiency but is not essential."
+      },
+      {
+        "item": "render-mermaid (Mermaid diagram rendering)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/render-mermaid.ts",
+        "detail": "Renders Mermaid diagram syntax to PNG using a headless browser (puppeteer). Uses the browser subsystem.",
+        "depsOrPortability": "Depends on the browser tool's puppeteer infrastructure.",
+        "recommendation": "skip — niche utility; out of scope for a minimal coding harness."
+      },
+      {
+        "item": "job / task (sub-agent / background job)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/job.ts",
+        "detail": "Background job manager and sub-agent spawner (task tool). Enables spawning concurrent agent instances for parallelism. Deeply tied to oh-my-pi's internal agent session management and process model.",
+        "depsOrPortability": "Tightly coupled to oh-my-pi's AgentRegistry, task runner, and session infrastructure. Not portable without significant refactoring.",
+        "recommendation": "build-new — sub-agent spawning is valuable but needs to be re-implemented on top of pi-mono's AgentHarness. Don't vendor oh-my-pi's job.ts; the harness layer is incompatible."
+      },
+      {
+        "item": "snapcompact (bitmap-frame context compaction)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/snapcompact/src/snapcompact.ts",
+        "detail": "Replaces LLM-summarized compaction with PNG bitmap frames of pixel-font text that vision models read back. Rasterization is done in the Rust pi-natives crate (`renderSnapcompactPng`). The TS layer serializes conversation history, dispatches to the native renderer, and reattaches frames to the compaction summary. Provider-aware frame shapes and budgets are defined in pure-TS. The research/ directory (Python) documents the empirical benchmarks that selected the shape parameters. Only the snapcompact.ts file is production code.",
+        "depsOrPortability": "Hard Rust dependency: `renderSnapcompactPng` from pi-natives is the entire rasterization engine. The TS orchestration layer (format selection, provider dispatch, summary construction) is pure-TS and could be extracted, but without the native renderer it produces no frames.",
+        "recommendation": "skip — the native rasterizer is non-negotiable; without it the package is inert. The compaction strategy itself (vision-based archiving) is high-value but cannot be vendored as pure-TS. If the fork later adds the pi-natives binary as a dep, snapcompact becomes trivially available via npm. For now, use pi-mono's LLM summarization compaction (already in the base harness)."
+      },
+      {
+        "item": "archive-reader (ZIP/tar reader)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/archive-reader.ts",
+        "detail": "Reads ZIP and TAR archives for listing and member extraction. Uses Bun.Archive (Bun's built-in archive API) for TAR/ZIP. Entry point for archive search path resolution in search.ts and fetch.ts.",
+        "depsOrPortability": "Bun.Archive — a Bun-specific built-in with no Node equivalent. ZIP reading can be replaced with `fflate` (pure-TS), TAR with `tar` npm package.",
+        "recommendation": "port-as-TS — replace Bun.Archive with fflate (ZIP) + tar npm (TAR). The entry-listing and member-extraction logic is straightforward."
+      },
+      {
+        "item": "sqlite-reader (SQLite schema inspector)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/sqlite-reader.ts",
+        "detail": "Inspects SQLite files: lists tables and row counts. Used by both fetch.ts (URL-fetched .db files) and read.ts (local .db files). Uses bun:sqlite.",
+        "depsOrPortability": "bun:sqlite only. Otherwise pure-TS.",
+        "recommendation": "port-as-TS — replace bun:sqlite with better-sqlite3. Trivial drop-in."
+      },
+      {
+        "item": "ask (ask user for input)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/ask.ts",
+        "detail": "Pauses the agent and asks the user a question, resuming with the user's response. Relies on oh-my-pi's client bridge (TUI message queue). Not portable without a UI layer.",
+        "depsOrPortability": "Tightly coupled to oh-my-pi's TUI client-bridge infrastructure.",
+        "recommendation": "build-new — implement a minimal version that reads from stdin or uses the pi-mono harness's message queue."
+      },
+      {
+        "item": "pi-mono agent harness (base fork target)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/pi-mono/packages/agent/src",
+        "detail": "The pi-mono agent package exports: agent loop, AgentHarness with full session management (JSONL/in-memory repos), compaction (LLM summarization), branch summarization, skills loading, system prompt construction, prompt templates, proxy utilities, and a FileSystem/Shell/ExecutionEnv abstraction. Tools are NOT built-in — the harness accepts a `tools` array from the application. The pi-mono coding-agent package is a pre-built binary; its source is not in this repo.",
+        "depsOrPortability": "Pure-TS/Node. The agent package has zero native deps. The harness runs on any Node-compatible runtime.",
+        "recommendation": "reuse-from-base — this is the confirmed fork base. It provides the agent loop, session persistence, compaction, skills, and prompt templates. All oh-my-pi tools that get ported must be registered in the harness's tools array."
+      }
+    ],
+    "designRecommendation": "The prior synthesis recommendation to 'fork external MCPs for code-search and browser/fetch' is contradicted by direct inspection of the source. oh-my-pi already ships both capabilities as built-in tools: fetch.ts is a 1938-line multi-backend web reader (including HTML-to-markdown, PDF via markit, RSS parsing, llms.txt discovery) and browser.ts is a full stateful Puppeteer controller. Both are portable to Node with Bun API substitutions only. No external MCP is needed for either.\n\nThe portability summary by capability tier:\n\nTIER 1 — port directly as pure-TS (high value, low effort): fetch.ts (web reader), search_tool_bm25.ts + tool-discovery/ (BM25 MCP catalog search), todo.ts (task tracker), checkpoint.ts (git checkpointing), memory-retain/recall/reflect/edit (long-term memory), sqlite-reader.ts (swap bun:sqlite for better-sqlite3), archive-reader.ts (swap Bun.Archive for fflate + tar).\n\nTIER 2 — port with moderate effort (Bun API substitution): browser.ts + browser/ subtree (replace Bun.write with fs.writeFile, strip cmux paths, keep puppeteer-core), write.ts and read.ts (replace Bun.file/Bun.write with fs, bun:sqlite with better-sqlite3), gh.ts (same substitutions), eval.ts + eval/ subtree (replace Bun.write with fs.writeFile), find.ts (replace pi-natives glob with fast-glob via the existing FindOperations interface).\n\nTIER 3 — rebuild on pi-mono primitives, do not port oh-my-pi source: bash.ts (use pi-mono's ExecutionEnv.exec()), job.ts/task (spawn sub-agents via pi-mono AgentHarness), ask.ts (stdin or harness message queue), ssh.ts (use ssh2 npm package if needed).\n\nSKIP entirely (Rust non-portable or out of scope): ast-grep.ts, ast-edit.ts (Rust AST — no TS equivalent), snapcompact (Rust rasterizer non-negotiable), image-gen.ts, tts.ts, irc.ts, render-mermaid.ts.\n\nFor code-search specifically: search.ts uses the Rust ripgrep binding as its primary path but also contains a complete pure-TS virtual-resource regex engine. The practical approach is to call the system `rg` binary via child_process (same as trafilatura/lynx in fetch.ts), which avoids the native binding while preserving the tool's interface and pagination logic. The search.ts tool schema, result formatting, and pagination are all pure-TS and reusable verbatim.",
+    "correctedFacts": [
+      {
+        "priorClaim": "A prior synthesis recommended adding an external MCP for browser/fetch capabilities, implying these were absent from the base.",
+        "correction": "oh-my-pi ships both fetch.ts (1938-line URL/HTML/PDF/SQLite/archive reader with native, trafilatura, lynx, Parallel, and Jina backends) and browser.ts (full Puppeteer multi-tab controller with open/run/close actions and stealth injection). Both are built-in tools already in the oh-my-pi coding-agent. Neither requires an external MCP. The fetch capability is even partially redundant with a Jina/Parallel MCP because it already calls those APIs as fallback backends.",
+        "source": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/fetch.ts:1, browser.ts:1"
+      },
+      {
+        "priorClaim": "A prior synthesis recommended forking an external MCP for code-search, implying the base lacked this capability.",
+        "correction": "oh-my-pi's search.ts implements full ripgrep-backed text search, ast-grep.ts implements AST structural search, and search_tool_bm25.ts implements BM25 tool discovery. All three are built-in. The ripgrep binding is Rust-only, but the practical port is to call the system `rg` binary via child_process, which is already the pattern used for trafilatura and lynx in fetch.ts. No external MCP is required.",
+        "source": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/search.ts:1-99, fetch.ts:661-695"
+      },
+      {
+        "priorClaim": "The pi-mono coding-agent package contains built-in tools that can be compared directly against oh-my-pi tools.",
+        "correction": "pi-mono's coding-agent package (packages/coding-agent) contains only docs, examples, and build entry points — it ships as a pre-built npm binary with no source tools in the repo. The actual pi-mono tool inventory lives in the agent harness (packages/agent), which provides ZERO built-in agent tools. It only provides the harness loop, session persistence, compaction, skills, and an ExecutionEnv/FileSystem abstraction. All tools must be supplied by the application via the `tools` array in AgentHarnessOptions.",
+        "source": "C:/Users/deyan/Projects/Misul Terminal/research/sources/pi-mono/packages/agent/src/harness/types.ts:800-805, packages/coding-agent/README.md:20-24"
+      },
+      {
+        "priorClaim": "snapcompact can be vendored as pure-TS to improve compaction quality.",
+        "correction": "snapcompact's rasterization is entirely in Rust (`renderSnapcompactPng` from pi-natives, documented at snapcompact.ts:51). The TS layer is only orchestration — it calls the native function and reattaches the resulting PNG frames. Without the pi-natives binary, snapcompact produces nothing. It cannot be vendored as pure-TS. The compaction value is real but requires shipping the pi-natives binary as a dep.",
+        "source": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/snapcompact/src/snapcompact.ts:44-51"
+      }
+    ]
+  },
+  {
+    "topic": "Skills loading/execution and memory toolchain: pi-mono vs oh-my-pi",
+    "findings": [
+      {
+        "item": "pi-mono skill discovery (loadSkillsFromDir / loadSkills)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/pi-mono/packages/coding-agent/src/core/skills.ts",
+        "detail": "Skills are Markdown files discovered at startup. Discovery rules: if a directory contains SKILL.md it is treated as a skill root (no further recursion); otherwise direct .md files at the scan root are loaded. Two default scan roots are checked: agentDir/skills (user scope) and cwd/.pi/skills (project scope). Additional explicit skill paths can be provided via CLI. Skills must have a YAML frontmatter block with a non-empty `description` field; `name` falls back to the parent directory name. A `disable-model-invocation: true` frontmatter key hides the skill from the system-prompt listing while still allowing explicit /skill:name invocation. Name collision is resolved first-writer-wins with the lower-priority entry emitting a ResourceDiagnostic of type 'collision'. The loaded Skill[] is stored in DefaultResourceLoader and passed to buildSystemPrompt via agent-session.ts:918. No Bun, no SQLite, no external registry — pure Node fs reads.",
+        "depsOrPortability": "pure-TS (node:fs, node:path, ignore npm package for .gitignore processing). The ignore package is a small pure-JS dep. easy",
+        "recommendation": "reuse-from-base — pi-mono already implements this fully; no porting needed. The base loadSkills implementation is clean and directly maps to our fork's needs."
+      },
+      {
+        "item": "pi-mono skill injection into system prompt (formatSkillsForPrompt)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/pi-mono/packages/coding-agent/src/core/skills.ts:335",
+        "detail": "formatSkillsForPrompt emits an XML <available_skills> block. Each <skill> has <name>, <description>, and <location> (absolute path to SKILL.md). The agent is instructed to call the read tool on that path when the task matches the description. Skills with disableModelInvocation=true are excluded. This is injected into the system prompt by buildSystemPrompt (system-prompt.ts:164) only when the read tool is in the active tool set.",
+        "depsOrPortability": "pure-TS, zero deps. easy",
+        "recommendation": "reuse-from-base — already present in pi-mono; adopt unchanged."
+      },
+      {
+        "item": "pi-mono /skill:name slash command execution (_expandSkillCommand)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/pi-mono/packages/coding-agent/src/core/agent-session.ts:1175",
+        "detail": "When user input starts with /skill:, the session reads the skill file, strips frontmatter, and wraps the body in a <skill name='...' location='...'> XML block that instructs the agent references are relative to skill.baseDir. Arguments after the name are appended verbatim. This is applied at three call sites: when sending user messages (line 1028), during steer (line 1216), and a third path (line 1236). There is NO skill:// URL expansion in bash commands in pi-mono — that feature exists only in oh-my-pi.",
+        "depsOrPortability": "pure-TS. easy",
+        "recommendation": "reuse-from-base — already present. No porting needed."
+      },
+      {
+        "item": "pi-mono extension loader (jiti-based TypeScript loader)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/pi-mono/packages/coding-agent/src/core/extensions/loader.ts",
+        "detail": "Extensions are TypeScript files loaded at runtime via jiti (createJiti). In the compiled Bun binary, virtualModules maps bundled packages so extensions can import @earendil-works/pi-coding-agent etc. without filesystem resolution. In Node/dev mode, aliases resolve to node_modules. An extension exports a default factory function (ExtensionFactory) that receives an ExtensionAPI; calling registerTool/registerCommand/registerShortcut/registerFlag on the API wires the extension. Discovery: cwd/.pi/extensions/ (project) then agentDir/extensions/ (global) then explicit CLI paths. Directories are scanned for index.ts/index.js or a package.json with a `pi.extensions` array. Extensions own no state across sessions; the runtime (ExtensionRuntime) is rebuilt per-session and provides action methods (sendMessage, setModel, etc.) that delegate to the live session after bindCore() is called.",
+        "depsOrPortability": "Bun binary for production (virtualModules path), but the jiti path works under Node. The Bun-specific path (isBunBinary check) is needed only for the distributed binary. The extension API surface itself is pure-TS. moderate — the fork runs under Bun, so this is directly reusable; the isBunBinary branching should be preserved.",
+        "recommendation": "reuse-from-base — already present and functional. Extensions are the portability mechanism for oh-my-pi tools into our fork."
+      },
+      {
+        "item": "pi-mono ResourceLoader (DefaultResourceLoader)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/pi-mono/packages/coding-agent/src/core/resource-loader.ts",
+        "detail": "Central coordinator that owns skills, extensions, prompt templates, themes, AGENTS.md context files, and system prompt overrides. reload() is the main lifecycle method: it calls packageManager.resolve() to get enabled resource paths (pulled from settings + installed packages), then calls loadSkills() with those paths. An extensionsOverride/skillsOverride callback pattern allows programmatic mutation at startup. extendResources() allows post-init injection (used by extensions that register skill paths dynamically). Skills, extensions, and prompt templates are all co-managed here and their source metadata (scope: user/project/temporary, origin: top-level/package) is tracked for UI display.",
+        "depsOrPortability": "pure-TS plus node:fs. easy",
+        "recommendation": "reuse-from-base — this is the integration layer our fork relies on."
+      },
+      {
+        "item": "oh-my-pi skill:// URL expansion in bash commands (expandSkillUrls / expandInternalUrls)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/bash-skill-urls.ts",
+        "detail": "Before executing a bash command, oh-my-pi scans it with SKILL_URL_PATTERN regex for skill:// tokens. Each token is resolved by matchSkillName (longest-prefix match with colon-delimited namespace/suffix handling) against the registered Skill[]. The skill URL can address the SKILL.md file itself (skill://name) or any file within the skill's baseDir (skill://name/relative/path). The resolved filesystem path is shell-escaped with single quotes and substituted back. Also supports a broader INTERNAL_URL_PATTERN_INCLUDING_NORMALIZED_LOCAL that handles agent://, artifact://, memory://, rule://, and local:// schemes through a pluggable InternalUrlResolver. Pi-mono has NO equivalent: its bash tool does not expand skill:// or any internal URL scheme.",
+        "depsOrPortability": "pure-TS (node:fs/promises, node:path). Zero external deps beyond what pi-mono already has. easy",
+        "recommendation": "port-as-TS — this is an additive pure-TS feature. The Skill[] type is already identical in shape to pi-mono's. Add expandInternalUrls() call in the fork's bash tool (core/tools/bash.ts) after input validation, passing resourceLoader.getSkills().skills. The internal router for non-skill schemes can start as a stub. The portability blocker is identifying WHERE in the bash tool call chain to inject it — the pi-mono bash.ts does not currently expose a pre-execute hook, so the injection requires a small surgical edit to that file."
+      },
+      {
+        "item": "oh-my-pi manage_skill tool (ManageSkillTool + writeManagedSkill)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/manage-skill.ts AND src/autolearn/managed-skills.ts",
+        "detail": "ManageSkillTool is gated behind autolearn.enabled setting (createIf returns null otherwise). It accepts create/update/delete operations on SKILL.md files confined to ~/.omp/agent/managed-skills/<name>/SKILL.md. writeManagedSkill enforces: sanitizeSkillName (kebab-case, 1-64 chars), sanitizeManagedDescription (strips < > backtick control chars), MAX_MANAGED_SKILL_BYTES=64000 cap, O_CREAT|O_EXCL for create (atomic, no TOCTOU), O_NOFOLLOW for update (rejects symlinks), hardlink count check (prevents writing to user-authored files via hard link). A per-name Promise chain serializes concurrent mutations. deleteManagedSkill similarly guards against symlinked directories. YAML.stringify from Bun is used for frontmatter serialization. Managed skills are loaded dead-last in skill discovery (authored skills always win by name). The autolearn/managed-skills.ts file uses `YAML from 'bun'` directly.",
+        "depsOrPortability": "The YAML.stringify call on line 76 of managed-skills.ts uses Bun's built-in YAML module. Everything else is node:fs. moderate — the Bun.YAML dependency must be replaced with a pure-TS YAML serializer (e.g., js-yaml or a 3-line manual YAML emitter for a simple 2-key object). The security hardening (O_NOFOLLOW, hardlink check, symlink root guard) is valuable and should be preserved verbatim. The YAML dependency is the only real portability blocker and is trivially replaceable.",
+        "recommendation": "port-as-TS — high value. The managed-skills isolation (separate directory, collision detection with authored skills, atomic writes) is the right design and the implementation is solid. Replace YAML.stringify with a minimal inline serializer or js-yaml. Wire it via the pi-mono extension system (register as an inline ExtensionFactory) to avoid touching pi-mono's core."
+      },
+      {
+        "item": "oh-my-pi learn tool (LearnTool)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/learn.ts",
+        "detail": "An orchestrating tool that combines memory retention and optional skill creation in one call. Gated behind autolearn.enabled AND a live memory backend (hindsight, mnemopi, or local). When backend=local it calls localBackend.save() which routes to saveLearnedLesson() in memories/index.ts, appending a neutralized+redacted lesson line to learned.md (newest-first, max 100 entries, 2000-char content cap). When backend=hindsight it calls state.enqueueRetain(). The skill creation branch calls writeManagedSkill identically to ManageSkillTool. The portability of the memory-persist path depends on which backend is in scope.",
+        "depsOrPortability": "moderate — the skill side is the same as manage_skill (same YAML dep). The memory side's portability depends on backend: local backend paths are pure-TS (Bun.file/Bun.write); hindsight/mnemopi are remote service clients not present in pi-mono.",
+        "recommendation": "port-as-TS — port the local-backend path only. The learn tool with memory.backend=local is a tractable pure-TS port: it appends lessons to a flat learned.md file with no service dependency. Defer hindsight/mnemopi backends entirely."
+      },
+      {
+        "item": "oh-my-pi AutoLearnController (session-lifetime nudge controller)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/autolearn/controller.ts",
+        "detail": "Subscribes to session events. After a turn that ran >= autolearn.minToolCalls tool calls (default 5), and not in plan mode or goal mode, it injects a hidden custom message (customType: 'autolearn-nudge') to prompt the agent to call manage_skill or learn. With autolearn.autoContinue=true it triggers a synthetic continuation turn instead of a passive reminder. Guards against re-triggering from its own continuation. Installed once per top-level session (taskDepth 0). Uses session.sendCustomMessage() which is a pi-agent-core API. No Bun deps.",
+        "depsOrPortability": "pure-TS. Depends on pi-agent-core's AgentSession.subscribe() and sendCustomMessage() event bus APIs. The pi-mono AgentSession (core/agent-session.ts) has an eventBus but the sendCustomMessage shape needs verification against pi-mono's API surface. moderate",
+        "recommendation": "port-as-TS — but only after manage_skill is wired. The controller is the trigger mechanism; it is low complexity but depends on pi-mono's session event shape being compatible. Check pi-mono's agent-session for equivalent subscribe/sendCustomMessage before porting."
+      },
+      {
+        "item": "oh-my-pi local memory backend (two-phase extract/consolidate pipeline)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/memories/index.ts AND src/memories/storage.ts",
+        "detail": "Phase 1 (extraction): runs at session startup as a background task (top-level sessions only, requires a persisted session file). Reads .jsonl session files from the session directory, upserts them into a SQLite job queue (bun:sqlite), claims unprocessed threads, and for each calls the LLM with stage_one_system.md + stage_one_input.md template (variables: thread_id, response_items_json). The model returns JSON {raw_memory, rollout_summary, rollout_slug}. Secrets are redacted before storage. Up to stage1Concurrency=8 threads run in parallel. Phase 2 (consolidation): after Phase 1, tries to claim a per-cwd global consolidation job (lease + heartbeat pattern prevents double-run across concurrent processes). Reads all stored stage1 outputs from SQLite, feeds them to a second LLM call (consolidation_system.md + consolidation.md; variables: raw_memories, rollout_summaries). Output JSON {memory_md, memory_summary, skills[]} is applied to disk: MEMORY.md, memory_summary.md, and per-skill SKILL.md files under a project-scoped directory. Injection: buildMemoryToolDeveloperInstructions reads memory_summary.md and learned.md and injects them as a 'Memory Guidance' block in the system prompt append section (capped at summaryInjectionTokenLimit=5000 tokens). Storage module uses bun:sqlite with WAL mode and a busy_timeout. Both LLM calls use pi-ai's completeSimple which works with any configured provider. Phase 1 uses 'default' model role; Phase 2 uses 'smol' role with fallback chain.",
+        "depsOrPortability": "hard — bun:sqlite is used directly in storage.ts (not via a wrapper). Bun.file(), Bun.write() are used throughout memories/index.ts for file I/O. YAML.stringify in managed-skills.ts. The Bun.Glob used in extensibility/skills.ts. The SQLite schema and job queue are non-trivial (WAL, leases, heartbeats, watermarks, multi-process coordination). Replacing bun:sqlite with better-sqlite3 or sqlite3 is mechanical but requires attention to the busy_timeout pragma and WAL config. Bun.file/Bun.write replacements are trivial (fs.readFile/fs.writeFile). The LLM call path (completeSimple from @oh-my-pi/pi-ai) must map to pi-mono's equivalent SDK call.",
+        "recommendation": "port-as-TS with caution — the algorithmic value (two-phase extract+consolidate, per-project isolation, SQLite job queue preventing double-run, secret redaction, injection budget) is high and directly serves quality-per-dollar. However, the Bun-specific surface is significant: bun:sqlite, Bun.file, Bun.write, Bun.YAML, Bun.Glob. Since the fork IS a Bun-based project (pi-mono compiles to a Bun binary), these are not blockers — they will work. The question is whether to treat the memories/ module as a vendored chunk or rewrite with Node APIs. Recommendation: vendor the memories/ and autolearn/ directories as-is (they will run under Bun), adapt only the import paths (@oh-my-pi/* -> fork equivalents) and the completeSimple call site to use pi-mono's SDK. This is a medium-sized porting job (~1-2 days) with clear boundaries."
+      },
+      {
+        "item": "oh-my-pi memory tools (retain, recall, reflect, memory_edit)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/memory-retain.ts, memory-recall.ts, memory-reflect.ts, memory-edit.ts",
+        "detail": "retain (MemoryRetainTool): queues items to the hindsight or mnemopi backend session state. No local-backend path — only hindsight and mnemopi. recall (MemoryRecallTool): calls state.client.recall() (hindsight REST API) or state.recallResultsScoped() (mnemopi). reflect (MemoryReflectTool): calls state.client.reflect() (hindsight) which synthesizes an answer server-side, or state.formatContextScoped() (mnemopi). memory_edit (MemoryEditTool): mnemopi-only, calls state.editScopedMemory(). All four are gated by memory.backend setting. Hindsight is a proprietary external API service; mnemopi is a separate oh-my-pi package with its own SQLite-backed semantic memory. Neither hindsight nor mnemopi exists in pi-mono.",
+        "depsOrPortability": "avoid — hindsight and mnemopi are oh-my-pi proprietary services. The retain/recall/reflect tools have no local-backend path for structured semantic search. Only the learn tool (which calls localBackend.save) has a viable local path. These four tools are not portable without porting hindsight or mnemopi.",
+        "recommendation": "skip — these tools require hindsight (external REST API) or mnemopi (oh-my-pi embedded semantic store). Neither is available in our fork. The local-backend alternative (learn tool + memory summary injection) covers the quality-per-dollar case without these dependencies."
+      },
+      {
+        "item": "oh-my-pi skill discovery (capability API + managed-skills integration)",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/extensibility/skills.ts",
+        "detail": "Oh-my-pi wraps skill loading in a capability API (loadCapability from src/discovery). It supports 9 source toggles (codex:user, claude:user, claude:project, native:user, native:project, agents:user, agents:project, custom, managed). Managed skills are loaded dead-last; authored skills of any enabled source win by name. Filtering supports glob patterns (ignoredSkills, includeSkills) via Bun.Glob. The buildSkillPromptMessage function (used for /skill:name) reads the file with Bun.file(). The setActiveSkills/getActiveSkills module-global snapshot is used by the skill:// URL protocol handler to avoid threading Skill[] through every call site. This is a significantly more complex discovery system than pi-mono's. The source-toggle system and capability API are oh-my-pi-specific.",
+        "depsOrPortability": "hard — Bun.Glob, Bun.file, and the capability API (src/discovery) are oh-my-pi-specific. The discovery/capability layer is an entire subsystem.",
+        "recommendation": "skip — pi-mono's own loadSkills is sufficient for the fork. The toggle system and capability API are oh-my-pi-internal. The only piece worth extracting is the managed-skills isolation pattern (already covered by the manage_skill port recommendation)."
+      }
+    ],
+    "designRecommendation": "The pi-mono base already provides a complete, clean skill subsystem (discovery, injection, /skill:name expansion) that requires zero changes for the fork. The three worthwhile additions from oh-my-pi are: (1) skill:// URL expansion in bash commands (bash-skill-urls.ts) — a pure-TS additive change, inject a call to expandInternalUrls() in the fork's bash tool pre-execute path; (2) the manage_skill tool + autolearn/managed-skills.ts infrastructure — port as pure-TS, replacing only YAML.stringify with js-yaml or a 3-line manual serializer; wire it as an inline ExtensionFactory so it does not touch pi-mono's core; (3) the local-backend two-phase extract/consolidate memory pipeline (memories/index.ts + memories/storage.ts) — vendor as-is since the fork runs under Bun, adapt only import paths and the completeSimple call site.\n\nDo NOT port: retain/recall/reflect/memory_edit tools (require hindsight/mnemopi services), the oh-my-pi capability/discovery subsystem (the pi-mono loadSkills is simpler and sufficient), or the AutoLearnController until manage_skill is confirmed working in the fork's session event model.\n\nPriority order for quality-per-dollar: (1) managed-skills + manage_skill tool — self-improving skill library with no service dependency; (2) local memory pipeline — cross-session knowledge accumulation, the single highest-leverage feature; (3) skill:// URL expansion — convenience, lowest priority.",
+    "correctedFacts": [
+      {
+        "priorClaim": "Oh-my-pi uses skill:// URLs and pi-mono also supports skill:// URL expansion in bash commands",
+        "correction": "Pi-mono has NO skill:// URL expansion in bash commands whatsoever. Grep of pi-mono/src for 'skill://' returns zero matches. The skill:// expansion in bash commands is exclusively an oh-my-pi feature implemented in bash-skill-urls.ts. Pi-mono only has /skill:name slash command expansion (_expandSkillCommand in agent-session.ts) which is a different mechanism that inlines the skill body into the user message.",
+        "source": "C:/Users/deyan/Projects/Misul Terminal/research/sources/pi-mono/packages/coding-agent/src/core/tools/bash.ts (grep: no matches for 'skill') AND C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/bash-skill-urls.ts:11 (SKILL_URL_PATTERN regex)"
+      },
+      {
+        "priorClaim": "The oh-my-pi manage_skill and learn tools are pure-TS with no Bun dependencies",
+        "correction": "managed-skills.ts line 14 imports `{ YAML } from 'bun'` and uses `YAML.stringify` at line 76 for frontmatter serialization. extensibility/skills.ts uses `new Bun.Glob()` at lines 179 and 185 for pattern matching and `Bun.file()` at line 391. These are direct Bun API dependencies, not pure-TS.",
+        "source": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/autolearn/managed-skills.ts:14,76 AND C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/extensibility/skills.ts:179,185,391"
+      },
+      {
+        "priorClaim": "The memory retain/recall/reflect tools work with the local file-based backend",
+        "correction": "retain, recall, and reflect tools are gated by `memory.backend !== 'hindsight' && memory.backend !== 'mnemopi'` returning null from createIf — meaning they only activate for hindsight or mnemopi backends. The local backend has no path through any of these three tools. Only the learn tool (LearnTool) has a `backend === 'local'` branch that calls localBackend.save().",
+        "source": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/memory-retain.ts:31-34 AND memory-recall.ts:26-29 AND memory-reflect.ts:27-30 AND learn.ts:84-99"
+      },
+      {
+        "priorClaim": "The two-phase memory pipeline in oh-my-pi uses a pure-TS SQLite wrapper",
+        "correction": "The storage layer (memories/storage.ts) imports `{ Database } from 'bun:sqlite'` directly at line 1 — a Bun-specific API. memories/index.ts also uses `Bun.file()` and `Bun.write()` throughout (lines 163, 531, 605, 681, 692, 721, 748, 826, 827, 848, 1226, 1235, 1246). The pipeline is Bun-native, not pure-TS compatible with Node.",
+        "source": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/memories/storage.ts:1 AND memories/index.ts:1,163,531,605"
+      }
+    ]
+  },
+  {
+    "topic": "Permission / Sandbox / Tool-Authorization Model — oh-my-pi vs pi-mono",
+    "findings": [
+      {
+        "item": "approval.ts — three-tier, three-mode authorization engine",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/approval.ts",
+        "detail": "Defines three capability tiers (read / write / exec) and three session modes (always-ask / write / yolo). Resolution order per tool call: (1) tool's own approval(args) function returns a ToolApprovalDecision (bare tier string or {tier, reason, override}); (2) user per-tool config override (tools.approval.<name>: allow|deny|prompt); (3) mode-vs-tier rank comparison. In yolo mode user per-tool deny still blocks; override:true on a tool forces a prompt even in write mode. The 'deny' policy throws immediately with a clear remediation message. Exports resolveApproval, requiresApproval, formatApprovalPrompt — all pure TS, no runtime deps beyond @oh-my-pi/pi-agent-core types (lines 9–11). The mode default in settings-schema.ts:2899 is 'yolo', so new sessions are unrestricted unless the user configures otherwise.",
+        "depsOrPortability": "Pure TS. The only imported type, ToolTier / ToolApprovalDecision from @oh-my-pi/pi-agent-core (packages/agent/src/types.ts lines 460–472), is a handful of string union types fully portable to any TS project. No Bun APIs, no Rust. Easy.",
+        "recommendation": "reuse-from-base — pi-mono's agent package (packages/ai + packages/agent) already defines ToolTier and ToolApproval identically (verified: agent/src/types.ts:460–472). The three-mode/three-tier resolution logic is the exact right model and fits Misul cleanly. Port approval.ts as a pure-TS module (strip the @oh-my-pi/ import alias, point at your agent types). This is ~190 lines with no dependency risk."
+      },
+      {
+        "item": "bash.ts — CRITICAL_BASH_PATTERNS inline blocklist + per-call override escalation",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/bash.ts",
+        "detail": "The BashTool.approval function (lines 354–361) checks the command string against CRITICAL_BASH_PATTERNS (lines 51–90) before every call. If matched, it returns {tier:'exec', override:true, reason:'Critical pattern detected'}, which forces a user prompt regardless of session mode (even write mode). The 17-pattern list covers: recursive delete to root (rm -rf /), sudo rm, chmod/chown -R to /, fork bombs, disk/filesystem destruction (mkfs, dd to /dev/, shred), /etc/passwd|shadow|sudoers writes, curl|wget|fetch piped to shell or in eval, kill PID 1, and nc -e/-c exfil. Patterns are anchored carefully to avoid false positives (e.g. shutdown is anchored at command position). The bash tool itself has no OS-level sandbox; protection is purely regex-on-command-string applied before execution. bash-command-fixup.ts strips trailing | head/tail and redundant 2>&1 but that logic delegates to a Rust native (@oh-my-pi/pi-natives) for AST-accurate parsing — not usable without the Rust build.",
+        "depsOrPortability": "CRITICAL_BASH_PATTERNS: pure TS, trivially portable. The fixup logic (bash-command-fixup.ts) calls applyBashFixups from @oh-my-pi/pi-natives (Rust native module). That specific piece must be skipped or reimplemented in pure TS if Rust is excluded. The rest of bash.ts is deeply coupled to Bun (Bun.write, Bun.sleep, Bun.file, bun:sqlite, etc.) and to many oh-my-pi-specific session/UI types. Reuse the patterns array, not the file. Hard to port wholesale.",
+        "recommendation": "port-as-TS — Extract CRITICAL_BASH_PATTERNS (lines 51–90) and the approval function pattern into Misul's own bash tool. Skip bash-command-fixup.ts entirely (the fixup is a nice-to-have UX polish; correctness does not depend on it and a naive regex strip of '| head' is sufficient). Build Misul's bash tool on top of pi-mono's createBashTool (pi-mono/packages/coding-agent/src/core/tools/bash.ts) which uses node:child_process and has no Bun/Rust deps, then bolt the critical-pattern check onto its beforeToolCall hook."
+      },
+      {
+        "item": "plan-mode-guard.ts — working-tree read-only enforcement during plan mode",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/plan-mode-guard.ts",
+        "detail": "When session.getPlanModeState().enabled is true, enforcePlanModeWrite() (lines 121–142) throws ToolError for any write/edit/delete that would touch the working tree. The only allowed writes are to the session-local 'local://' artifact sandbox (verified via targetsLocalSandbox which calls localSandboxRoot then does realpath-normalized containment checks to handle macOS /tmp vs /private/tmp). Move and delete operations are unconditionally rejected in plan mode. resolvePlanPath() handles local://, vault://, and bare filesystem paths (lines 98–113). unwrapHashlineHeaderPath() strips oh-my-pi's hashline display headers ([path#TAG]) before path decisions. Depends on @oh-my-pi/hashline (a checksum/header format library) and resolveLocalRoot/resolveVaultUrlToPath from oh-my-pi's internal-urls module.",
+        "depsOrPortability": "The core logic (containment check, plan-state check, ToolError throw) is pure TS node:fs/node:path. The hashline unwrapping depends on @oh-my-pi/hashline — a format specific to oh-my-pi's file display system Misul will not have. The local:// URL scheme is also oh-my-pi-specific. Moderate.",
+        "recommendation": "build-new — Misul does not use hashline or local:// artifact URLs. Build a simpler plan-mode guard from scratch: a boolean session flag plus a path containment check (isUnderCwd). The core idea — 'only allow writes to a designated scratch dir, reject everything else when planning' — is a ~30-line function and does not need the oh-my-pi abstractions. If Misul adds a scratch artifact dir, replicate targetsLocalSandbox without the hashline/URL machinery."
+      },
+      {
+        "item": "auto-generated-guard.ts — auto-generated file edit blocker",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/auto-generated-guard.ts",
+        "detail": "assertEditableFile() (line 293) peeks the first 1024 bytes of a file and checks for known auto-generated markers via regex against leading comment text. Also checks filename patterns (zz_generated.*, *.pb.go, *.gen.ts, etc.). Uses an LRUCache keyed on (mtime, size) to avoid re-reading unchanged files. Gated by settings.get('edit.blockAutoGenerated'). One Bun-specific API: Bun.file(filePath).stat() at line 258, used for mtime/size cache key. The detection logic itself is pure TS. Also imports lru-cache/raw (npm package).",
+        "depsOrPortability": "Bun.file().stat() is the only Bun API. Replace with fs.stat() from node:fs/promises. lru-cache is a standard npm package. Pure-TS logic otherwise. Easy.",
+        "recommendation": "port-as-TS — The detection logic (header comment extraction, marker regex set, filename pattern list) is genuinely valuable quality guardrail and is straightforward to port. Replace Bun.file().stat() with node:fs/promises stat. Replace @oh-my-pi/pi-utils's peekFile with a simple fs.read() of the first 1024 bytes. ~323 lines, entirely standalone after those two substitutions."
+      },
+      {
+        "item": "bash-interceptor.ts — redirect-to-tool blocklist",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/bash-interceptor.ts",
+        "detail": "checkBashInterception() compiles user-configurable BashInterceptorRule[] into RegExps and matches them against the normalized command. Only blocks if the suggested alternative tool is actually in the active tool set. Default rules (settings-schema.ts:277–295) redirect cat/head/tail/less to 'read' and grep/rg to 'search'. This is UX guidance, not a security control — it nudges the model to use structured tools rather than shelling out. Entirely pure TS, zero deps beyond the settings schema type.",
+        "depsOrPortability": "Pure TS, no external deps, no Bun, no Rust. The BashInterceptorRule interface and DEFAULT_BASH_INTERCEPTOR_RULES constant can be extracted as a ~70-line file. Easy.",
+        "recommendation": "port-as-TS — Worth including. Extract BashInterceptorRule + checkBashInterception + a default ruleset for whatever tools Misul provides. The rules are driven by which structured tools exist (read, search, etc.), so the default list will differ but the engine is reusable verbatim."
+      },
+      {
+        "item": "bash-command-fixup.ts — trailing pipe/redirect cleanup",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/bash-command-fixup.ts",
+        "detail": "A thin TS wrapper (lines 35–37) that delegates entirely to nativeApplyBashFixups from @oh-my-pi/pi-natives, which is a Rust native addon using the brush-parser AST. Strips trailing | head/tail and redundant 2>&1 from single-line commands. The comment at lines 20–21 confirms the heavy lifting is 'in Rust under pi_shell::fixup, driven by the real brush-parser AST.'",
+        "depsOrPortability": "Hard dependency on @oh-my-pi/pi-natives Rust native module. Avoid.",
+        "recommendation": "skip — The fixup is a cosmetic UX improvement (model-generated | head is already handled by output truncation). The Rust native requirement makes this a hard exclude. If the behavior matters later, a naive regex strip of trailing '| head [n]' and '2>&1' on single-line input is ~20 lines and handles 95% of cases without AST parsing."
+      },
+      {
+        "item": "pi-mono extension tool_call hook — lightweight pre-execution gate",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/pi-mono/packages/coding-agent/src/core/extensions/types.ts",
+        "detail": "pi-mono's extension system fires a 'tool_call' event before every tool execution (types.ts lines 857–865, 1020–1024). Handlers receive mutable event.input (can patch args in place) and return {block?: boolean, reason?: string} to veto the call. The permission-gate.ts example (examples/extensions/permission-gate.ts) shows a 34-line extension that regex-matches bash commands and uses ctx.ui.select() to confirm. This is the only permission mechanism in the base pi-mono: no tier system, no approval modes, no per-tool config — just the extension hook. The base bash tool (core/tools/bash.ts) has no built-in blocklist; it uses node:child_process (spawn), is pure Node.js, and carries no approval logic of its own.",
+        "depsOrPortability": "The extension runner and tool_call event pipeline are pure TS Node.js. No Bun, no Rust. The base pi-mono codebase is the fork target, so this is the starting point.",
+        "recommendation": "reuse-from-base — The beforeToolCall hook in the agent loop (agent/src/types.ts lines 280–284) is the right integration point in Misul. Wire oh-my-pi's CRITICAL_BASH_PATTERNS check into that hook. pi-mono's extension 'tool_call' event is also suitable for user-facing permission gates if Misul exposes an extension system."
+      },
+      {
+        "item": "pi-mono project trust system",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/pi-mono/packages/coding-agent/src/core/trust-manager.ts",
+        "detail": "Tracks per-directory trust decisions in ~/.pi/trust.json using lockfile for concurrency safety. hasTrustRequiringProjectResources() (lines 184–206) checks for .pi/ config dirs and .agents/skills directories under cwd — if any exist, project must be trusted before loading those resources (settings, extensions, prompts). The trust gate is checked at startup (project-trust.ts) before loading project-local extensions, not before individual tool calls. Trust decisions: true/false/null (inherit from parent), with parent-folder and session-only options. This is a project-resource sandboxing concern, not a tool-authorization concern.",
+        "depsOrPortability": "Pure Node.js TS plus proper-lockfile (npm). No Bun, no Rust. Easy.",
+        "recommendation": "reuse-from-base — This is already in the fork base. Misul should adopt it as-is since it gates loading of project-local agent configuration (skills, extensions, prompts) which is exactly the right threat model for a coding agent that operates on arbitrary repos."
+      },
+      {
+        "item": "ExtensionToolWrapper — approval gate wired into the extension execution pipeline",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/extensibility/extensions/wrapper.ts",
+        "detail": "ExtensionToolWrapper.execute() (lines 106–258) is where the three-tier approval system is wired into actual tool execution. Order: (1) resolve approvalMode from context.autoApprove flag or settings; (2) call requiresApproval(); (3) if required and no UI, throw immediately; (4) if UI, show select('Approve'/'Deny'); (5) emit tool_call event to extensions (can block); (6) run tool.execute(); (7) emit tool_result event (can modify). The approval UI prompt is built by formatApprovalPrompt() which calls tool.formatApprovalDetails(args) for per-tool context lines. When the agent runs as a subtask (executor.ts:724–726), approval mode is forced to 'yolo' — the parent task is the authorization boundary.",
+        "depsOrPortability": "The wrapper is pure TS but tightly coupled to oh-my-pi's ExtensionRunner, UIContext, and Settings types. The logic pattern (check mode, prompt, emit events) is the portable concept.",
+        "recommendation": "build-new — Implement the same pattern in Misul using the pi-mono beforeToolCall hook (agent/src/types.ts:280–284) which is a clean injection point. That hook receives the tool name and args before execution and can return {block: true, reason: string}. Wire the approval resolution logic there rather than in a wrapper class, keeping it decoupled from any UI framework."
+      }
+    ],
+    "designRecommendation": "Misul should adopt a two-layer permission model that combines what the base pi-mono already provides with the algorithmic value from oh-my-pi.\n\nLayer 1: Project trust (already in pi-mono base). Before loading any project-local resources (.pi/ config, skills, extensions), require explicit user trust for the working directory, stored in ~/.misul/trust.json. Adopt pi-mono's ProjectTrustStore and hasTrustRequiringProjectResources verbatim — they are pure Node.js TS and serve exactly the right purpose. Trust-requiring project resources for Misul would be any .misul/ directory containing settings, extensions, or skills.\n\nLayer 2: Tool-call authorization. Wire a beforeToolCall hook into the agent loop (already defined in packages/agent/src/types.ts). The hook should enforce three things in order:\n\nFirst, a hard regex blocklist against CRITICAL_BASH_PATTERNS extracted from oh-my-pi's bash.ts lines 51–90. This runs regardless of session mode and covers the genuinely dangerous shapes: recursive delete to root, mkfs, dd to device, curl-pipe-to-shell, fork bombs, kill PID 1, nc exfil. These 17 patterns are the distilled result of careful calibration (comments in the source explicitly note false-positive avoidance) and should be copied verbatim. When matched, block with a clear error rather than prompting — these are never legitimate in automation.\n\nSecond, a three-tier approval mode check, ported from oh-my-pi's approval.ts (~190 lines, pure TS, trivially portable). Map tools to tiers: read-only filesystem and search tools get 'read'; write/edit tools get 'write'; bash and any network-mutating tools get 'exec'. Session mode (always-ask / write / yolo) determines which tiers auto-approve. Default mode for non-interactive (CI) runs should be 'write', not 'yolo', to require confirmation before exec-tier tools. For interactive sessions the user controls the mode.\n\nThird, a per-tool user policy table (tools.approval.<name>: allow|deny|prompt in config), also ported from approval.ts, so users can permanently allow a safe tool or permanently deny a dangerous one without touching the mode.\n\nDo not implement OS-level sandboxing (seccomp, namespaces, containers) in v1. The regex-based critical-pattern check plus user confirmation for exec-tier tools is the right tradeoff for a developer tool that must run arbitrary build commands: it blocks catastrophic accidents while not interfering with legitimate automation. Process-isolation sandboxing belongs in a later phase if Misul runs untrusted agent-generated code at scale.\n\nFor plan mode (if Misul implements one): add a simple session boolean flag plus a path containment check in the write/edit tools — do not port the full oh-my-pi plan-mode-guard.ts which is coupled to hashline and local:// URL schemes Misul will not have.\n\nPort the auto-generated file guard (auto-generated-guard.ts) with two substitutions: replace Bun.file().stat() with node:fs/promises stat, and replace peekFile with a direct fs.read(). This is a correctness guard that prevents the model from silently corrupting generated files and belongs in the write and edit tools.\n\nThe bash interceptor (redirect cat/grep to structured tools) should be included but is optional in v1. It improves quality-per-dollar by keeping the model in structured tools that return better-formatted context. Extract the engine and define a default ruleset matched to Misul's actual tool inventory.",
+    "correctedFacts": [
+      {
+        "priorClaim": "The base pi-mono has no permission or approval model.",
+        "correction": "pi-mono has two permission mechanisms. First, a project trust system (core/trust-manager.ts + core/project-trust.ts) that gates loading of project-local resources (.pi/ dirs, .agents/skills) using a persistent trust.json store with lockfile safety. Second, the extension system fires a 'tool_call' event before every tool execution (extensions/types.ts lines 857–865) that can block with {block: true}; a working example permission gate is provided at examples/extensions/permission-gate.ts. What pi-mono lacks is the three-tier/three-mode approval engine and the CRITICAL_BASH_PATTERNS blocklist — those are oh-my-pi additions.",
+        "source": "C:/Users/deyan/Projects/Misul Terminal/research/sources/pi-mono/packages/coding-agent/src/core/trust-manager.ts:184-206 and C:/Users/deyan/Projects/Misul Terminal/research/sources/pi-mono/packages/coding-agent/src/core/extensions/types.ts:857-865"
+      },
+      {
+        "priorClaim": "bash-command-fixup.ts is a pure-TS module that can be vendored.",
+        "correction": "bash-command-fixup.ts is a one-function wrapper (lines 35–37) that delegates entirely to nativeApplyBashFixups from @oh-my-pi/pi-natives, a Rust native addon. The file's own comment (lines 20–21) states: 'The heavy lifting (tokenization, quoting, heredoc handling, command substitution, nested compound commands) lives in Rust under pi_shell::fixup, driven by the real brush-parser AST.' It cannot be vendored without the Rust build.",
+        "source": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/bash-command-fixup.ts:20-37"
+      },
+      {
+        "priorClaim": "The default approval mode in oh-my-pi is 'always-ask', making it conservative by default.",
+        "correction": "The default is 'yolo', verified in settings-schema.ts line 2899: `default: 'yolo'`. In yolo mode all tool tiers auto-approve except tools explicitly denied via per-tool user policy. The conservative 'always-ask' mode must be set explicitly by the user or via the --approval-mode CLI flag.",
+        "source": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/config/settings-schema.ts:2896-2899"
+      },
+      {
+        "priorClaim": "auto-generated-guard.ts depends heavily on Bun APIs and cannot be ported.",
+        "correction": "auto-generated-guard.ts has exactly one Bun API call: Bun.file(filePath).stat() at line 258, used only to get mtime and size for cache invalidation. The entire detection logic (regex matching, comment parsing, filename patterns, LRUCache) is pure TS. Replacing that single call with node:fs/promises stat() and replacing the peekFile utility with a direct fs.read() produces a fully portable module.",
+        "source": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/tools/auto-generated-guard.ts:248-284"
+      },
+      {
+        "priorClaim": "oh-my-pi subtask agents run under the parent session's approval mode.",
+        "correction": "Subtask executor.ts forces approval mode to 'yolo' for child agents (line 724–726), explicitly overriding the parent session's configured mode. The comment states: 'the parent task approval is the authorization boundary.' This means nested agents in oh-my-pi run unrestricted regardless of the outer session's mode.",
+        "source": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/coding-agent/src/task/executor.ts:724-726"
+      }
+    ]
+  },
+  {
+    "topic": "pi-mono/packages/ai provider routing gaps and corrected provider facts for Misul Terminal fork",
+    "findings": [
+      {
+        "item": "maxRetries defaults to 0 in anthropic.ts, openai-completions.ts, and openai-responses.ts — no built-in retry at provider level",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/pi-mono/packages/ai/src/providers/anthropic.ts:524",
+        "detail": "The requestOptions object in all three providers sets `maxRetries: options?.maxRetries ?? 0`. This delegates to the underlying SDK client (Anthropic SDK, OpenAI SDK), which then honours its own retry logic only if the caller passes a non-zero value. The default of 0 means the Anthropic and OpenAI SDK clients perform exactly one attempt — no SDK-level 429/5xx retries. The openai-codex-responses.ts provider is the single exception: it implements its own retry loop with `DEFAULT_MAX_RETRIES` (line 308), exponential backoff (`BASE_DELAY_MS * 2^attempt`), and a `Retry-After` header cap (`capRetryDelayMs`, controlled by `options?.maxRetryDelayMs`). That loop covers 429s and network errors for the Codex path only.",
+        "depsOrPortability": "pure-TS, easy",
+        "recommendation": "build-new — Misul must add its own retry/fallback layer above stream.ts rather than inside providers, since the provider contract is fire-and-return-stream. A wrapper that catches errors from stream.result(), inspects stopReason/errorMessage for 429 or outage patterns, and re-calls stream() with an alternate model is the correct seam. The openai-codex-responses retry logic is a reuse candidate as a pure-TS pattern to port."
+      },
+      {
+        "item": "No per-session cost accumulation anywhere in packages/ai",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/pi-mono/packages/ai/src/models.ts:39",
+        "detail": "calculateCost() computes cost for a single AssistantMessage in-place by reading model.cost.{input,output,cacheRead,cacheWrite}. It mutates usage.cost and returns it. There is no session-level accumulator: no running total, no session store, no cost budget enforcement. The Usage type (types.ts:274) carries per-turn cost only. session-resources.ts only manages cleanup callbacks — no financial tracking. The fork must build accumulation from scratch.",
+        "depsOrPortability": "pure-TS, easy",
+        "recommendation": "build-new — a SessionCostAccumulator that subscribes to stream events (or wraps complete()) and sums usage.cost.total across turns is trivially portable. The calculateCost function itself is a clean reuse candidate."
+      },
+      {
+        "item": "Provider routing / failover: no cross-provider fallback in base",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/pi-mono/packages/ai/src/stream.ts:40",
+        "detail": "stream() and complete() are single-shot: they call provider.stream() once and return. There is no fallback list, no circuit breaker, no health tracking. The only multi-provider awareness is OpenRouter's `provider.order` routing hint passed as a request body field (openai-completions.ts:631), which delegates the fallback decision to OpenRouter's servers — invisible to client-side cost or latency accounting. The Model type has no `fallbackChain` field.",
+        "depsOrPortability": "pure-TS, easy",
+        "recommendation": "build-new — design a ProviderRouter wrapper around stream/complete that accepts an ordered list of (model, options) pairs and retries the chain on 429/5xx/timeout errors. Classification of retryable vs fatal errors should read errorMessage patterns (already surfaced in AssistantMessage.errorMessage) or the HTTP status via onResponse callback."
+      },
+      {
+        "item": "Cost-aware model selection: no built-in tiering",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/pi-mono/packages/ai/src/types.ts:592",
+        "detail": "Model.cost carries per-million-token prices (input, output, cacheRead, cacheWrite). The Model type has no `tier` or `capability` field. Model selection is entirely caller-driven: the caller picks a model object and passes it to stream(). There is no automatic cheap-vs-strong dispatch. The only relevant machinery is thinkingLevelMap (for reasoning effort) and the reasoning: boolean flag. All cost data is present and accurate per-model; the gap is a routing policy layer that uses it.",
+        "depsOrPortability": "pure-TS, easy",
+        "recommendation": "build-new — define a TurnClass enum (utility/tool-execution vs reasoning/planning) and a ModelSelector that maps TurnClass to a model object using the cost field as a secondary filter. The existing Model interface is fully sufficient; no schema changes needed."
+      },
+      {
+        "item": "grok reasoning_effort gating via detectCompat isGrok check",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/pi-mono/packages/ai/src/providers/openai-completions.ts:1131",
+        "detail": "detectCompat() sets `isGrok = provider === 'xai' || baseUrl.includes('api.x.ai')` at line 1131, then at line 1141 sets `supportsReasoningEffort: !isGrok && ...`. All xai-provider grok models carry no explicit compat overrides, so the detected value applies. The buildParams paths for OpenAI-style reasoning_effort (lines 620 and 623) both gate on `compat.supportsReasoningEffort`, so reasoning_effort is never emitted for any xai/grok model — including the reasoning: true models (grok-4.20-0309-reasoning, grok-4.3, grok-build-0.1). The grok-4.3 and grok-build-0.1 models have `reasoning: true` and `reasoning: true` respectively but no thinkingLevelMap and no supportsReasoningEffort override, confirming reasoning effort control is fully absent for this provider.",
+        "depsOrPortability": "pure-TS, easy",
+        "recommendation": "reuse-from-base — the gating logic is already correct and intentional. No change needed. When forking, preserve the isGrok exclusion in detectCompat."
+      },
+      {
+        "item": "opencode-go model count and exact IDs",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/pi-mono/packages/ai/src/models.generated.ts:8568",
+        "detail": "The opencode-go provider block (lines 8568-8803) contains exactly 13 model entries, all using baseUrl https://opencode.ai/zen/go/v1 (openai-completions) or https://opencode.ai/zen/go (anthropic-messages). IDs and APIs: deepseek-v4-flash (openai-completions), deepseek-v4-pro (openai-completions), glm-5 (openai-completions), glm-5.1 (openai-completions), kimi-k2.6 (openai-completions), kimi-k2.7-code (openai-completions), mimo-v2.5 (openai-completions), mimo-v2.5-pro (openai-completions), minimax-m2.7 (openai-completions), minimax-m3 (anthropic-messages), qwen3.6-plus (openai-completions), qwen3.7-max (anthropic-messages), qwen3.7-plus (anthropic-messages). Three models use the anthropic-messages API against the /zen/go endpoint.",
+        "depsOrPortability": "pure-TS, easy",
+        "recommendation": "reuse-from-base — model metadata is data, copy verbatim. Note that opencode-go is NOT in detectCompat's isNonStandard list (only the generic 'opencode' provider and 'opencode.ai' URL are listed at lines 1122-1123). The opencode-go provider reaches detectCompat as a plain OpenAI-style provider, so supportsReasoningEffort defaults to true — but individual models override this selectively via their compat fields."
+      },
+      {
+        "item": "oh-my-pi auth-retry: structured a/b/c credential rotation with ApiKeyResolver",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/ai/src/auth-retry.ts:1",
+        "detail": "oh-my-pi adds an ApiKeyResolver function type (vs pi-mono's plain string apiKey). withAuth() runs initial attempt, then on 401 or usage-limit error: step b (refresh same credential, forceRefresh: true), step c (rotate to sibling account). This is pure TS with no Bun or Rust deps. The ProviderHttpError class in errors.ts structures HTTP errors with status, headers, and code fields for downstream classification. pi-mono has none of this — it surfaces errors only as errorMessage strings.",
+        "depsOrPortability": "pure-TS, easy",
+        "recommendation": "port-as-TS — withAuth / withOAuthAccess / isAuthRetryableError are self-contained and directly address 401 and usage-limit failover. Port them as the credential layer above Misul's provider router. They complement but do not replace the 429/outage router design since they only handle auth errors."
+      },
+      {
+        "item": "oh-my-pi inband dialect system for text-generation-only models",
+        "path": "C:/Users/deyan/Projects/Misul Terminal/research/sources/oh-my-pi/packages/ai/src/dialect/types.ts:1",
+        "detail": "oh-my-pi implements a dialect layer (anthropic, deepseek, gemini, kimi, qwen3, glm, hermes, etc.) for models that do not support native tool-call APIs. Tools are rendered into the system prompt via InbandTool/renderInbandToolPrompt; tool calls and results are parsed from text via InbandScanner. This enables cheap text-generation models (e.g. opencode-go's minimax, mimo, glm entries) as fallback execution tiers. pi-mono has no equivalent.",
+        "depsOrPortability": "moderate — depends on @oh-my-pi/pi-catalog/identity (Dialect type) and @oh-my-pi/pi-utils. Dependency graph needs audit before porting.",
+        "recommendation": "fork-external-MCP — if Misul wants to route utility turns to cheap text-generation models (relevant for quality-per-dollar), the dialect system is the necessary infrastructure. Port the pure-TS scanner/renderer files; replace the @oh-my-pi/pi-catalog import with a local Dialect enum."
+      }
+    ],
+    "designRecommendation": "Design a three-layer routing stack above pi-mono's stream.ts, with no changes to the provider internals.\n\nLayer 1 — ProviderRouter (outage and 429 failover). Accept an ordered list of RouteEntry = { model: Model, options: StreamOptions }[]. Call complete() on the first entry. If AssistantMessage.stopReason is 'error' and errorMessage matches a 429 or transient-outage pattern (HTTP 429, 503, 'overloaded', 'capacity'), advance to the next entry. Preserve the partial context — no replay of already-received content. Each entry can point to a different provider: direct Anthropic, OpenRouter, opencode-go. The onResponse callback in StreamOptions (types.ts:120) gives you the HTTP status before stream body consumption, enabling fast 429 detection without reading the full error body. Circuit-breaker state (consecutive failure count per provider) can be maintained in a Map keyed by model.provider.\n\nLayer 2 — CostAwareSelector (cheap vs strong dispatch). Define TurnClass: 'utility' | 'reasoning'. Utility covers tool execution turns (file reads, shell commands — high volume, low latency requirement, structured output). Reasoning covers planning, summarization, multi-step code generation. Map each TurnClass to a ModelTier = { primary: RouteEntry[], floor: RouteEntry[] } where primary is the preferred model(s) and floor is the budget cap. Use Model.cost.output as the primary sort key for tier selection. For utility turns, target output cost under $2/M (e.g. opencode-go/deepseek-v4-flash at $0.28/M output, opencode-go/mimo-v2.5 at $0.28/M). For reasoning turns, allow up to direct Anthropic claude-opus or haiku depending on budget. The SessionCostAccumulator (Layer 3) feeds back into tier selection: if accumulated cost exceeds a per-session budget, the selector shifts all turns to the utility tier.\n\nLayer 3 — SessionCostAccumulator. Subscribe to AssistantMessage.usage.cost.total after each complete() call. Maintain a running session total. Expose currentCost(), remainingBudget(budget), and a budgetExceeded(budget) predicate that the CostAwareSelector polls. No async coordination needed — the accumulator is synchronous state local to the session.\n\nInteraction with grok reasoning: because grok xai models never receive reasoning_effort (supportsReasoningEffort is false in detectCompat), do not route reasoning turns to grok variants unless you are comfortable with uncontrolled reasoning token spend. If used, set model.thinkingLevelMap appropriately or exclude them from the reasoning tier.\n\nInteraction with opencode-go: three models use anthropic-messages API (minimax-m3, qwen3.7-max, qwen3.7-plus) and ten use openai-completions. For the completions models, detectCompat treats opencode-go as standard OpenAI-style (supportsReasoningEffort: true by default), but individual models override via compat fields. deepseek-v4-flash and deepseek-v4-pro set requiresReasoningContentOnAssistantMessages: true, so multi-turn replay must include reasoning_content. Handle this at the ProviderRouter level when replaying history across provider switches by normalizing assistant messages before re-submission.\n\nAuth failover: port oh-my-pi's withAuth/ApiKeyResolver pattern as a credential factory that the ProviderRouter calls when constructing each RouteEntry's apiKey. This handles 401 rotation independently of 429 provider switching. The two concerns are orthogonal and should not be conflated in a single retry loop.\"",
+    "correctedFacts": [
+      {
+        "priorClaim": "supportsReasoningEffort = !isGrok gates reasoning_effort for grok-4.x models; reasoning_effort IS sent to grok when model.reasoning is true",
+        "correction": "reasoning_effort is NEVER sent to any xai/grok model. detectCompat() at openai-completions.ts:1131 sets isGrok = provider === 'xai' || baseUrl.includes('api.x.ai'), and at line 1141 supportsReasoningEffort = !isGrok (among other exclusions). Both buildParams branches that emit reasoning_effort (lines 620 and 623) are gated on compat.supportsReasoningEffort. No xai model has an explicit compat.supportsReasoningEffort override. The grok reasoning models (grok-4.20-0309-reasoning, grok-4.3, grok-build-0.1) carry reasoning: true but receive no effort parameter — the reasoning: true flag only enables thinking-content parsing in the stream handler.",
+        "source": "C:/Users/deyan/Projects/Misul Terminal/research/sources/pi-mono/packages/ai/src/providers/openai-completions.ts:1131 and :1141 and :620"
+      },
+      {
+        "priorClaim": "opencode-go has a small model count (implied fewer than 10) or a different set of model names than what was cited",
+        "correction": "opencode-go has exactly 13 models in models.generated.ts (lines 8568-8803): deepseek-v4-flash, deepseek-v4-pro, glm-5, glm-5.1, kimi-k2.6, kimi-k2.7-code, mimo-v2.5, mimo-v2.5-pro, minimax-m2.7, minimax-m3, qwen3.6-plus, qwen3.7-max, qwen3.7-plus. Three (minimax-m3, qwen3.7-max, qwen3.7-plus) use the anthropic-messages API against https://opencode.ai/zen/go; the remaining ten use openai-completions against https://opencode.ai/zen/go/v1.",
+        "source": "C:/Users/deyan/Projects/Misul Terminal/research/sources/pi-mono/packages/ai/src/models.generated.ts:8568-8803"
+      },
+      {
+        "priorClaim": "pi-mono/packages/ai has no retry logic at all",
+        "correction": "The openai-codex-responses.ts provider implements its own retry loop with configurable maxRetries (DEFAULT_MAX_RETRIES when not set by caller), exponential backoff, and Retry-After header parsing for 429s. The anthropic.ts, openai-completions.ts, and openai-responses.ts providers default maxRetries to 0 (delegating to SDK defaults, which with 0 means one attempt). So the claim is accurate for all Anthropic-API providers but false for the Codex provider.",
+        "source": "C:/Users/deyan/Projects/Misul Terminal/research/sources/pi-mono/packages/ai/src/providers/openai-codex-responses.ts:308-377 and C:/Users/deyan/Projects/Misul Terminal/research/sources/pi-mono/packages/ai/src/providers/anthropic.ts:524"
+      },
+      {
+        "priorClaim": "opencode-go provider is treated as non-standard in detectCompat and supportsReasoningEffort is false for it",
+        "correction": "detectCompat() lists provider === 'opencode' and baseUrl.includes('opencode.ai') in isNonStandard (lines 1122-1123), but 'opencode-go' is not in that list. The opencode-go models all use baseUrl 'https://opencode.ai/zen/go/v1' which DOES include 'opencode.ai', so they do fall into isNonStandard via the URL check. However, supportsReasoningEffort is NOT excluded by isNonStandard — it is only excluded by the specific isGrok, isZai, isMoonshot, isTogether, isCloudflareAiGateway, and isNvidia checks. opencode-go is none of those, so the detected supportsReasoningEffort would be true. Individual opencode-go models then selectively override via their compat fields (e.g. kimi-k2.6 sets supportsReasoningEffort: false explicitly).",
+        "source": "C:/Users/deyan/Projects/Misul Terminal/research/sources/pi-mono/packages/ai/src/providers/openai-completions.ts:1111-1141 and C:/Users/deyan/Projects/Misul Terminal/research/sources/pi-mono/packages/ai/src/models.generated.ts:8649"
+      }
+    ]
+  },
+  {
+    "topic": "Trust Ledger: Correction of laundered/single-source claims from prior capabilities-research synthesis, verified against local pi-mono clone and web sources",
+    "findings": [],
+    "designRecommendation": "1. COMPACTION LOGIC: Port pi-mono's flat `shouldCompact` formula verbatim — it is well-tested, self-contained pure TS with no external deps, and ships in the exact fork target. The oh-my-pi `max(15% of contextWindow, reserveTokens)` variant is a more sophisticated threshold that is worth vendoring as a configurable upgrade, but must be treated as additive oh-my-pi logic, not as something already present in the base. Do not conflate the two in specs or PRDs.\n\n2. MCP BENCHMARKS: All numeric MCP claims (939x, 70-95%, 99%, 9-16x) must be treated as directional-unverified marketing figures until a primary reproducible source is found. Do not gate architectural decisions on these numbers. Treat MCP as beneficial for tool-surface expansion and external integrations, with the conservative assumption that token overhead is real and variable depending on server quality, and speed gains are tool-dependent. Budget for MCP latency in the architecture rather than assuming speed gains.\n\n3. ANTHROPIC AUTH/ToS: The Misul Terminal plan must be built exclusively around API key authentication against claude.com/platform. Do not build any feature that relies on OAuth subscription tokens from Pro/Max accounts — the policy has been enforced at least once (April 2026), reversed, then re-proposed (May 2026 credit split), then paused again (June 15 confirmed not going ahead). The instability itself is the risk signal: Anthropic has demonstrated willingness to terminate third-party subscription auth with short notice. The safe path for production agent workloads is the pay-per-use API. Budget all cost projections on API rates, not subscription access.\n\n4. PRICING: Use $5/$25 per MTok (input/output) for claude-opus-4-8 as the current baseline from claude.com/platform/api (fetched June 2026). These figures are confirmed by the official Anthropic platform page and consistent across multiple secondary sources. Apply the standard caveats that Anthropic has changed pricing structures multiple times in 2026 and any cost model should build in a ±20% buffer and be refreshed quarterly.",
+    "correctedFacts": [
+      {
+        "priorClaim": "pi-mono uses a '15% of contextWindow / max()' compaction threshold formula",
+        "correction": "False. The pi-mono compaction threshold is a flat `contextTokens > contextWindow - reserveTokens` check with no percentage component. The `shouldCompact` function at line 196-199 of packages/agent/src/harness/compaction/compaction.ts reads exactly: `return contextTokens > contextWindow - settings.reserveTokens`. The default `reserveTokens` is 16384 (line 114 of the same file, in `DEFAULT_COMPACTION_SETTINGS`). There is no `max()` call, no 15% floor, and no `thresholdPercent` field anywhere in pi-mono. The '15% of contextWindow / max(reserveTokens, 15% of contextWindow)' formula exists only in oh-my-pi, documented at line 413 of oh-my-pi/docs/compaction.md: 'when no positive override is set, the threshold is contextWindow - max(15% of contextWindow, reserveTokens)'. The prior claim conflated oh-my-pi's documentation with pi-mono's code.",
+        "source": "C:\\Users\\deyan\\Projects\\Misul Terminal\\research\\sources\\pi-mono\\packages\\agent\\src\\harness\\compaction\\compaction.ts:113-116,196-199 and C:\\Users\\deyan\\Projects\\Misul Terminal\\research\\sources\\oh-my-pi\\docs\\compaction.md:413"
+      },
+      {
+        "priorClaim": "MCP delivers 939x improvement in app-control tasks, 70-95% token reduction, 99% retrieval savings, and 9-16x browser speed gains",
+        "correction": "No primary or authoritative source for any of these specific multipliers was found. The oh-my-pi local clone contains no mention of these figures in any documentation file. Web search found no official Anthropic or modelcontextprotocol.io publication with these exact numbers. The closest verified claim is that schema-compression approaches can reduce tool-definition tokens by 70-97% (a GitHub issue on modelcontextprotocol, single-source, not peer-reviewed). All four figures — 939x, 70-95%, 99%, 9-16x — must be treated as directional-unverified: the underlying phenomena (MCP reduces manual glue code, retrieval MCPs can cut lookup token spend, browser MCPs change interaction patterns) are plausible, but no reproducible benchmark with a defined baseline and methodology was located. Label these figures as vendor-directional until a primary reproducible source is identified.",
+        "source": "Local clone search: C:\\Users\\deyan\\Projects\\Misul Terminal\\research\\sources\\oh-my-pi (no matches found). Web: https://github.com/modelcontextprotocol/modelcontextprotocol/issues/1576 (schema token reduction, single issue, not peer-reviewed benchmark)"
+      },
+      {
+        "priorClaim": "Anthropic's OAuth/subscription enforcement timeline and ToS risk are stable and predictable",
+        "correction": "False. The enforcement history in 2026 shows three distinct policy reversals in under six months, making this an actively unstable area. Timeline: (1) February 19 2026 — Anthropic formally updated ToS to prohibit OAuth tokens from Free/Pro/Max accounts in any third-party tool, restricting them to Claude Code and Claude.ai only. (2) April 4 2026 — Enforcement began; third-party tools blocked. (3) May 2026 — Anthropic reversed the April enforcement and announced a 'credit pool' split model effective June 15. (4) June 15 2026 — Anthropic paused the credit pool change; Agent SDK usage continues drawing from existing subscription pools 'exactly as before'. Current binding rule: OAuth subscription tokens are still formally prohibited by ToS from non-Anthropic tools, but enforcement posture has oscillated. The safe conclusion is: do not build any system dependency on subscription OAuth access; use API key authentication only. This is time-sensitive and cannot be verified from the local clone.",
+        "source": "https://www.theregister.com/2026/02/20/anthropic_clarifies_ban_third_party_claude_access/ and https://www.digitalapplied.com/blog/anthropic-claude-credit-overhaul-june-15-2026 and https://alternativeto.net/news/2026/2/anthropic-officially-bans-using-subscription-authentication-for-third-party-claude-use"
+      },
+      {
+        "priorClaim": "Claude Opus 4.8 pricing figures are reliable and stable",
+        "correction": "Partially confirmed but date-sensitive. The official claude.com/platform/api page (fetched June 17 2026) shows Opus 4.8 at $5/MTok input and $25/MTok output. Fast Mode (2.5x speed) is 2x standard price ($10/$25 per MTok). These figures are corroborated by multiple secondary sources citing the May 28 2026 Opus 4.8 launch. However, Anthropic changed its billing structure at least twice in 2026 (the April enforcement and the paused June 15 credit pool split), and the pricing page itself notes 'Price and plans are subject to change at Anthropic's discretion.' Cost models using these figures should be treated as point-in-time (June 2026) and budgeted with a buffer for revision. The prior claim of a specific Opus 4.8 price should be labeled 'single-source/date-sensitive: verified June 2026, refresh quarterly'.",
+        "source": "https://claude.com/platform/api (fetched June 2026, primary source) and https://www.metacto.com/blogs/anthropic-api-pricing-a-full-breakdown-of-costs-and-integration (secondary corroboration)"
+      }
+    ]
+  }
+]

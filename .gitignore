@@ -1,0 +1,8 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.DS_Store
+# upstream reference clones — never commit (thousands of files, own .git)
+research/sources/
+# raw research payloads are large; keep findings (md/json) but not the raw dumps
+research/findings-raw/

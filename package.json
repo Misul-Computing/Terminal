@@ -1,0 +1,22 @@
+{
+  "name": "misul-terminal",
+  "private": true,
+  "type": "module",
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "build": "cd packages/tui && npm run build && cd ../ai && npm run build && cd ../agent && npm run build && cd ../coding-agent && npm run build",
+    "test": "npm run test --workspaces --if-present",
+    "clean": "npm run clean --workspaces",
+    "verify": "npm run build && npm test"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.3.5",
+    "@types/node": "22.19.19",
+    "@typescript/native-preview": "7.0.0-dev.20260120.1",
+    "esbuild": "0.28.0",
+    "shx": "0.4.0",
+    "tsx": "4.22.1",
+    "typescript": "5.9.3"
+  },
+  "engines": { "node": ">=22.19.0" }
+}
