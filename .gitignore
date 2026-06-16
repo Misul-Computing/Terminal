@@ -6,3 +6,5 @@ dist/
 research/sources/
 # raw research payloads are large; keep findings (md/json) but not the raw dumps
 research/findings-raw/
+# harness session/config dir
+.claude/
