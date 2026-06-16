@@ -36,7 +36,8 @@ describe("ProjectTrustStore", () => {
 		expect(store.get(childDir)).toBe(true);
 	});
 
-	it("detects trust-requiring project resources", () => {
+	// Windows tmpdir is nested under the real user home, so the upward walk finds the real ~/.agents.
+	it.skipIf(process.platform === "win32")("detects trust-requiring project resources", () => {
 		const originalHome = process.env.HOME;
 		process.env.HOME = tempDir;
 		try {

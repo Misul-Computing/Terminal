@@ -182,7 +182,8 @@ Content`,
 			expect(result.prompts.some((r) => r.path === promptPath && !r.enabled)).toBe(true);
 		});
 
-		it("should resolve symlinked user and project resources once", async () => {
+		// Windows requires Developer Mode/privilege to create symlinks; fixture setup throws EPERM.
+		it.skipIf(process.platform === "win32")("should resolve symlinked user and project resources once", async () => {
 			const previousHome = process.env.HOME;
 			process.env.HOME = tempDir;
 

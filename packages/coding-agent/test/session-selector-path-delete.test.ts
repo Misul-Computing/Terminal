@@ -246,7 +246,8 @@ describe("session selector path/delete interactions", () => {
 		await flushPromises();
 	});
 
-	it("threads sessions when parent and child paths use different symlink aliases", async () => {
+	// Windows requires Developer Mode/privilege to create symlinks; fixture setup throws EPERM.
+	it.skipIf(process.platform === "win32")("threads sessions when parent and child paths use different symlink aliases", async () => {
 		const paths = createSymlinkedSessionPaths();
 		tempDirs.push(paths.baseDir);
 
@@ -282,7 +283,8 @@ describe("session selector path/delete interactions", () => {
 		expect(output).toContain("└─ Child");
 	});
 
-	it("treats the current session as active across symlink aliases", async () => {
+	// Windows requires Developer Mode/privilege to create symlinks; fixture setup throws EPERM.
+	it.skipIf(process.platform === "win32")("treats the current session as active across symlink aliases", async () => {
 		const paths = createSymlinkedSessionPaths();
 		tempDirs.push(paths.baseDir);
 

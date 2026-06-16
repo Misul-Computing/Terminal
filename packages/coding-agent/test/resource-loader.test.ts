@@ -157,7 +157,8 @@ Project skill`,
 			expect(theme?.sourcePath).toBe(projectThemePath);
 		});
 
-		it("should load symlinked user and project extensions once", async () => {
+		// Windows requires Developer Mode/privilege to create symlinks; fixture setup throws EPERM.
+		it.skipIf(process.platform === "win32")("should load symlinked user and project extensions once", async () => {
 			const sharedExtDir = join(tempDir, "shared-extensions");
 			mkdirSync(sharedExtDir, { recursive: true });
 			writeFileSync(

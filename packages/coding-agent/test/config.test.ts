@@ -212,7 +212,8 @@ describe("detectInstallMethod", () => {
 		});
 	});
 
-	test("self-update respects configured npmCommand", () => {
+	// fixtures assume Unix npm lib/node_modules global layout; real package managers on PATH; chmod 0o500 is a no-op on NTFS.
+	test.skipIf(process.platform === "win32")("self-update respects configured npmCommand", () => {
 		const { prefix } = createNpmPrefixInstall();
 
 		const command = getSelfUpdateCommand("@earendil-works/pi-coding-agent", ["npm", "--prefix", prefix]);
@@ -269,7 +270,8 @@ describe("detectInstallMethod", () => {
 		);
 	});
 
-	test("self-updates bun global installs from bun pm bin", () => {
+	// fixtures assume Unix npm lib/node_modules global layout; real package managers on PATH; chmod 0o500 is a no-op on NTFS.
+	test.skipIf(process.platform === "win32")("self-updates bun global installs from bun pm bin", () => {
 		createBunGlobalInstall();
 
 		const command = getSelfUpdateCommand("@earendil-works/pi-coding-agent");
@@ -282,7 +284,8 @@ describe("detectInstallMethod", () => {
 		});
 	});
 
-	test("self-updates renamed pnpm global installs by removing the old package first", () => {
+	// fixtures assume Unix npm lib/node_modules global layout; real package managers on PATH; chmod 0o500 is a no-op on NTFS.
+	test.skipIf(process.platform === "win32")("self-updates renamed pnpm global installs by removing the old package first", () => {
 		createPnpmGlobalInstall();
 
 		const command = getSelfUpdateCommand("@mariozechner/pi-coding-agent", undefined, "@new-scope/pi");
@@ -308,7 +311,8 @@ describe("detectInstallMethod", () => {
 		});
 	});
 
-	test("self-updates pnpm v11 global installs resolved through the store", () => {
+	// fixtures assume Unix npm lib/node_modules global layout; real package managers on PATH; chmod 0o500 is a no-op on NTFS.
+	test.skipIf(process.platform === "win32")("self-updates pnpm v11 global installs resolved through the store", () => {
 		const temp = mkdtempSync(join(tmpdir(), "pi-pnpm11-"));
 		const binDir = join(temp, "bin");
 		const root = join(temp, "Library", "pnpm", "global", "v11");
@@ -351,7 +355,8 @@ describe("detectInstallMethod", () => {
 		});
 	});
 
-	test("self-updates renamed yarn global installs by removing the old package first", () => {
+	// fixtures assume Unix npm lib/node_modules global layout; real package managers on PATH; chmod 0o500 is a no-op on NTFS.
+	test.skipIf(process.platform === "win32")("self-updates renamed yarn global installs by removing the old package first", () => {
 		createYarnGlobalInstall();
 
 		const command = getSelfUpdateCommand("@mariozechner/pi-coding-agent", undefined, "@new-scope/pi");
@@ -376,7 +381,8 @@ describe("detectInstallMethod", () => {
 		});
 	});
 
-	test("self-updates renamed bun global installs by removing the old package first", () => {
+	// fixtures assume Unix npm lib/node_modules global layout; real package managers on PATH; chmod 0o500 is a no-op on NTFS.
+	test.skipIf(process.platform === "win32")("self-updates renamed bun global installs by removing the old package first", () => {
 		createBunGlobalInstall();
 
 		const command = getSelfUpdateCommand("@mariozechner/pi-coding-agent", undefined, "@new-scope/pi");
@@ -402,7 +408,8 @@ describe("detectInstallMethod", () => {
 		});
 	});
 
-	test("does not self-update when npm install path is not writable", () => {
+	// fixtures assume Unix npm lib/node_modules global layout; real package managers on PATH; chmod 0o500 is a no-op on NTFS.
+	test.skipIf(process.platform === "win32")("does not self-update when npm install path is not writable", () => {
 		const { packageDir } = createNpmPrefixInstall();
 		chmodSync(packageDir, 0o500);
 
