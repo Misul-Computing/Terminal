@@ -1,3 +1,4 @@
+import { sep } from "node:path";
 import { parse } from "yaml";
 import { type ExecutionEnv, type FileInfo, type PromptTemplate, type Result, toError } from "./types.ts";
 
@@ -214,7 +215,8 @@ function parseFrontmatter<T extends Record<string, unknown>>(
 }
 
 function basenameEnvPath(path: string): string {
-	const normalized = path.replace(/\/+$/, "");
+	// Split on the OS separator only (preserves backslashes in POSIX filenames).
+	const normalized = path.split(sep).join("/").replace(/\/+$/, "");
 	const slashIndex = normalized.lastIndexOf("/");
 	return slashIndex === -1 ? normalized : normalized.slice(slashIndex + 1);
 }

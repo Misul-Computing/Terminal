@@ -1,4 +1,5 @@
 import ignore from "ignore";
+import { sep } from "node:path";
 import { parse } from "yaml";
 import { type ExecutionEnv, type FileInfo, type Result, type Skill, toError } from "./types.ts";
 
@@ -349,25 +350,33 @@ async function resolveKind(
 	return target.value.kind === "file" || target.value.kind === "directory" ? target.value.kind : undefined;
 }
 
+// Normalize a native ExecutionEnv path to forward slashes by splitting on the
+// OS separator only. This preserves legitimate backslashes in POSIX filenames
+// (a blanket /\\/g replace would corrupt them) while converting native Windows
+// separators. Mirrors toPosixPath in coding-agent/src/core/skills.ts.
+function toPosixEnvPath(path: string): string {
+	return path.split(sep).join("/");
+}
+
 function joinEnvPath(base: string, child: string): string {
-	return `${base.replace(/\/+$/, "")}/${child.replace(/^\/+/, "")}`;
+	return `${toPosixEnvPath(base).replace(/\/+$/, "")}/${toPosixEnvPath(child).replace(/^\/+/, "")}`;
 }
 
 function dirnameEnvPath(path: string): string {
-	const normalized = path.replace(/\/+$/, "");
+	const normalized = toPosixEnvPath(path).replace(/\/+$/, "");
 	const slashIndex = normalized.lastIndexOf("/");
 	return slashIndex <= 0 ? "/" : normalized.slice(0, slashIndex);
 }
 
 function basenameEnvPath(path: string): string {
-	const normalized = path.replace(/\/+$/, "");
+	const normalized = toPosixEnvPath(path).replace(/\/+$/, "");
 	const slashIndex = normalized.lastIndexOf("/");
 	return slashIndex === -1 ? normalized : normalized.slice(slashIndex + 1);
 }
 
 function relativeEnvPath(root: string, path: string): string {
-	const normalizedRoot = root.replace(/\/+$/, "");
-	const normalizedPath = path.replace(/\/+$/, "");
+	const normalizedRoot = toPosixEnvPath(root).replace(/\/+$/, "");
+	const normalizedPath = toPosixEnvPath(path).replace(/\/+$/, "");
 	if (normalizedPath === normalizedRoot) return "";
 	return normalizedPath.startsWith(`${normalizedRoot}/`)
 		? normalizedPath.slice(normalizedRoot.length + 1)

@@ -35,7 +35,8 @@ Use this skill.
 		]);
 	});
 
-	it("loads skills through symlinked directories", async () => {
+	// Windows requires Developer Mode/privilege to create symlinks; fixture setup throws EPERM.
+	it.skipIf(process.platform === "win32")("loads skills through symlinked directories", async () => {
 		const root = createTempDir();
 		const env = new NodeExecutionEnv({ cwd: root });
 		await env.createDir("actual/example", { recursive: true });
