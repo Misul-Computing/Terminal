@@ -543,7 +543,7 @@ describe("InteractiveMode.showLoadedResources", () => {
 		];
 	}
 
-	test("shows a compact resource listing by default", () => {
+	test("does not list skills at startup (skills live in the /skills menu)", () => {
 		const fakeThis = createShowLoadedResourcesThis({
 			quietStartup: false,
 			skills: [{ filePath: "/tmp/skill/SKILL.md", name: "commit" }],
@@ -554,16 +554,15 @@ describe("InteractiveMode.showLoadedResources", () => {
 		});
 
 		const output = renderAll(fakeThis.chatContainer);
-		expect(output).toContain("[Skills]");
-		expect(output).toContain("commit");
-		expect(output).not.toContain("resource-list");
+		expect(output).not.toContain("[Skills]");
+		expect(output).not.toContain("commit");
 	});
 
 	test("shows full resource listing when expanded", () => {
 		const fakeThis = createShowLoadedResourcesThis({
 			quietStartup: false,
 			toolOutputExpanded: true,
-			skills: [{ filePath: "/tmp/skill/SKILL.md", name: "commit" }],
+			extensions: [{ path: "/tmp/extensions/answer.ts" }, { path: "/tmp/extensions/btw.ts" }],
 		});
 
 		(InteractiveMode as any).prototype.showLoadedResources.call(fakeThis, {
@@ -571,9 +570,9 @@ describe("InteractiveMode.showLoadedResources", () => {
 		});
 
 		const output = renderAll(fakeThis.chatContainer);
-		expect(output).toContain("[Skills]");
+		expect(output).toContain("[Extensions]");
 		expect(output).toContain("resource-list");
-		expect(output).not.toContain("commit");
+		expect(output).not.toContain("answer.ts, btw.ts");
 	});
 
 	test("shows full resource listing on verbose startup even when tool output is collapsed", () => {
@@ -581,7 +580,7 @@ describe("InteractiveMode.showLoadedResources", () => {
 			quietStartup: true,
 			verbose: true,
 			toolOutputExpanded: false,
-			skills: [{ filePath: "/tmp/skill/SKILL.md", name: "commit" }],
+			extensions: [{ path: "/tmp/extensions/answer.ts" }, { path: "/tmp/extensions/btw.ts" }],
 		});
 
 		(InteractiveMode as any).prototype.showLoadedResources.call(fakeThis, {
@@ -589,9 +588,9 @@ describe("InteractiveMode.showLoadedResources", () => {
 		});
 
 		const output = renderAll(fakeThis.chatContainer);
-		expect(output).toContain("[Skills]");
+		expect(output).toContain("[Extensions]");
 		expect(output).toContain("resource-list");
-		expect(output).not.toContain("commit");
+		expect(output).not.toContain("answer.ts, btw.ts");
 	});
 
 	test("abbreviates extensions in compact listing", () => {

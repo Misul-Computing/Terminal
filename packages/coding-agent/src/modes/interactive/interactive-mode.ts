@@ -111,7 +111,7 @@ import { ExtensionEditorComponent } from "./components/extension-editor.ts";
 import { ExtensionInputComponent } from "./components/extension-input.ts";
 import { ExtensionSelectorComponent } from "./components/extension-selector.ts";
 import { FooterComponent } from "./components/footer.ts";
-import { formatKeyText, keyDisplayText, keyHint, keyText, rawKeyHint } from "./components/keybinding-hints.ts";
+import { formatKeyText, keyDisplayText, keyText } from "./components/keybinding-hints.ts";
 import { LoginDialogComponent } from "./components/login-dialog.ts";
 import { ModelSelectorComponent } from "./components/model-selector.ts";
 import { type AuthSelectorProvider, OAuthSelectorComponent } from "./components/oauth-selector.ts";
@@ -675,52 +675,14 @@ export class InteractiveMode {
 			const wordmark = theme.fg("accent", MISUL_LOGO_LINES.join("\n"));
 			const logo = `${wordmark}\n${theme.bold(theme.fg("accent", APP_TITLE))}${theme.fg("dim", ` v${this.version}`)}`;
 
-			// Build startup instructions using keybinding hint helpers
-			const hint = (keybinding: AppKeybinding, description: string) => keyHint(keybinding, description);
-
-			const expandedInstructions = [
-				hint("app.interrupt", "to interrupt"),
-				hint("app.clear", "to clear"),
-				rawKeyHint(`${keyText("app.clear")} twice`, "to exit"),
-				hint("app.exit", "to exit (empty)"),
-				hint("app.suspend", "to suspend"),
-				keyHint("tui.editor.deleteToLineEnd", "to delete to end"),
-				hint("app.thinking.cycle", "to cycle thinking level"),
-				rawKeyHint(`${keyText("app.model.cycleForward")}/${keyText("app.model.cycleBackward")}`, "to cycle models"),
-				hint("app.model.select", "to select model"),
-				hint("app.tools.expand", "to expand tools"),
-				hint("app.thinking.toggle", "to expand thinking"),
-				hint("app.editor.external", "for external editor"),
-				rawKeyHint("/", "for commands"),
-				rawKeyHint("!", "to run bash"),
-				rawKeyHint("!!", "to run bash (no context)"),
-				hint("app.message.followUp", "to queue follow-up"),
-				hint("app.message.dequeue", "to edit all queued messages"),
-				hint("app.clipboard.pasteImage", "to paste image"),
-				rawKeyHint("drop files", "to attach"),
-			].join("\n");
-			const compactInstructions = [
-				hint("app.interrupt", "interrupt"),
-				rawKeyHint(`${keyText("app.clear")}/${keyText("app.exit")}`, "clear/exit"),
-				rawKeyHint("/", "commands"),
-				rawKeyHint("!", "bash"),
-				hint("app.tools.expand", "more"),
-			].join(theme.fg("muted", " · "));
-			const compactOnboarding = theme.fg(
-				"dim",
-				`Press ${keyText("app.tools.expand")} to show full startup help and loaded resources.`,
-			);
+			// Startup header is intentionally minimal: the wordmark and a one-line
+			// intro only — no keybinding hints and no loaded-resources/skills list.
 			const onboarding = theme.fg(
 				"dim",
 				`${APP_TITLE} — a coding agent by Misul Computing. Ask it to build, debug, or explain code, or type / for commands.`,
 			);
-			this.builtInHeader = new ExpandableText(
-				() => `${logo}\n${compactInstructions}\n${compactOnboarding}\n\n${onboarding}`,
-				() => `${logo}\n${expandedInstructions}\n\n${onboarding}`,
-				this.getStartupExpansionState(),
-				1,
-				0,
-			);
+			const headerText = `${logo}\n\n${onboarding}`;
+			this.builtInHeader = new ExpandableText(() => headerText, () => headerText, this.getStartupExpansionState(), 1, 0);
 
 			// Setup UI layout
 			this.headerContainer.addChild(new Spacer(1));
@@ -1419,18 +1381,7 @@ export class InteractiveMode {
 				addLoadedSection("Context", contextCompactList, contextList);
 			}
 
-			const skills = skillsResult.skills;
-			if (skills.length > 0) {
-				const groups = this.buildScopeGroups(
-					skills.map((skill) => ({ path: skill.filePath, sourceInfo: skill.sourceInfo })),
-				);
-				const skillList = this.formatScopeGroups(groups, {
-					formatPath: (item) => this.formatDisplayPath(item.path),
-					formatPackagePath: (item) => this.getShortPath(item.path, item.sourceInfo),
-				});
-				const skillCompactList = formatCompactList(skills.map((skill) => skill.name));
-				addLoadedSection("Skills", skillCompactList, skillList);
-			}
+			// Skills are intentionally NOT listed at startup; they are available via the /skills menu.
 
 			const templates = this.session.promptTemplates;
 			if (templates.length > 0) {
