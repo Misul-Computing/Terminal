@@ -356,8 +356,9 @@ describe("skills", () => {
 				skillPaths: [join(fixturesDir, "valid-skill")],
 				includeDefaults: true,
 			});
-			expect(skills).toHaveLength(1);
-			expect(skills[0].sourceInfo.scope).toBe("temporary");
+			const explicit = skills.find((s) => s.name === "valid-skill");
+			expect(explicit).toBeDefined();
+			expect(explicit?.sourceInfo.scope).toBe("temporary");
 			expect(diagnostics).toHaveLength(0);
 		});
 
@@ -368,7 +369,7 @@ describe("skills", () => {
 				skillPaths: ["/non/existent/path"],
 				includeDefaults: true,
 			});
-			expect(skills).toHaveLength(0);
+			expect(skills.some((s) => s.filePath.includes("non/existent"))).toBe(false);
 			expect(diagnostics.some((d: ResourceDiagnostic) => d.message.includes("does not exist"))).toBe(true);
 		});
 

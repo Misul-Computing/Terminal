@@ -16,7 +16,7 @@ import type { PromptTemplate } from "./prompt-templates.ts";
 import { loadPromptTemplates } from "./prompt-templates.ts";
 import { SettingsManager } from "./settings-manager.ts";
 import type { Skill } from "./skills.ts";
-import { loadSkills } from "./skills.ts";
+import { getBundledSkillsDir, loadSkills } from "./skills.ts";
 import { createSourceInfo, type SourceInfo } from "./source-info.ts";
 
 export interface ResourceExtensionPaths {
@@ -404,7 +404,8 @@ export class DefaultResourceLoader implements ResourceLoader {
 
 		const skillPaths = this.noSkills
 			? this.mergePaths(cliEnabledSkills, this.additionalSkillPaths)
-			: this.mergePaths([...cliEnabledSkills, ...enabledSkills], this.additionalSkillPaths);
+			: // Bundled defaults load last so user/project/cli skills win name collisions.
+				this.mergePaths([...cliEnabledSkills, ...enabledSkills], [...this.additionalSkillPaths, getBundledSkillsDir()]);
 
 		this.lastSkillPaths = skillPaths;
 		this.updateSkillsFromPaths(skillPaths, metadataByPath);

@@ -1,6 +1,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "fs";
 import ignore from "ignore";
 import { basename, dirname, join, relative, resolve, sep } from "path";
+import { fileURLToPath } from "url";
 import { CONFIG_DIR_NAME, getAgentDir } from "../config.ts";
 import { parseFrontmatter } from "../utils/frontmatter.ts";
 import { canonicalizePath, resolvePath } from "../utils/paths.ts";
@@ -16,6 +17,23 @@ const MAX_DESCRIPTION_LENGTH = 1024;
 const IGNORE_FILE_NAMES = [".gitignore", ".ignore", ".fdignore"];
 
 type IgnoreMatcher = ReturnType<typeof ignore>;
+
+/**
+ * Resolve the directory holding the bundled default skills, working in both the
+ * dev layout (src/core/skills.ts -> ../../skills = packages/coding-agent/skills)
+ * and the built layout (dist/core/skills.ts -> ../skills = dist/skills).
+ */
+export function getBundledSkillsDir(): string {
+	const moduleDir = dirname(fileURLToPath(import.meta.url));
+	const candidates = [join(moduleDir, "..", "..", "skills"), join(moduleDir, "..", "skills")];
+	for (const candidate of candidates) {
+		if (existsSync(candidate)) {
+			return candidate;
+		}
+	}
+	// Fallback to the dev path so a missing dir is simply skipped by the loader.
+	return candidates[0];
+}
 
 function toPosixPath(p: string): string {
 	return p.split(sep).join("/");
@@ -430,6 +448,8 @@ export function loadSkills(options: LoadSkillsOptions): LoadSkillsResult {
 	if (includeDefaults) {
 		addSkills(loadSkillsFromDirInternal(join(resolvedAgentDir, "skills"), "user", true));
 		addSkills(loadSkillsFromDirInternal(resolve(resolvedCwd, CONFIG_DIR_NAME, "skills"), "project", true));
+		// Bundled defaults load last so user/project skills win name collisions.
+		addSkills(loadSkillsFromDirInternal(getBundledSkillsDir(), "bundled", true));
 	}
 
 	const userSkillsDir = join(resolvedAgentDir, "skills");
