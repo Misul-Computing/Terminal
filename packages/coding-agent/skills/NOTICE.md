@@ -32,3 +32,12 @@ All bundled skills are distributed under the MIT License.
   scaffolding, and accessibility/quality floor are original additions that make
   the guidance universal across models. No text is copied from that skill, so
   the bundle remains MIT.
+
+## api-design
+
+- Source: Original Misul Terminal skill.
+- License: MIT
+- Original synthesis of standard HTTP/REST and backend API best practice into
+  universal, model-agnostic scaffolding (method/status semantics, error
+  envelope, boundary validation, pagination, versioning, an auth/security floor,
+  idempotency, observability).
