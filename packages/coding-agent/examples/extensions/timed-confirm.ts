@@ -7,7 +7,7 @@
  * - /timed-signal - Shows confirm using AbortSignal (manual approach)
  */
 
-import type { ExtensionAPI } from "@misul/coding-agent";
+import type { ExtensionAPI } from "@misul/terminal";
 
 export default function (pi: ExtensionAPI) {
 	// Simple approach: use timeout option (recommended)

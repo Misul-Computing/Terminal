@@ -4,7 +4,7 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { registerFauxProvider } from "@misul/ai";
-import { AuthStorage, ModelRegistry } from "@misul/coding-agent";
+import { AuthStorage, ModelRegistry } from "@misul/terminal";
 
 export interface FauxRig {
 	faux: ReturnType<typeof registerFauxProvider>;

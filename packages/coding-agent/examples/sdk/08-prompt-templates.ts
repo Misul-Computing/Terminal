@@ -11,7 +11,7 @@ import {
 	getAgentDir,
 	type PromptTemplate,
 	SessionManager,
-} from "@misul/coding-agent";
+} from "@misul/terminal";
 
 // Define custom templates
 const deployTemplate: PromptTemplate = {

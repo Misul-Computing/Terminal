@@ -3,7 +3,7 @@ import {
 	type ExtensionAPI,
 	type ExtensionContext,
 	type KeybindingsManager,
-} from "@misul/coding-agent";
+} from "@misul/terminal";
 import type { Component, EditorTheme, TUI } from "@misul/tui";
 import { truncateToWidth, visibleWidth } from "@misul/tui";
 

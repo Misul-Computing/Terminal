@@ -1,4 +1,4 @@
-import type { ExtensionAPI, ExtensionContext } from "@misul/coding-agent";
+import type { ExtensionAPI, ExtensionContext } from "@misul/terminal";
 
 const COMPACT_THRESHOLD_TOKENS = 100_000;
 

@@ -12,7 +12,7 @@ import {
 	getAgentDir,
 	SessionManager,
 	type Skill,
-} from "@misul/coding-agent";
+} from "@misul/terminal";
 
 // Or define custom skills inline
 const customSkill: Skill = {

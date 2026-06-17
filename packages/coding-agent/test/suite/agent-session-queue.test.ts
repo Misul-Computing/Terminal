@@ -1,6 +1,6 @@
 import type { AgentTool } from "@misul/agent-core";
 import { fauxAssistantMessage, fauxToolCall } from "@misul/ai";
-import type { ExtensionAPI } from "@misul/coding-agent";
+import type { ExtensionAPI } from "@misul/terminal";
 import { Type } from "typebox";
 import { afterEach, describe, expect, it } from "vitest";
 import { createHarness, getAssistantTexts, getMessageText, getUserTexts, type Harness } from "./harness.ts";

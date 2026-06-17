@@ -11,7 +11,7 @@
  */
 
 import { StringEnum } from "@misul/ai";
-import type { ExtensionAPI, ExtensionContext, Theme } from "@misul/coding-agent";
+import type { ExtensionAPI, ExtensionContext, Theme } from "@misul/terminal";
 import { matchesKey, Text, truncateToWidth } from "@misul/tui";
 import { Type } from "typebox";
 

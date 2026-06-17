@@ -24,7 +24,7 @@
 	},
 	"dependencies": {
 		"@misul/ai": "*",
-		"@misul/coding-agent": "*"
+		"@misul/terminal": "*"
 	},
 	"devDependencies": {
 		"@opentelemetry/api": "1.9.0",

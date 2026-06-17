@@ -4,7 +4,7 @@
  * Override settings using SettingsManager.
  */
 
-import { createAgentSession, SessionManager, SettingsManager } from "@misul/coding-agent";
+import { createAgentSession, SessionManager, SettingsManager } from "@misul/terminal";
 
 const cwd = process.cwd();
 

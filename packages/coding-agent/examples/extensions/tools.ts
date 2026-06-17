@@ -9,8 +9,8 @@
  * 2. Use /tools to open the tool selector
  */
 
-import type { ExtensionAPI, ExtensionContext, ToolInfo } from "@misul/coding-agent";
-import { getSettingsListTheme } from "@misul/coding-agent";
+import type { ExtensionAPI, ExtensionContext, ToolInfo } from "@misul/terminal";
+import { getSettingsListTheme } from "@misul/terminal";
 import { Container, type SettingItem, SettingsList } from "@misul/tui";
 
 // State persisted to session

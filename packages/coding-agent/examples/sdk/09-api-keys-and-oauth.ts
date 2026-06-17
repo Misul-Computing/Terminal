@@ -4,7 +4,7 @@
  * Configure API key resolution via AuthStorage and ModelRegistry.
  */
 
-import { AuthStorage, createAgentSession, ModelRegistry, SessionManager } from "@misul/coding-agent";
+import { AuthStorage, createAgentSession, ModelRegistry, SessionManager } from "@misul/terminal";
 
 // Default: AuthStorage uses ~/.pi/agent/auth.json
 // ModelRegistry loads built-in + custom models from ~/.pi/agent/models.json

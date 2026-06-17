@@ -1,6 +1,6 @@
 import { complete, getModel } from "@misul/ai";
-import type { ExtensionAPI, ExtensionCommandContext } from "@misul/coding-agent";
-import { DynamicBorder, getMarkdownTheme } from "@misul/coding-agent";
+import type { ExtensionAPI, ExtensionCommandContext } from "@misul/terminal";
+import { DynamicBorder, getMarkdownTheme } from "@misul/terminal";
 import { Container, Markdown, matchesKey, Text } from "@misul/tui";
 
 type ContentBlock = {

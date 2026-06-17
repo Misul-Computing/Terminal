@@ -5,7 +5,7 @@
  * without paying for an extra follow-up LLM turn.
  */
 
-import { defineTool, type ExtensionAPI } from "@misul/coding-agent";
+import { defineTool, type ExtensionAPI } from "@misul/terminal";
 import { Text } from "@misul/tui";
 import { Type } from "typebox";
 

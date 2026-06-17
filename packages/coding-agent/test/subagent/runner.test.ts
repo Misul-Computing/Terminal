@@ -15,7 +15,7 @@ interface FauxRig {
 	authStorage: AuthStorage;
 	modelRegistry: ModelRegistry;
 	model: ReturnType<ReturnType<typeof registerFauxProvider>["getModel"]>;
-	/** Isolated empty agent dir so child sessions skip real ~/.pi/agent extension discovery (perf bug P10). */
+	/** Isolated empty agent dir so child sessions skip real ~/.misul/agent extension discovery (perf bug P10). */
 	agentDir: string;
 }
 

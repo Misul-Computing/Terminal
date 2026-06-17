@@ -473,10 +473,10 @@ try {
 }
 
 const piConfigName: string | undefined = pkg.piConfig?.name;
-export const PACKAGE_NAME: string = pkg.name || "@misul/coding-agent";
+export const PACKAGE_NAME: string = pkg.name || "@misul/terminal";
 export const APP_NAME: string = piConfigName || "pi";
 export const APP_TITLE: string = pkg.piConfig?.title || (piConfigName ? APP_NAME : "π");
-export const CONFIG_DIR_NAME: string = pkg.piConfig?.configDir || ".pi";
+export const CONFIG_DIR_NAME: string = pkg.piConfig?.configDir || ".misul";
 export const VERSION: string = pkg.version || "0.0.0";
 
 // Derived from APP_NAME, e.g. MISUL_CODING_AGENT_DIR

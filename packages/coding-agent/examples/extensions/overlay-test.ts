@@ -8,7 +8,7 @@
  * - Edge case tests (wide chars, styled text, emoji)
  */
 
-import type { ExtensionAPI, ExtensionCommandContext, Theme } from "@misul/coding-agent";
+import type { ExtensionAPI, ExtensionCommandContext, Theme } from "@misul/terminal";
 import { CURSOR_MARKER, type Focusable, matchesKey, visibleWidth } from "@misul/tui";
 
 export default function (pi: ExtensionAPI) {

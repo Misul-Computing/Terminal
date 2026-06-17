@@ -21,7 +21,7 @@
  */
 
 import type { TextContent } from "@misul/ai";
-import { type ExtensionAPI, getAgentDir, withFileMutationQueue } from "@misul/coding-agent";
+import { type ExtensionAPI, getAgentDir, withFileMutationQueue } from "@misul/terminal";
 import { constants, readFileSync } from "fs";
 import { access, appendFile, readFile } from "fs/promises";
 import { join, resolve } from "path";

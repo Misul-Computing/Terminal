@@ -14,8 +14,8 @@
  */
 
 import type { AssistantMessage, Model } from "@misul/ai";
-import type { AuthStorage, CreateAgentSessionResult, ModelRegistry } from "@misul/coding-agent";
-import { createAgentSession, SessionManager } from "@misul/coding-agent";
+import type { AuthStorage, CreateAgentSessionResult, ModelRegistry } from "@misul/terminal";
+import { createAgentSession, SessionManager } from "@misul/terminal";
 import { trace } from "@opentelemetry/api";
 import { recordChat } from "./cost-adapter.ts";
 import { cleanupRunDir, cloneToRunDir } from "./isolation.ts";

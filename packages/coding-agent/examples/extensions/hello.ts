@@ -3,7 +3,7 @@
  */
 
 import { Type } from "@misul/ai";
-import { defineTool, type ExtensionAPI } from "@misul/coding-agent";
+import { defineTool, type ExtensionAPI } from "@misul/terminal";
 
 const helloTool = defineTool({
 	name: "hello",

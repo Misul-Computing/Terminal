@@ -19,7 +19,7 @@ import * as path from "node:path";
 import type { AgentToolResult } from "@misul/agent-core";
 import type { Message } from "@misul/ai";
 import { StringEnum } from "@misul/ai";
-import { type ExtensionAPI, getMarkdownTheme, withFileMutationQueue } from "@misul/coding-agent";
+import { type ExtensionAPI, getMarkdownTheme, withFileMutationQueue } from "@misul/terminal";
 import { Container, Markdown, Spacer, Text } from "@misul/tui";
 import { Type } from "typebox";
 import { type AgentConfig, type AgentScope, discoverAgents } from "./agents.ts";

@@ -14,9 +14,9 @@ import { detectTerminalBackgroundTheme, initTheme, setTheme } from "../modes/int
 
 // Canonical identity of the official Misul Terminal distribution. A rebrand/fork
 // with different values is intentionally not treated as official.
-const OFFICIAL_PACKAGE_NAME = "@misul/coding-agent";
+const OFFICIAL_PACKAGE_NAME = "@misul/terminal";
 const OFFICIAL_APP_NAME = "misul";
-const OFFICIAL_CONFIG_DIR_NAME = ".pi";
+const OFFICIAL_CONFIG_DIR_NAME = ".misul";
 
 interface DistributionMetadata {
 	packageName: string;

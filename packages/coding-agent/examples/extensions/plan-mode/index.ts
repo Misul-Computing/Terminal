@@ -14,7 +14,7 @@
 
 import type { AgentMessage } from "@misul/agent-core";
 import type { AssistantMessage, TextContent } from "@misul/ai";
-import type { ExtensionAPI, ExtensionContext } from "@misul/coding-agent";
+import type { ExtensionAPI, ExtensionContext } from "@misul/terminal";
 import { Key } from "@misul/tui";
 import { extractTodoItems, isSafeCommand, markCompletedSteps, type TodoItem } from "./utils.ts";
 

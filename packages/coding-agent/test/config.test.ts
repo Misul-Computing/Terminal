@@ -152,8 +152,8 @@ describe("detectInstallMethod", () => {
 		);
 
 		expect(detectInstallMethod()).toBe("pnpm");
-		expect(getUpdateInstruction("@misul/coding-agent")).toBe(
-			"Run: pnpm install -g --ignore-scripts --config.minimumReleaseAge=0 @misul/coding-agent",
+		expect(getUpdateInstruction("@misul/terminal")).toBe(
+			"Run: pnpm install -g --ignore-scripts --config.minimumReleaseAge=0 @misul/terminal",
 		);
 	});
 
@@ -161,16 +161,16 @@ describe("detectInstallMethod", () => {
 		setExecPath("/usr/local/bin/node");
 
 		expect(detectInstallMethod()).toBe("unknown");
-		expect(getSelfUpdateCommand("@misul/coding-agent")).toBeUndefined();
-		expect(getUpdateInstruction("@misul/coding-agent")).toBe(
-			"Update @misul/coding-agent using the package manager, wrapper, or source checkout that provides this installation.",
+		expect(getSelfUpdateCommand("@misul/terminal")).toBeUndefined();
+		expect(getUpdateInstruction("@misul/terminal")).toBe(
+			"Update @misul/terminal using the package manager, wrapper, or source checkout that provides this installation.",
 		);
 	});
 
 	test("self-updates npm installs from custom prefixes", () => {
 		const { prefix } = createNpmPrefixInstall();
 
-		const command = getSelfUpdateCommand("@misul/coding-agent");
+		const command = getSelfUpdateCommand("@misul/terminal");
 
 		expect(detectInstallMethod()).toBe("npm");
 		expect(command).toEqual({
@@ -182,9 +182,9 @@ describe("detectInstallMethod", () => {
 				"-g",
 				"--ignore-scripts",
 				"--min-release-age=0",
-				"@misul/coding-agent",
+				"@misul/terminal",
 			],
-			display: `npm --prefix ${prefix} install -g --ignore-scripts --min-release-age=0 @misul/coding-agent`,
+			display: `npm --prefix ${prefix} install -g --ignore-scripts --min-release-age=0 @misul/terminal`,
 		});
 	});
 
@@ -216,7 +216,7 @@ describe("detectInstallMethod", () => {
 	test.skipIf(process.platform === "win32")("self-update respects configured npmCommand", () => {
 		const { prefix } = createNpmPrefixInstall();
 
-		const command = getSelfUpdateCommand("@misul/coding-agent", ["npm", "--prefix", prefix]);
+		const command = getSelfUpdateCommand("@misul/terminal", ["npm", "--prefix", prefix]);
 
 		expect(command).toEqual({
 			command: "npm",
@@ -227,16 +227,16 @@ describe("detectInstallMethod", () => {
 				"-g",
 				"--ignore-scripts",
 				"--min-release-age=0",
-				"@misul/coding-agent",
+				"@misul/terminal",
 			],
-			display: `npm --prefix ${prefix} install -g --ignore-scripts --min-release-age=0 @misul/coding-agent`,
+			display: `npm --prefix ${prefix} install -g --ignore-scripts --min-release-age=0 @misul/terminal`,
 		});
 	});
 
 	test("self-update treats empty npmCommand as unset", () => {
 		const { prefix } = createNpmPrefixInstall();
 
-		const command = getSelfUpdateCommand("@misul/coding-agent", []);
+		const command = getSelfUpdateCommand("@misul/terminal", []);
 
 		expect(command?.args).toEqual([
 			"--prefix",
@@ -245,17 +245,17 @@ describe("detectInstallMethod", () => {
 			"-g",
 			"--ignore-scripts",
 			"--min-release-age=0",
-			"@misul/coding-agent",
+			"@misul/terminal",
 		]);
 	});
 
 	test("quotes npm self-update display paths", () => {
 		const { prefix } = createNpmPrefixInstall("pi prefix ");
 
-		const command = getSelfUpdateCommand("@misul/coding-agent");
+		const command = getSelfUpdateCommand("@misul/terminal");
 
 		expect(command?.display).toBe(
-			`npm --prefix "${prefix}" install -g --ignore-scripts --min-release-age=0 @misul/coding-agent`,
+			`npm --prefix "${prefix}" install -g --ignore-scripts --min-release-age=0 @misul/terminal`,
 		);
 	});
 
@@ -265,8 +265,8 @@ describe("detectInstallMethod", () => {
 		setExecPath(`${packageDir}\\dist\\cli.js`);
 
 		expect(detectInstallMethod()).toBe("npm");
-		expect(getUpdateInstruction("@misul/coding-agent")).toBe(
-			"Run: npm install -g --ignore-scripts --min-release-age=0 @misul/coding-agent",
+		expect(getUpdateInstruction("@misul/terminal")).toBe(
+			"Run: npm install -g --ignore-scripts --min-release-age=0 @misul/terminal",
 		);
 	});
 
@@ -274,13 +274,13 @@ describe("detectInstallMethod", () => {
 	test.skipIf(process.platform === "win32")("self-updates bun global installs from bun pm bin", () => {
 		createBunGlobalInstall();
 
-		const command = getSelfUpdateCommand("@misul/coding-agent");
+		const command = getSelfUpdateCommand("@misul/terminal");
 
 		expect(detectInstallMethod()).toBe("bun");
 		expect(command).toEqual({
 			command: "bun",
-			args: ["install", "-g", "--ignore-scripts", "--minimum-release-age=0", "@misul/coding-agent"],
-			display: "bun install -g --ignore-scripts --minimum-release-age=0 @misul/coding-agent",
+			args: ["install", "-g", "--ignore-scripts", "--minimum-release-age=0", "@misul/terminal"],
+			display: "bun install -g --ignore-scripts --minimum-release-age=0 @misul/terminal",
 		});
 	});
 
@@ -316,7 +316,7 @@ describe("detectInstallMethod", () => {
 		const temp = mkdtempSync(join(tmpdir(), "pi-pnpm11-"));
 		const binDir = join(temp, "bin");
 		const root = join(temp, "Library", "pnpm", "global", "v11");
-		const packageName = "@misul/coding-agent";
+		const packageName = "@misul/terminal";
 		const globalPackageDir = join(root, "11e9a", "node_modules", "@earendil-works", "pi-coding-agent");
 		const storePackageDir = join(
 			temp,
@@ -413,8 +413,8 @@ describe("detectInstallMethod", () => {
 		const { packageDir } = createNpmPrefixInstall();
 		chmodSync(packageDir, 0o500);
 
-		expect(getSelfUpdateCommand("@misul/coding-agent")).toBeUndefined();
-		expect(getSelfUpdateUnavailableInstruction("@misul/coding-agent")).toContain(
+		expect(getSelfUpdateCommand("@misul/terminal")).toBeUndefined();
+		expect(getSelfUpdateUnavailableInstruction("@misul/terminal")).toContain(
 			"the install path is not writable",
 		);
 	});

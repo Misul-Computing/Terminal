@@ -64,7 +64,7 @@ describe("bundled skills", () => {
 	});
 
 	it("lets a project skill override a bundled skill of the same name", () => {
-		const projectSkillDir = join(cwd, ".pi", "skills", "semantic-compression");
+		const projectSkillDir = join(cwd, ".misul", "skills", "semantic-compression");
 		mkdirSync(projectSkillDir, { recursive: true });
 		const projectSkillPath = join(projectSkillDir, "SKILL.md");
 		writeFileSync(

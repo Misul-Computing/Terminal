@@ -9,7 +9,7 @@
  */
 
 import type { AssistantMessage } from "@misul/ai";
-import type { ExtensionAPI } from "@misul/coding-agent";
+import type { ExtensionAPI } from "@misul/terminal";
 import { truncateToWidth, visibleWidth } from "@misul/tui";
 
 export default function (pi: ExtensionAPI) {

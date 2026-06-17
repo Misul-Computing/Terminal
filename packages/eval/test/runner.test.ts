@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { fauxAssistantMessage, fauxToolCall } from "@misul/ai";
-import { createAgentSession } from "@misul/coding-agent";
+import { createAgentSession } from "@misul/terminal";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { loadFixtures } from "../src/fixtures.ts";
 import { gradeRunDir } from "../src/grader.ts";

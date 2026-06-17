@@ -21,7 +21,7 @@ import * as _bundledTypeboxCompile from "typebox/compile";
 import * as _bundledTypeboxValue from "typebox/value";
 import { CONFIG_DIR_NAME, getAgentDir, isBunBinary } from "../../config.ts";
 // NOTE: This import works because loader.ts exports are NOT re-exported from index.ts,
-// avoiding a circular dependency. Extensions can import from @misul/coding-agent.
+// avoiding a circular dependency. Extensions can import from @misul/terminal.
 import * as _bundledPiCodingAgent from "../../index.ts";
 import { resolvePath } from "../../utils/paths.ts";
 import { createEventBus, type EventBus } from "../event-bus.ts";
@@ -52,7 +52,7 @@ const VIRTUAL_MODULES: Record<string, unknown> = {
 	"@misul/tui": _bundledPiTui,
 	"@misul/ai": _bundledPiAi,
 	"@misul/ai/oauth": _bundledPiAiOauth,
-	"@misul/coding-agent": _bundledPiCodingAgent,
+	"@misul/terminal": _bundledPiCodingAgent,
 	"@mariozechner/pi-agent-core": _bundledPiAgentCore,
 	"@mariozechner/pi-tui": _bundledPiTui,
 	"@mariozechner/pi-ai": _bundledPiAi,
@@ -94,7 +94,7 @@ function getAliases(): Record<string, string> {
 	const piAiOauthEntry = resolveWorkspaceOrImport("ai/dist/oauth.js", "@misul/ai/oauth");
 
 	_aliases = {
-		"@misul/coding-agent": piCodingAgentEntry,
+		"@misul/terminal": piCodingAgentEntry,
 		"@misul/agent-core": piAgentCoreEntry,
 		"@misul/tui": piTuiEntry,
 		"@misul/ai": piAiEntry,

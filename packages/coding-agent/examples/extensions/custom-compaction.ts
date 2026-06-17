@@ -14,8 +14,8 @@
  */
 
 import { complete } from "@misul/ai";
-import type { ExtensionAPI } from "@misul/coding-agent";
-import { convertToLlm, serializeConversation } from "@misul/coding-agent";
+import type { ExtensionAPI } from "@misul/terminal";
+import { convertToLlm, serializeConversation } from "@misul/terminal";
 
 export default function (pi: ExtensionAPI) {
 	pi.on("session_before_compact", async (event, ctx) => {

@@ -1,12 +1,12 @@
 {
-	"name": "@misul/coding-agent",
-	"version": "0.79.5",
+	"name": "@misul/terminal",
+	"version": "0.1.0",
 	"description": "Coding agent CLI with read, bash, edit, write tools and session management",
 	"type": "module",
 	"piConfig": {
 		"name": "misul",
 		"title": "Misul Terminal",
-		"configDir": ".pi"
+		"configDir": ".misul"
 	},
 	"bin": {
 		"misul": "dist/cli.js"

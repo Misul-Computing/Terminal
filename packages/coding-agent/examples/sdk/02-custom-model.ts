@@ -5,7 +5,7 @@
  */
 
 import { getModel } from "@misul/ai";
-import { AuthStorage, createAgentSession, ModelRegistry } from "@misul/coding-agent";
+import { AuthStorage, createAgentSession, ModelRegistry } from "@misul/terminal";
 
 // Set up auth storage and model registry
 const authStorage = AuthStorage.create();

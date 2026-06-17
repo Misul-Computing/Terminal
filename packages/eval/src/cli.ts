@@ -8,7 +8,7 @@
 import { argv } from "node:process";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import type { Model } from "@misul/ai";
-import { AuthStorage, ModelRegistry } from "@misul/coding-agent";
+import { AuthStorage, ModelRegistry } from "@misul/terminal";
 import { loadFixtures } from "./fixtures.ts";
 import { gradeRunDir } from "./grader.ts";
 import { cleanupRunDir } from "./isolation.ts";

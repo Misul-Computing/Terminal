@@ -19,7 +19,7 @@
  *   /overlay-streaming  - Multiple input panels with simulated streaming (Tab to cycle focus)
  */
 
-import type { ExtensionAPI, ExtensionCommandContext, Theme } from "@misul/coding-agent";
+import type { ExtensionAPI, ExtensionCommandContext, Theme } from "@misul/terminal";
 import type { Component, OverlayAnchor, OverlayHandle, OverlayOptions, TUI } from "@misul/tui";
 import { Input, matchesKey, truncateToWidth, visibleWidth } from "@misul/tui";
 import { spawn } from "child_process";

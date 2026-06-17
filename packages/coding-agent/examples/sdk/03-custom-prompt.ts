@@ -9,7 +9,7 @@ import {
 	DefaultResourceLoader,
 	getAgentDir,
 	SessionManager,
-} from "@misul/coding-agent";
+} from "@misul/terminal";
 
 const cwd = process.cwd();
 const agentDir = getAgentDir();
