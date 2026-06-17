@@ -1,0 +1,5 @@
+{
+	"testCommand": "node strings.test.mjs",
+	"timeoutMs": 120000,
+	"tags": ["tier1", "single-file", "bugfix"]
+}

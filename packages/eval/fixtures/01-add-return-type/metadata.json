@@ -1,0 +1,5 @@
+{
+	"testCommand": "node math.test.mjs",
+	"timeoutMs": 120000,
+	"tags": ["tier1", "single-file", "types"]
+}

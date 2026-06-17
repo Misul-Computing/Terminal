@@ -1,0 +1,5 @@
+{
+	"testCommand": "node divide.test.mjs",
+	"timeoutMs": 120000,
+	"tags": ["tier1", "single-file", "error-handling"]
+}
