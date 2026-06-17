@@ -22,3 +22,13 @@ All bundled skills are distributed under the MIT License.
 - Source: oh-my-pi (`.omp/skills/semantic-compression`, https://omp.sh)
 - Copyright (c) 2025 Mario Zechner, Copyright (c) 2025-2026 Can Bölük
 - License: MIT
+
+## frontend-design
+
+- Source: Original Misul Terminal skill.
+- License: MIT
+- Aesthetic principles informed by Anthropic's `frontend-design` skill
+  (Apache-2.0, claude-plugins-official). The design-token system, execution
+  scaffolding, and accessibility/quality floor are original additions that make
+  the guidance universal across models. No text is copied from that skill, so
+  the bundle remains MIT.

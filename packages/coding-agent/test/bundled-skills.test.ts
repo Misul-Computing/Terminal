@@ -29,12 +29,13 @@ describe("bundled skills", () => {
 		expect(dir.replace(/\\/g, "/").endsWith("/skills")).toBe(true);
 	});
 
-	it("loads the three bundled skills when defaults are included", () => {
+	it("loads the bundled skills when defaults are included", () => {
 		const { skills } = loadSkills({ agentDir, cwd, skillPaths: [], includeDefaults: true });
 		const names = skills.map((s) => s.name);
 		expect(names).toContain("ponytail");
 		expect(names).toContain("system-prompts");
 		expect(names).toContain("semantic-compression");
+		expect(names).toContain("frontend-design");
 
 		// Bundled skills carry the "bundled" source label.
 		const ponytail = skills.find((s) => s.name === "ponytail");
