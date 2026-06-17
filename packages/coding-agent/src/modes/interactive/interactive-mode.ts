@@ -114,6 +114,7 @@ import { FooterComponent } from "./components/footer.ts";
 import { formatKeyText, keyDisplayText, keyText } from "./components/keybinding-hints.ts";
 import { LoginDialogComponent } from "./components/login-dialog.ts";
 import { ModelSelectorComponent } from "./components/model-selector.ts";
+import { ThinkingSelectorComponent } from "./components/thinking-selector.ts";
 import { type AuthSelectorProvider, OAuthSelectorComponent } from "./components/oauth-selector.ts";
 import { ScopedModelsSelectorComponent } from "./components/scoped-models-selector.ts";
 import { SessionSelectorComponent } from "./components/session-selector.ts";
@@ -2511,6 +2512,11 @@ export class InteractiveMode {
 				await this.handleModelCommand(searchTerm);
 				return;
 			}
+			if (text === "/thinking") {
+				this.editor.setText("");
+				this.showThinkingSelector();
+				return;
+			}
 			if (text === "/export" || text.startsWith("/export ")) {
 				await this.handleExportCommand(text);
 				this.editor.setText("");
@@ -4214,6 +4220,29 @@ export class InteractiveMode {
 				},
 			});
 			return { component: selector, focus: selector };
+		});
+	}
+
+	private showThinkingSelector(): void {
+		this.showSelector((done) => {
+			const selector = new ThinkingSelectorComponent(
+				this.session.thinkingLevel,
+				this.session.getAvailableThinkingLevels(),
+				(level) => {
+					this.session.setThinkingLevel(level);
+					this.footer.invalidate();
+					this.updateEditorBorderColor();
+					done();
+					this.showStatus(`Thinking: ${level}`);
+				},
+				() => {
+					done();
+					this.ui.requestRender();
+				},
+			);
+			// The component is a Container wrapping a SelectList; focus the list so it
+			// receives keyboard input (matches the settings/session selector pattern).
+			return { component: selector, focus: selector.getSelectList() };
 		});
 	}
 

@@ -8,13 +8,18 @@ const THINKING_SELECT_LIST_LAYOUT: SelectListLayoutOptions = {
 	maxPrimaryColumnWidth: 32,
 };
 
+// Honest, provider-agnostic labels for the reasoning effort scale. We do NOT
+// invent token-budget numbers here: providers differ (OpenAI/OpenRouter use a
+// reasoning-effort scale, Anthropic/Google use thinking budgets), and the
+// selector only ever shows the levels the SELECTED model actually supports
+// (getSupportedThinkingLevels, derived from the model's thinkingLevelMap).
 const LEVEL_DESCRIPTIONS: Record<ThinkingLevel, string> = {
 	off: "No reasoning",
-	minimal: "Very brief reasoning (~1k tokens)",
-	low: "Light reasoning (~2k tokens)",
-	medium: "Moderate reasoning (~8k tokens)",
-	high: "Deep reasoning (~16k tokens)",
-	xhigh: "Maximum reasoning (~32k tokens)",
+	minimal: "Minimal reasoning effort",
+	low: "Low reasoning effort",
+	medium: "Medium reasoning effort",
+	high: "High reasoning effort",
+	xhigh: "Maximum reasoning effort",
 };
 
 /**
