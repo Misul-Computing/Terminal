@@ -479,7 +479,7 @@ export const APP_TITLE: string = pkg.piConfig?.title || (piConfigName ? APP_NAME
 export const CONFIG_DIR_NAME: string = pkg.piConfig?.configDir || ".pi";
 export const VERSION: string = pkg.version || "0.0.0";
 
-// e.g., PI_CODING_AGENT_DIR or TAU_CODING_AGENT_DIR
+// Derived from APP_NAME, e.g. MISUL_CODING_AGENT_DIR
 export const ENV_AGENT_DIR = `${APP_NAME.toUpperCase()}_CODING_AGENT_DIR`;
 export const ENV_SESSION_DIR = `${APP_NAME.toUpperCase()}_CODING_AGENT_SESSION_DIR`;
 

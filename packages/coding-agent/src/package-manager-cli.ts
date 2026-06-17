@@ -370,14 +370,13 @@ async function getSelfUpdatePlan(force: boolean): Promise<SelfUpdatePlan> {
 		return { packageName: PACKAGE_NAME, shouldRun: true };
 	}
 
-	try {
-		const latestRelease = await getLatestPiRelease(VERSION);
-		const packageName = latestRelease?.packageName ?? PACKAGE_NAME;
-		if (!latestRelease || packageName !== PACKAGE_NAME || isNewerPackageVersion(latestRelease.version, VERSION)) {
-			return { packageName, shouldRun: true, ...(latestRelease?.note ? { note: latestRelease.note } : {}) };
-		}
-	} catch {
-		return { packageName: PACKAGE_NAME, shouldRun: true };
+	const latestRelease = await getLatestPiRelease(VERSION);
+	const packageName = latestRelease?.packageName ?? PACKAGE_NAME;
+	// Only update when a release feed actually offers a newer build of THIS package.
+	// With release discovery disabled (no feed), fall through to "already up to date"
+	// rather than reinstalling or switching to a foreign package.
+	if (latestRelease && (packageName !== PACKAGE_NAME || isNewerPackageVersion(latestRelease.version, VERSION))) {
+		return { packageName, shouldRun: true, ...(latestRelease.note ? { note: latestRelease.note } : {}) };
 	}
 
 	console.log(chalk.green(`${APP_NAME} is already up to date (v${VERSION})`));

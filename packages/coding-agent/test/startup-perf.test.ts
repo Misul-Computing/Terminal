@@ -47,6 +47,9 @@ function writeTrapExtension(agentDir: string): void {
 		join(extDir, "trap.ts"),
 		[
 			"export default async function (pi) {",
+			// Emitted the instant the factory runs, BEFORE the hanging fetch — so "the
+			// extension loaded at all" is observable on stderr independent of timing.
+			'\tconsole.error("TRAP_EXTENSION_LOADED");',
 			// 203.0.113.0/24 is TEST-NET-3 (RFC 5737): guaranteed unroutable.
 			'\tawait fetch("https://203.0.113.1/v1/models");',
 			'\tpi.registerProvider("trap-provider", { baseUrl: "https://203.0.113.1/v1", apiKey: "x", api: "openai-completions", models: [] });',
@@ -106,8 +109,9 @@ function runCli(args: string[], options?: { offline?: boolean }): Promise<RunRes
 // Correctness here is proven behaviorally, not by wall-clock. Under heavy parallel
 // test load a correct-but-contended startup (~12s observed) can overlap the buggy
 // OS-connect-timeout path (~11s), so a tight wall-clock bound only flakes. Instead:
-//   - --help/--version assert the trap extension never loaded (trap-provider absent),
-//     which directly proves the short-circuit ran before extension loading;
+//   - --help/--version assert the trap extension's factory never ran (its
+//     TRAP_EXTENSION_LOADED marker is absent), which directly proves the
+//     short-circuit ran before extension loading;
 //   - the offline path asserts it completes (exit 0) rather than hanging, guarded by
 //     the per-test 30s timeout (a regressed unbounded fetch would time out).
 // The wall-clock backstop below only catches a "slow but not infinite" stall; the
@@ -121,8 +125,9 @@ describe("startup performance (P10)", () => {
 		expect(result.code).toBe(0);
 		expect(result.stdout.toLowerCase()).toContain("misul");
 		expect(result.stdout).toContain("--help");
-		// The trap extension must never have loaded (proves the short-circuit).
-		expect(result.stderr).not.toContain("trap-provider");
+		// The trap extension's factory must never have run (proves the short-circuit
+		// happened before extension loading) — timing-independent.
+		expect(result.stderr).not.toContain("TRAP_EXTENSION_LOADED");
 		expect(result.durationMs).toBeLessThan(STARTUP_BACKSTOP_MS);
 	}, 30_000);
 
@@ -131,8 +136,9 @@ describe("startup performance (P10)", () => {
 
 		expect(result.code).toBe(0);
 		expect(result.stdout.trim()).toMatch(/^\d+\.\d+\.\d+/);
-		// The trap extension must never have loaded (proves the short-circuit).
-		expect(result.stderr).not.toContain("trap-provider");
+		// The trap extension's factory must never have run (proves the short-circuit
+		// happened before extension loading) — timing-independent.
+		expect(result.stderr).not.toContain("TRAP_EXTENSION_LOADED");
 		expect(result.durationMs).toBeLessThan(STARTUP_BACKSTOP_MS);
 	}, 30_000);
 

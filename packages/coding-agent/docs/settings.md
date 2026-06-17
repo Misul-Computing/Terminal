@@ -196,7 +196,7 @@ Keep `retry.provider.maxRetries` at `0` unless provider-level retries are explic
 { "sessionDir": ".pi/sessions" }
 ```
 
-When multiple sources specify a session directory, precedence is `--session-dir`, `PI_CODING_AGENT_SESSION_DIR`, then `sessionDir` in settings.json.
+When multiple sources specify a session directory, precedence is `--session-dir`, `MISUL_CODING_AGENT_SESSION_DIR`, then `sessionDir` in settings.json.
 
 ### Model Cycling
 
