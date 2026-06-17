@@ -26,7 +26,12 @@ import { formatNoModelsAvailableMessage } from "./core/auth-guidance.ts";
 import { AuthStorage } from "./core/auth-storage.ts";
 import { exportFromFile } from "./core/export-html/index.ts";
 import type { ExtensionFactory } from "./core/extensions/types.ts";
-import { applyHttpProxySettings, configureHttpDispatcher } from "./core/http-dispatcher.ts";
+import {
+	applyHttpProxySettings,
+	configureHttpDispatcher,
+	DEFAULT_HTTP_IDLE_TIMEOUT_MS,
+	OFFLINE_CONNECT_TIMEOUT_MS,
+} from "./core/http-dispatcher.ts";
 import type { ModelRegistry } from "./core/model-registry.ts";
 import { resolveCliModel, resolveModelScope, type ScopedModel } from "./core/model-resolver.ts";
 import { restoreStdout, takeOverStdout } from "./core/output-guard.ts";
@@ -478,7 +483,7 @@ export async function main(args: string[], options?: MainOptions) {
 	const agentDir = getAgentDir();
 	const bootstrapSettingsManager = SettingsManager.create(cwd, agentDir, { projectTrusted: false });
 	applyHttpProxySettings(bootstrapSettingsManager.getGlobalSettings().httpProxy);
-	configureHttpDispatcher();
+	configureHttpDispatcher(DEFAULT_HTTP_IDLE_TIMEOUT_MS, offlineMode ? { connectTimeoutMs: OFFLINE_CONNECT_TIMEOUT_MS } : undefined);
 
 	if (await handlePackageCommand(args, { extensionFactories: options?.extensionFactories })) {
 		const exitCode = process.exitCode ?? 0;
@@ -540,6 +545,18 @@ export async function main(args: string[], options?: MainOptions) {
 	const shouldTakeOverStdout = appMode !== "interactive" && !isPlainRuntimeMetadataCommand(parsed);
 	if (shouldTakeOverStdout) {
 		takeOverStdout();
+	}
+
+	// Fast path for plain `--help` (text/interactive output to stdout): short-circuit
+	// before any session/service/resource init. Building the full runtime loads
+	// extensions, and an extension factory can do blocking network work during load
+	// (perf bug P10), which would delay help by ~11s. Extension-contributed CLI flags
+	// are omitted here; core help is complete and notes that extensions add flags.
+	// The json/print-mode `--help` path is handled later, after stdout is taken over,
+	// so machine-output modes keep stdout clean.
+	if (parsed.help && isPlainRuntimeMetadataCommand(parsed)) {
+		printHelp();
+		process.exit(0);
 	}
 
 	if (parsed.mode === "rpc" && parsed.fileArgs.length > 0) {
@@ -754,7 +771,10 @@ export async function main(args: string[], options?: MainOptions) {
 	const { services, session, modelFallbackMessage } = runtime;
 	const { settingsManager, modelRegistry, resourceLoader } = services;
 	applyHttpProxySettings(settingsManager.getGlobalSettings().httpProxy);
-	configureHttpDispatcher(settingsManager.getHttpIdleTimeoutMs());
+	configureHttpDispatcher(
+		settingsManager.getHttpIdleTimeoutMs(),
+		offlineMode ? { connectTimeoutMs: OFFLINE_CONNECT_TIMEOUT_MS } : undefined,
+	);
 
 	if (parsed.help) {
 		const extensionFlags = resourceLoader

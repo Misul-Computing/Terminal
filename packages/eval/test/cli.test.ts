@@ -101,6 +101,7 @@ describe("runEvalCli (offline faux)", () => {
 			model: rig.model,
 			authStorage: rig.authStorage,
 			modelRegistry: rig.modelRegistry,
+			agentDir: rig.agentDir,
 		});
 		expect(result.kind).toBe("run");
 		if (result.kind !== "run") throw new Error("expected run");
@@ -122,6 +123,7 @@ describe("runEvalCli (offline faux)", () => {
 			variantModel: rig.model,
 			authStorage: rig.authStorage,
 			modelRegistry: rig.modelRegistry,
+			agentDir: rig.agentDir,
 		});
 		expect(result.kind).toBe("compare");
 		if (result.kind !== "compare") throw new Error("expected compare");
@@ -146,6 +148,7 @@ describe("runEvalCli (offline faux)", () => {
 			model: rig.model,
 			authStorage: rig.authStorage,
 			modelRegistry: rig.modelRegistry,
+			agentDir: rig.agentDir,
 		});
 		if (result.kind !== "compare") throw new Error("expected compare");
 		expect(result.report.baseline.label).toBe("baseline");

@@ -1,3 +1,6 @@
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { registerFauxProvider } from "@earendil-works/pi-ai";
 import { fauxAssistantMessage } from "@earendil-works/pi-ai";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -12,9 +15,12 @@ interface FauxRig {
 	authStorage: AuthStorage;
 	modelRegistry: ModelRegistry;
 	model: ReturnType<ReturnType<typeof registerFauxProvider>["getModel"]>;
+	/** Isolated empty agent dir so child sessions skip real ~/.pi/agent extension discovery (perf bug P10). */
+	agentDir: string;
 }
 
 function createFauxRig(): FauxRig {
+	const agentDir = mkdtempSync(join(tmpdir(), "subagent-faux-agent-"));
 	const faux = registerFauxProvider({
 		models: [{ id: "faux-1", cost: { input: 0.000001, output: 0.000002, cacheRead: 0, cacheWrite: 0 } }],
 	});
@@ -38,7 +44,7 @@ function createFauxRig(): FauxRig {
 			baseUrl: m.baseUrl,
 		})),
 	});
-	return { faux, authStorage, modelRegistry, model };
+	return { faux, authStorage, modelRegistry, model, agentDir };
 }
 
 describe("runSubagent (offline faux)", () => {
@@ -75,6 +81,7 @@ describe("runSubagent (offline faux)", () => {
 			cwd: process.cwd(),
 			authStorage: rig.authStorage,
 			modelRegistry: rig.modelRegistry,
+			agentDir: rig.agentDir,
 			createSession: spyCreateSession,
 		});
 
@@ -104,6 +111,7 @@ describe("runSubagent (offline faux)", () => {
 			cwd: process.cwd(),
 			authStorage: rig.authStorage,
 			modelRegistry: rig.modelRegistry,
+			agentDir: rig.agentDir,
 			createSession: spyCreateSession,
 		});
 
@@ -146,6 +154,7 @@ describe("runSubagent (offline faux)", () => {
 			cwd: process.cwd(),
 			authStorage: rig.authStorage,
 			modelRegistry: rig.modelRegistry,
+			agentDir: rig.agentDir,
 			timeoutMs: 100,
 			createSession: spyCreateSession,
 		});
@@ -191,6 +200,7 @@ describe("runSubagent (offline faux)", () => {
 			cwd: process.cwd(),
 			authStorage: rig.authStorage,
 			modelRegistry: rig.modelRegistry,
+			agentDir: rig.agentDir,
 			signal: parentController.signal,
 			createSession: spyCreateSession,
 		});
@@ -227,6 +237,7 @@ describe("runSubagent (offline faux)", () => {
 			cwd: process.cwd(),
 			authStorage: rig.authStorage,
 			modelRegistry: rig.modelRegistry,
+			agentDir: rig.agentDir,
 			signal: parentController.signal,
 		});
 

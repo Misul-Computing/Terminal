@@ -94,6 +94,8 @@ export interface RunSubagentOptions extends RunSubagentInput {
 	timeoutMs?: number;
 	authStorage?: AuthStorage;
 	modelRegistry?: ModelRegistry;
+	/** Isolated agent dir for offline tests so child session creation skips real extension discovery. */
+	agentDir?: string;
 	createSession?: typeof createAgentSession;
 }
 

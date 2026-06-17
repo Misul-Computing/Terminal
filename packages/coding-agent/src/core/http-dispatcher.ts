@@ -46,7 +46,17 @@ export function applyHttpProxySettings(httpProxy: string | undefined): void {
 	process.env.HTTPS_PROXY ??= proxy;
 }
 
-export function configureHttpDispatcher(timeoutMs: number = DEFAULT_HTTP_IDLE_TIMEOUT_MS): void {
+/**
+ * Connect timeout used in offline mode so startup network calls (including ones
+ * made by extension factories during resource load) fail fast instead of
+ * hanging on the OS connect timeout (~11s). See perf bug P10.
+ */
+export const OFFLINE_CONNECT_TIMEOUT_MS = 1_500;
+
+export function configureHttpDispatcher(
+	timeoutMs: number = DEFAULT_HTTP_IDLE_TIMEOUT_MS,
+	options?: { connectTimeoutMs?: number },
+): void {
 	const normalizedTimeoutMs = parseHttpIdleTimeoutMs(timeoutMs);
 	if (normalizedTimeoutMs === undefined) {
 		throw new Error(`Invalid HTTP idle timeout: ${String(timeoutMs)}`);
@@ -56,6 +66,7 @@ export function configureHttpDispatcher(timeoutMs: number = DEFAULT_HTTP_IDLE_TI
 			allowH2: false,
 			bodyTimeout: normalizedTimeoutMs,
 			headersTimeout: normalizedTimeoutMs,
+			...(options?.connectTimeoutMs !== undefined ? { connect: { timeout: options.connectTimeoutMs } } : {}),
 		}),
 	);
 	// Keep fetch and the dispatcher on the same undici implementation. Node 26.0's

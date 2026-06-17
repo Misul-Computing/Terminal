@@ -44,6 +44,7 @@ describe("runFixture (offline faux)", () => {
 			tools: ["write"],
 			authStorage: rig.authStorage,
 			modelRegistry: rig.modelRegistry,
+			agentDir: rig.agentDir,
 			// This test inspects + grades the run dir, so keep it.
 			keepRunDir: true,
 		});
@@ -78,6 +79,7 @@ describe("runFixture (offline faux)", () => {
 			tools: ["write"],
 			authStorage: rig.authStorage,
 			modelRegistry: rig.modelRegistry,
+			agentDir: rig.agentDir,
 		});
 		runDirs.push(run.runDir);
 		expect(run.fixtureId).toBe("01-add-return-type");
@@ -100,6 +102,7 @@ describe("runFixture (offline faux)", () => {
 			tools: ["write"],
 			authStorage: rig.authStorage,
 			modelRegistry: rig.modelRegistry,
+			agentDir: rig.agentDir,
 			temperature: 0.42,
 			createSession: spyCreateSession,
 		});
@@ -123,6 +126,7 @@ describe("runFixture (offline faux)", () => {
 			tools: ["write"],
 			authStorage: rig.authStorage,
 			modelRegistry: rig.modelRegistry,
+			agentDir: rig.agentDir,
 			createSession: spyCreateSession,
 		});
 		runDirs.push(run.runDir);
@@ -168,6 +172,7 @@ describe("runFixture (offline faux)", () => {
 			tools: ["write"],
 			authStorage: rig.authStorage,
 			modelRegistry: rig.modelRegistry,
+			agentDir: rig.agentDir,
 			agentTimeoutMs: 100,
 			createSession: spyCreateSession,
 		});
@@ -200,6 +205,7 @@ describe("runFixture (offline faux)", () => {
 			tools: ["write"],
 			authStorage: rig.authStorage,
 			modelRegistry: rig.modelRegistry,
+			agentDir: rig.agentDir,
 			createSession: spyCreateSession,
 		});
 		runDirs.push(run.runDir);
@@ -218,6 +224,7 @@ describe("runFixture (offline faux)", () => {
 			tools: ["write"],
 			authStorage: rig.authStorage,
 			modelRegistry: rig.modelRegistry,
+			agentDir: rig.agentDir,
 		});
 		expect(existsSync(cleaned.runDir)).toBe(false);
 
@@ -229,6 +236,7 @@ describe("runFixture (offline faux)", () => {
 			tools: ["write"],
 			authStorage: rig.authStorage,
 			modelRegistry: rig.modelRegistry,
+			agentDir: rig.agentDir,
 			keepRunDir: true,
 		});
 		runDirs.push(kept.runDir);

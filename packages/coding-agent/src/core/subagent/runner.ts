@@ -45,6 +45,7 @@ export async function runSubagent(options: RunSubagentOptions): Promise<Subagent
 			sessionManager: SessionManager.inMemory(cwd),
 			...(options.authStorage ? { authStorage: options.authStorage } : {}),
 			...(options.modelRegistry ? { modelRegistry: options.modelRegistry } : {}),
+			...(options.agentDir ? { agentDir: options.agentDir } : {}),
 		});
 	} catch (err) {
 		return { ...base, durationMs: Date.now() - start, errored: true, errorMessage: errorText(err) };
