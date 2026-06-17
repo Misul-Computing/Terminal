@@ -2,10 +2,9 @@
 
 User is out of the loop and has ordered: do not stop to wait for me; keep driving; refine until exhaustion (but converge to shipping). Runs under `ultracode` by standing order. Requirements + execution model: `docs/superpowers/specs/2026-06-17-misul-terminal-design.md` (§5–§8).
 
-## Current phase: P1+P2 — RESEARCH (running)
+## Current phase: P10 — CLI/session startup perf (see TAIL for live state)
 
-- wf #1 `wf_bf1fd036-944` — Pi/oh-my-pi internals + token-pipeline/eval landscape.
-- wf #2 `wf_b1d1fe51-09b` — capabilities: skills, MCPs, providers/auth, reasoning modes, prompt/compression/agents.
+DONE+committed: research (wf#1-4), master findings, SP-0 (fork bring-up), SP-0.5 (find Windows fix), SP-1 (QpD eval meter), P7.1 (bundled skills), P9 (subagent mechanism + deep-work/simple agents, opt-in). IN FLIGHT: P10 (startup perf — ~11s blocking network model-discovery). The AUTHORITATIVE current state + NEXT ACTION is always the TAIL of this file. (Original research-phase header/steps preserved below for history.)
 
 ## On every (re)invocation, do this — never stop for the user:
 
