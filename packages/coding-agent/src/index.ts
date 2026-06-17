@@ -238,6 +238,29 @@ export {
 	type SkillFrontmatter,
 } from "./core/skills.ts";
 export { createSyntheticSourceInfo } from "./core/source-info.ts";
+// Subagents (spawn_agent tool + built-in presets)
+export {
+	type AgentName,
+	type AgentPreset,
+	type AgentStrategy,
+	type CreateSpawnAgentToolOptions,
+	createSpawnAgentTool,
+	DEEP_WORK,
+	getPreset,
+	isSubagentSuccess,
+	listPresets,
+	PRESET_NAMES,
+	type RunDeepWorkInput,
+	runDeepWork,
+	type RunSubagentInput,
+	type RunSubagentOptions,
+	runSubagent,
+	SIMPLE,
+	type SpawnAgentArgs,
+	type SubagentRunner,
+	type SubagentRunResult,
+	type SubagentTokens,
+} from "./core/subagent/index.ts";
 // Tools
 export {
 	type BashOperations,

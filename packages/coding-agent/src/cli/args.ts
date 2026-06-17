@@ -6,6 +6,7 @@ import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
 import chalk from "chalk";
 import { APP_NAME, CONFIG_DIR_NAME, ENV_AGENT_DIR, ENV_SESSION_DIR } from "../config.ts";
 import type { ExtensionFlag } from "../core/extensions/types.ts";
+import { PRESET_NAMES } from "../core/subagent/presets.ts";
 
 export type Mode = "text" | "json" | "rpc";
 
@@ -30,6 +31,8 @@ export interface Args {
 	models?: string[];
 	tools?: string[];
 	excludeTools?: string[];
+	/** Built-in agent persona to apply + enable subagent delegation for (simple | deep-work). */
+	agent?: string;
 	noTools?: boolean;
 	noBuiltinTools?: boolean;
 	extensions?: string[];
@@ -122,6 +125,16 @@ export function parseArgs(args: string[]): Args {
 				.split(",")
 				.map((s) => s.trim())
 				.filter((name) => name.length > 0);
+		} else if (arg === "--agent" && i + 1 < args.length) {
+			const value = args[++i];
+			if (PRESET_NAMES.includes(value as (typeof PRESET_NAMES)[number])) {
+				result.agent = value;
+			} else {
+				result.diagnostics.push({
+					type: "warning",
+					message: `Invalid agent "${value}". Valid values: ${PRESET_NAMES.join(", ")}`,
+				});
+			}
 		} else if ((arg === "--exclude-tools" || arg === "-xt") && i + 1 < args.length) {
 			result.excludeTools = args[++i]
 				.split(",")
@@ -258,6 +271,8 @@ ${chalk.bold("Options:")}
                                  Applies to built-in, extension, and custom tools
   --exclude-tools, -xt <tools>   Comma-separated denylist of tool names to disable
                                  Applies to built-in, extension, and custom tools
+  --agent <name>                 Enable the chosen agent persona (simple or deep-work)
+                                 and subagent delegation (the spawn_agent tool)
   --thinking <level>             Set thinking level: off, minimal, low, medium, high, xhigh
   --extension, -e <path>         Load an extension file (can be used multiple times)
   --no-extensions, -ne           Disable extension discovery (explicit -e paths still work)

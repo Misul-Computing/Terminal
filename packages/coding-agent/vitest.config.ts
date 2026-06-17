@@ -10,7 +10,12 @@ export default defineConfig({
 	test: {
 		globals: true,
 		environment: "node",
-		testTimeout: 30000,
+		// Real-session/real-process tests are slow because session/CLI cold start
+		// does a ~11s blocking network model-discovery (tracked perf bug P10).
+		// Run files serially to avoid the parallel-contention death-spiral, and keep
+		// generous timeouts. Revert both (fast parallel) once P10 makes startup fast.
+		testTimeout: 120000,
+		fileParallelism: false,
 		server: {
 			deps: {
 				external: [/@silvia-odwyer\/photon-node/],

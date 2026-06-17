@@ -39,6 +39,7 @@ import {
 	type SessionCwdIssue,
 } from "./core/session-cwd.ts";
 import { assertValidSessionId, SessionManager } from "./core/session-manager.ts";
+import { getPreset } from "./core/subagent/index.ts";
 import { SettingsManager } from "./core/settings-manager.ts";
 import { printTimings, resetTimings, time } from "./core/timings.ts";
 import { hasTrustRequiringProjectResources, ProjectTrustStore } from "./core/trust-manager.ts";
@@ -338,7 +339,7 @@ async function createSessionManager(
 	return SessionManager.create(cwd, sessionDir, { id: parsed.sessionId });
 }
 
-function buildSessionOptions(
+export function buildSessionOptions(
 	parsed: Args,
 	scopedModels: ScopedModel[],
 	hasExistingSession: boolean,
@@ -433,6 +434,13 @@ function buildSessionOptions(
 		options.excludeTools = [...parsed.excludeTools];
 	}
 
+	// --agent <name>: run this session WITH the chosen agent persona and enable
+	// subagent delegation (the spawn_agent tool). The persona system prompt is
+	// appended via resourceLoaderOptions.appendSystemPrompt (see createRuntime).
+	if (parsed.agent && getPreset(parsed.agent)) {
+		options.enableSubagents = true;
+	}
+
 	return { options, cliThinkingFromModel, diagnostics };
 }
 
@@ -500,6 +508,14 @@ export async function main(args: string[], options?: MainOptions) {
 		}
 	}
 	time("parseArgs");
+
+	if (parsed.agent && getPreset(parsed.agent)) {
+		// --agent enables the chosen agent's persona + subagent delegation for this
+		// session. TODO(user-decision): running the top-level session through the
+		// full deep-work STRATEGY loop (spec -> plan -> execute -> review) is a
+		// larger run-mode integration + UX decision; deferred (see plan SP9).
+		console.error(`Running with the "${parsed.agent}" agent (subagent delegation enabled).`);
+	}
 
 	if (parsed.version) {
 		console.log(VERSION);
@@ -615,6 +631,12 @@ export async function main(args: string[], options?: MainOptions) {
 				parsed.projectTrustOverride ??
 				(!hasTrustRequiringResources || trustStore.get(cwd) === true));
 		const runtimeSettingsManager = SettingsManager.create(cwd, agentDir, { projectTrusted });
+		// --agent <name>: append the chosen preset's persona to the system prompt
+		// (subagent delegation itself is enabled via enableSubagents below).
+		const agentPreset = parsed.agent ? getPreset(parsed.agent) : undefined;
+		const appendSystemPrompt = agentPreset
+			? [...(parsed.appendSystemPrompt ?? []), agentPreset.systemPrompt]
+			: parsed.appendSystemPrompt;
 		const services = await createAgentSessionServices({
 			cwd,
 			agentDir,
@@ -656,7 +678,7 @@ export async function main(args: string[], options?: MainOptions) {
 				noThemes: parsed.noThemes,
 				noContextFiles: parsed.noContextFiles,
 				systemPrompt: parsed.systemPrompt,
-				appendSystemPrompt: parsed.appendSystemPrompt,
+				appendSystemPrompt,
 				extensionFactories: options?.extensionFactories,
 			},
 		});
@@ -709,6 +731,7 @@ export async function main(args: string[], options?: MainOptions) {
 			excludeTools: sessionOptions.excludeTools,
 			noTools: sessionOptions.noTools,
 			customTools: sessionOptions.customTools,
+			enableSubagents: sessionOptions.enableSubagents,
 		});
 		const cliThinkingOverride = parsed.thinking !== undefined || cliThinkingFromModel;
 		if (created.session.model && cliThinkingOverride) {

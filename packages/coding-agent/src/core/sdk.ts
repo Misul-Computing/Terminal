@@ -16,6 +16,7 @@ import type { ResourceLoader } from "./resource-loader.ts";
 import { DefaultResourceLoader } from "./resource-loader.ts";
 import { getDefaultSessionDir, SessionManager } from "./session-manager.ts";
 import { SettingsManager } from "./settings-manager.ts";
+import { createSpawnAgentTool } from "./subagent/spawn-tool.ts";
 import { time } from "./timings.ts";
 import {
 	createBashTool,
@@ -69,6 +70,15 @@ export interface CreateAgentSessionOptions {
 	excludeTools?: string[];
 	/** Custom tools to register (in addition to built-in tools). */
 	customTools?: ToolDefinition[];
+
+	/**
+	 * Whether to expose the built-in `spawn_agent` tool (subagent delegation).
+	 * Default false (opt-in) — enabling it changes the session's tool set (and
+	 * means `noTools:"builtin"` no longer yields a tool-less session), so it is
+	 * off until explicitly requested. Child sessions spawned by `runSubagent`
+	 * always pass false so they cannot recursively spawn further subagents.
+	 */
+	enableSubagents?: boolean;
 
 	/** Resource loader. When omitted, DefaultResourceLoader is used. */
 	resourceLoader?: ResourceLoader;
@@ -374,6 +384,14 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 		sessionManager.appendThinkingLevelChange(thinkingLevel);
 	}
 
+	// Inject the built-in spawn_agent tool unless disabled (e.g. child subagent
+	// sessions never enable it, preventing recursive delegation).
+	// getParentModel falls back to the live agent model if ctx.model is stale.
+	const customTools =
+		options.enableSubagents === true
+			? [...(options.customTools ?? []), createSpawnAgentTool({ getParentModel: () => agent.state.model })]
+			: options.customTools;
+
 	const session = new AgentSession({
 		agent,
 		sessionManager,
@@ -381,7 +399,7 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 		cwd,
 		scopedModels: options.scopedModels,
 		resourceLoader,
-		customTools: options.customTools,
+		customTools,
 		modelRegistry,
 		initialActiveToolNames,
 		allowedToolNames,
