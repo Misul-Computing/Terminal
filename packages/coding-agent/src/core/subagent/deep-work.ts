@@ -139,5 +139,13 @@ function phaseTask(phase: string, task: string, previous: string, feedback?: str
 	const parts = [`PHASE: ${phase}`, `TASK: ${task}`];
 	if (previous) parts.push(`PRIOR PHASE OUTPUT:\n${previous}`);
 	if (feedback) parts.push(`REVIEW FEEDBACK TO ADDRESS:\n${feedback}`);
+	if (phase === "review") {
+		parts.push(
+			"Autoreview the work for correctness AND over-engineering. Apply the `ponytail` skill: cut " +
+				"anything that is not the simplest thing that works, and flag reinvented stdlib, dead " +
+				"flexibility, or needless abstraction. Verify every claim against the real code rather than " +
+				"assuming. End with `REVIEW: PASS` or `REVIEW: FAIL` and concrete, actionable feedback.",
+		);
+	}
 	return parts.join("\n\n");
 }
