@@ -1,4 +1,4 @@
-import type { Model } from "@earendil-works/pi-ai";
+import type { Model } from "@misul/ai";
 import { describe, expect, test } from "vitest";
 import {
 	defaultModelPerProvider,

@@ -7,7 +7,7 @@
  * not subclasses.
  */
 
-import type { Model } from "@earendil-works/pi-ai";
+import type { Model } from "@misul/ai";
 import type { AuthStorage } from "../auth-storage.ts";
 import type { ModelRegistry } from "../model-registry.ts";
 import type { createAgentSession } from "../sdk.ts";

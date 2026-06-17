@@ -7,8 +7,8 @@
  * are returned as tool results, not thrown.
  */
 
-import type { AgentToolResult } from "@earendil-works/pi-agent-core";
-import type { Model } from "@earendil-works/pi-ai";
+import type { AgentToolResult } from "@misul/agent-core";
+import type { Model } from "@misul/ai";
 import { type Static, Type } from "typebox";
 import { defineTool, type ToolDefinition } from "../extensions/types.ts";
 import { allToolNames, type ToolName } from "../tools/index.ts";

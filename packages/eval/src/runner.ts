@@ -13,9 +13,9 @@
  * timeout never leaves the agent running.
  */
 
-import type { AssistantMessage, Model } from "@earendil-works/pi-ai";
-import type { AuthStorage, CreateAgentSessionResult, ModelRegistry } from "@earendil-works/pi-coding-agent";
-import { createAgentSession, SessionManager } from "@earendil-works/pi-coding-agent";
+import type { AssistantMessage, Model } from "@misul/ai";
+import type { AuthStorage, CreateAgentSessionResult, ModelRegistry } from "@misul/coding-agent";
+import { createAgentSession, SessionManager } from "@misul/coding-agent";
 import { trace } from "@opentelemetry/api";
 import { recordChat } from "./cost-adapter.ts";
 import { cleanupRunDir, cloneToRunDir } from "./isolation.ts";

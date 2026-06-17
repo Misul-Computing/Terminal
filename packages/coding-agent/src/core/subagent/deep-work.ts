@@ -8,7 +8,7 @@
  * short-circuits the run.
  */
 
-import type { Model } from "@earendil-works/pi-ai";
+import type { Model } from "@misul/ai";
 import type { ToolName } from "../tools/index.ts";
 import type { AgentPreset, SubagentRunner, SubagentRunResult } from "./types.ts";
 

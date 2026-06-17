@@ -5,7 +5,7 @@
  * place that knows pi-ai's `usage.cost.total` shape.
  */
 
-import type { AssistantMessage } from "@earendil-works/pi-ai";
+import type { AssistantMessage } from "@misul/ai";
 import type { Span } from "@opentelemetry/api";
 import type { AgentRunCollector } from "./run-collector.ts";
 

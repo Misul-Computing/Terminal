@@ -15,7 +15,7 @@
  * produced a result message).
  */
 
-import type { AssistantMessage, Model, StopReason } from "@earendil-works/pi-ai";
+import type { AssistantMessage, Model, StopReason } from "@misul/ai";
 import type { Span } from "@opentelemetry/api";
 
 /** Terminal status reported by an `execute_tool` span. */

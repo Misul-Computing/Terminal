@@ -1,4 +1,4 @@
-import { fauxAssistantMessage, fauxToolCall, registerFauxProvider } from "@earendil-works/pi-ai";
+import { fauxAssistantMessage, fauxToolCall, registerFauxProvider } from "@misul/ai";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { AuthStorage } from "../../src/core/auth-storage.ts";
 import { ModelRegistry } from "../../src/core/model-registry.ts";

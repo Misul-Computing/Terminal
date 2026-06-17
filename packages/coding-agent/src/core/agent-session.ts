@@ -22,8 +22,8 @@ import type {
 	AgentState,
 	AgentTool,
 	ThinkingLevel,
-} from "@earendil-works/pi-agent-core";
-import type { AssistantMessage, ImageContent, Message, Model, TextContent } from "@earendil-works/pi-ai";
+} from "@misul/agent-core";
+import type { AssistantMessage, ImageContent, Message, Model, TextContent } from "@misul/ai";
 import {
 	clampThinkingLevel,
 	cleanupSessionResources,
@@ -32,7 +32,7 @@ import {
 	modelsAreEqual,
 	resetApiProviders,
 	streamSimple,
-} from "@earendil-works/pi-ai";
+} from "@misul/ai";
 import { getThemeByName, theme } from "../modes/interactive/theme/theme.ts";
 import { stripFrontmatter } from "../utils/frontmatter.ts";
 import { resolvePath } from "../utils/paths.ts";

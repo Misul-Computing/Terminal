@@ -11,7 +11,7 @@
  * so it never exposes `spawn_agent` and cannot delegate further.
  */
 
-import type { AssistantMessage } from "@earendil-works/pi-ai";
+import type { AssistantMessage } from "@misul/ai";
 import { createAgentSession, type CreateAgentSessionResult } from "../sdk.ts";
 import { SessionManager } from "../session-manager.ts";
 import type { RunSubagentOptions, SubagentRunResult } from "./types.ts";

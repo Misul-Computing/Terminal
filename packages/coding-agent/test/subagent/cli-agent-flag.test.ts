@@ -1,4 +1,4 @@
-import { registerFauxProvider } from "@earendil-works/pi-ai";
+import { registerFauxProvider } from "@misul/ai";
 import { describe, expect, it } from "vitest";
 import { parseArgs } from "../../src/cli/args.ts";
 import { AuthStorage } from "../../src/core/auth-storage.ts";

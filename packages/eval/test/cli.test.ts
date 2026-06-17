@@ -1,4 +1,4 @@
-import { fauxAssistantMessage, fauxToolCall } from "@earendil-works/pi-ai";
+import { fauxAssistantMessage, fauxToolCall } from "@misul/ai";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { formatReport, parseArgv, runEvalCli } from "../src/cli.ts";
 import { createFauxRig, type FauxRig } from "./faux-helpers.ts";

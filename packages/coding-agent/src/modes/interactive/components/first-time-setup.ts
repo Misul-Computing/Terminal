@@ -1,4 +1,4 @@
-import { Container, getKeybindings, Spacer, Text } from "@earendil-works/pi-tui";
+import { Container, getKeybindings, Spacer, Text } from "@misul/tui";
 import { APP_TITLE } from "../../../config.ts";
 import { MISUL_LOGO_LINES } from "../misul-logo.ts";
 import { type TerminalTheme, theme } from "../theme/theme.ts";

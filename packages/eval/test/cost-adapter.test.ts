@@ -1,4 +1,4 @@
-import type { AssistantMessage } from "@earendil-works/pi-ai";
+import type { AssistantMessage } from "@misul/ai";
 import { trace } from "@opentelemetry/api";
 import { describe, expect, it } from "vitest";
 import { costFieldsFromMessage, recordChat } from "../src/cost-adapter.ts";

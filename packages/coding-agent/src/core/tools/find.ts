@@ -1,6 +1,6 @@
 import { createInterface } from "node:readline";
-import type { AgentTool } from "@earendil-works/pi-agent-core";
-import { Text } from "@earendil-works/pi-tui";
+import type { AgentTool } from "@misul/agent-core";
+import { Text } from "@misul/tui";
 import { spawn } from "child_process";
 import { minimatch } from "minimatch";
 import path from "path";

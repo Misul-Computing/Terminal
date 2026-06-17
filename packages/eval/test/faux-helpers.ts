@@ -3,8 +3,8 @@
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { registerFauxProvider } from "@earendil-works/pi-ai";
-import { AuthStorage, ModelRegistry } from "@earendil-works/pi-coding-agent";
+import { registerFauxProvider } from "@misul/ai";
+import { AuthStorage, ModelRegistry } from "@misul/coding-agent";
 
 export interface FauxRig {
 	faux: ReturnType<typeof registerFauxProvider>;
