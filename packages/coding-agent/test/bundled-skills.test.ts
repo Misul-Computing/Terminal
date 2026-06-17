@@ -37,6 +37,7 @@ describe("bundled skills", () => {
 		expect(names).toContain("semantic-compression");
 		expect(names).toContain("frontend-design");
 		expect(names).toContain("api-design");
+		expect(names).toContain("secure-coding");
 
 		// Bundled skills carry the "bundled" source label.
 		const ponytail = skills.find((s) => s.name === "ponytail");

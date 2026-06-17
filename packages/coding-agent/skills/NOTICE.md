@@ -41,3 +41,12 @@ All bundled skills are distributed under the MIT License.
   universal, model-agnostic scaffolding (method/status semantics, error
   envelope, boundary validation, pagination, versioning, an auth/security floor,
   idempotency, observability).
+
+## secure-coding
+
+- Source: Original Misul Terminal skill.
+- License: MIT
+- Original synthesis of defensive secure-coding best practice into universal,
+  model-agnostic scaffolding (boundary validation, injection-safe queries and
+  commands, output encoding, authn/authz, secrets, vetted crypto, dependency
+  hygiene, safe failure, SSRF/deserialization safety).
