@@ -145,19 +145,25 @@ export class FooterComponent implements Component {
 			statsParts.push(costStr);
 		}
 
-		// Colorize context percentage based on usage
+		// Compact context-usage gauge + percentage, colorized by usage severity.
 		let contextPercentStr: string;
 		const autoIndicator = this.autoCompactEnabled ? " (auto)" : "";
+		const gaugeWidth = 5;
+		const filledSegments =
+			contextPercent === "?"
+				? 0
+				: Math.max(0, Math.min(gaugeWidth, Math.round((contextPercentValue / 100) * gaugeWidth)));
+		const gauge = `${"▰".repeat(filledSegments)}${"▱".repeat(gaugeWidth - filledSegments)} `;
 		const contextPercentDisplay =
 			contextPercent === "?"
-				? `?/${formatTokens(contextWindow)}${autoIndicator}`
-				: `${contextPercent}%/${formatTokens(contextWindow)}${autoIndicator}`;
+				? `${gauge}?/${formatTokens(contextWindow)}${autoIndicator}`
+				: `${gauge}${contextPercent}%/${formatTokens(contextWindow)}${autoIndicator}`;
 		if (contextPercentValue > 90) {
 			contextPercentStr = theme.fg("error", contextPercentDisplay);
 		} else if (contextPercentValue > 70) {
 			contextPercentStr = theme.fg("warning", contextPercentDisplay);
 		} else {
-			contextPercentStr = contextPercentDisplay;
+			contextPercentStr = theme.fg("accent", contextPercentDisplay);
 		}
 		statsParts.push(contextPercentStr);
 		if (areExperimentalFeaturesEnabled()) {
