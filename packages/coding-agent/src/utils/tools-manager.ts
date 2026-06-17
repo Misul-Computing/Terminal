@@ -81,8 +81,7 @@ function commandExists(cmd: string): boolean {
 	}
 }
 
-// Get the path to a tool (system-wide or in our tools dir)
-export function getToolPath(tool: "fd" | "rg"): string | null {
+function resolveToolPath(tool: "fd" | "rg"): string | null {
 	const config = TOOLS[tool];
 	if (!config) return null;
 
@@ -101,6 +100,26 @@ export function getToolPath(tool: "fd" | "rg"): string | null {
 	}
 
 	return null;
+}
+
+// A resolved tool path is stable for the lifetime of the process. Without this cache,
+// every grep/find call re-probes the system PATH by spawning `<tool> --version`, adding
+// subprocess latency to each search. Only successful resolutions are cached so that a
+// later download (after a miss) is still picked up.
+const toolPathCache = new Map<"fd" | "rg", string>();
+
+// Reset the resolved-tool-path cache. Tests only.
+export function __resetToolPathCache(): void {
+	toolPathCache.clear();
+}
+
+// Get the path to a tool (system-wide or in our tools dir), memoized per process.
+export function getToolPath(tool: "fd" | "rg"): string | null {
+	const cached = toolPathCache.get(tool);
+	if (cached) return cached;
+	const resolved = resolveToolPath(tool);
+	if (resolved) toolPathCache.set(tool, resolved);
+	return resolved;
 }
 
 // Fetch latest release version from GitHub
