@@ -46,16 +46,15 @@ describe("buildSystemPrompt", () => {
 			expect(prompt).toContain("- write:");
 		});
 
-		test("instructs models to resolve pi docs and examples under absolute base paths", () => {
+		test("uses the Misul identity by default, not pi branding", () => {
 			const prompt = buildSystemPrompt({
 				contextFiles: [],
 				skills: [],
 				cwd: process.cwd(),
 			});
 
-			expect(prompt).toContain(
-				"- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory",
-			);
+			expect(prompt).toContain("You are Misul, the coding agent of Misul Terminal");
+			expect(prompt).not.toContain("operating inside pi");
 		});
 	});
 
