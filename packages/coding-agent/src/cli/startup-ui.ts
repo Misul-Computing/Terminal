@@ -12,8 +12,10 @@ import {
 } from "../modes/interactive/components/first-time-setup.ts";
 import { detectTerminalBackgroundTheme, initTheme, setTheme } from "../modes/interactive/theme/theme.ts";
 
+// Canonical identity of the official Misul Terminal distribution. A rebrand/fork
+// with different values is intentionally not treated as official.
 const OFFICIAL_PACKAGE_NAME = "@earendil-works/pi-coding-agent";
-const OFFICIAL_APP_NAME = "pi";
+const OFFICIAL_APP_NAME = "misul";
 const OFFICIAL_CONFIG_DIR_NAME = ".pi";
 
 interface DistributionMetadata {

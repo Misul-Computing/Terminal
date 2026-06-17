@@ -4,11 +4,12 @@
 	"description": "Coding agent CLI with read, bash, edit, write tools and session management",
 	"type": "module",
 	"piConfig": {
+		"name": "misul",
+		"title": "Misul Terminal",
 		"configDir": ".pi"
 	},
 	"bin": {
-		"misul": "dist/cli.js",
-		"pi": "dist/cli.js"
+		"misul": "dist/cli.js"
 	},
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",
