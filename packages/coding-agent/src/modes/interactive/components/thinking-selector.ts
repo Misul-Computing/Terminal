@@ -1,4 +1,5 @@
 import type { ThinkingLevel } from "@misul/agent-core";
+import { type Model, thinkingLevelLabel } from "@misul/ai";
 import { Container, type SelectItem, SelectList, type SelectListLayoutOptions } from "@misul/tui";
 import { getSelectListTheme } from "../theme/theme.ts";
 import { DynamicBorder } from "./dynamic-border.ts";
@@ -33,17 +34,17 @@ export class ThinkingSelectorComponent extends Container {
 		availableLevels: ThinkingLevel[],
 		onSelect: (level: ThinkingLevel) => void,
 		onCancel: () => void,
-		thinkingLevelMap?: Partial<Record<ThinkingLevel, string | null>>,
+		model?: Model<any>,
 	) {
 		super();
 
 		const thinkingLevels: SelectItem[] = availableLevels.map((level) => ({
 			value: level,
-			// Show the provider's own name for the top budget tier (e.g. "max" on
-			// Anthropic/DeepSeek) so it matches what the provider/OpenCode calls it;
-			// lower tiers share the generic effort name across providers. The value
-			// stays the generic ThinkingLevel, which the session maps when calling.
-			label: level === "xhigh" && typeof thinkingLevelMap?.xhigh === "string" ? thinkingLevelMap.xhigh : level,
+			// Single source of truth for the displayed name (see thinkingLevelLabel):
+			// shows the provider's own term (e.g. "max") so it stays consistent with
+			// the footer/status after selecting. The value stays the generic
+			// ThinkingLevel, which the session maps when calling the provider.
+			label: thinkingLevelLabel(model, level),
 			description: LEVEL_DESCRIPTIONS[level],
 		}));
 

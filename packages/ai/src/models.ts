@@ -61,6 +61,34 @@ export function getSupportedThinkingLevels<TApi extends Api>(model: Model<TApi>)
 	});
 }
 
+const GENERIC_THINKING_LEVEL_NAMES = new Set<string>(EXTENDED_THINKING_LEVELS);
+
+/**
+ * Human-facing label for a thinking level on a specific model — the single
+ * source of truth for displaying a level anywhere in the UI (selector, footer,
+ * status, tree, settings).
+ *
+ * Surfaces the provider's own mode name when it is a distinct word (e.g. the
+ * budget-based top tier is "max" on Anthropic/DeepSeek), so the UI shows what
+ * the provider actually calls the mode. Falls back to the generic effort level
+ * otherwise — and never surfaces a provider value that is itself a generic level
+ * name (so a `minimal → "low"` alias can't collide with the real `low`), nor an
+ * internal value like "default"/"none" or a numeric budget.
+ */
+export function thinkingLevelLabel<TApi extends Api>(
+	model: Model<TApi> | undefined,
+	level: ModelThinkingLevel,
+): string {
+	const mapped = model?.thinkingLevelMap?.[level];
+	if (typeof mapped === "string") {
+		const term = mapped.toLowerCase();
+		if (/^[a-z]+$/.test(term) && !GENERIC_THINKING_LEVEL_NAMES.has(term) && term !== "default" && term !== "none") {
+			return term;
+		}
+	}
+	return level;
+}
+
 export function clampThinkingLevel<TApi extends Api>(
 	model: Model<TApi>,
 	level: ModelThinkingLevel,

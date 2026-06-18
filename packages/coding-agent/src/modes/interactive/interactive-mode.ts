@@ -16,6 +16,7 @@ import {
 	type Model,
 	type OAuthProviderId,
 	type OAuthSelectPrompt,
+	thinkingLevelLabel,
 } from "@misul/ai";
 import type {
 	AutocompleteItem,
@@ -624,7 +625,7 @@ export class InteractiveMode {
 		if (this.session.scopedModels.length > 0 && (this.options.verbose || !this.settingsManager.getQuietStartup())) {
 			const modelList = this.session.scopedModels
 				.map((sm) => {
-					const thinkingStr = sm.thinkingLevel ? `:${sm.thinkingLevel}` : "";
+					const thinkingStr = sm.thinkingLevel ? `:${thinkingLevelLabel(sm.model, sm.thinkingLevel)}` : "";
 					return `${sm.model.id}${thinkingStr}`;
 				})
 				.join(", ");
@@ -3536,7 +3537,7 @@ export class InteractiveMode {
 		} else {
 			this.footer.invalidate();
 			this.updateEditorBorderColor();
-			this.showStatus(`Thinking level: ${newLevel}`);
+			this.showStatus(`Thinking level: ${thinkingLevelLabel(this.session.model, newLevel)}`);
 		}
 	}
 
@@ -3550,7 +3551,9 @@ export class InteractiveMode {
 				this.footer.invalidate();
 				this.updateEditorBorderColor();
 				const thinkingStr =
-					result.model.reasoning && result.thinkingLevel !== "off" ? ` (thinking: ${result.thinkingLevel})` : "";
+					result.model.reasoning && result.thinkingLevel !== "off"
+						? ` (thinking: ${thinkingLevelLabel(result.model, result.thinkingLevel)})`
+						: "";
 				this.showStatus(`Switched to ${result.model.name || result.model.id}${thinkingStr}`);
 				void this.maybeWarnAboutAnthropicSubscriptionAuth(result.model);
 			}
@@ -4250,13 +4253,13 @@ export class InteractiveMode {
 					this.footer.invalidate();
 					this.updateEditorBorderColor();
 					done();
-					this.showStatus(`Thinking: ${level}`);
+					this.showStatus(`Thinking: ${thinkingLevelLabel(this.session.model, level)}`);
 				},
 				() => {
 					done();
 					this.ui.requestRender();
 				},
-				this.session.model?.thinkingLevelMap,
+				this.session.model,
 			);
 			// The component is a Container wrapping a SelectList; focus the list so it
 			// receives keyboard input (matches the settings/session selector pattern).

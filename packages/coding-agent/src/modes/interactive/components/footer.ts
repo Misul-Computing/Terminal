@@ -1,4 +1,5 @@
 import { isAbsolute, relative, resolve, sep } from "node:path";
+import { thinkingLevelLabel } from "@misul/ai";
 import { type Component, truncateToWidth, visibleWidth } from "@misul/tui";
 import type { AgentSession } from "../../../core/agent-session.ts";
 import { areExperimentalFeaturesEnabled } from "../../../core/experimental.ts";
@@ -191,7 +192,9 @@ export class FooterComponent implements Component {
 		if (state.model?.reasoning) {
 			const thinkingLevel = state.thinkingLevel || "off";
 			rightSideWithoutProvider =
-				thinkingLevel === "off" ? `${modelName} • thinking off` : `${modelName} • ${thinkingLevel}`;
+				thinkingLevel === "off"
+					? `${modelName} • thinking off`
+					: `${modelName} • ${thinkingLevelLabel(state.model, thinkingLevel)}`;
 		}
 
 		// Prepend the provider in parentheses if there are multiple providers and there's enough room

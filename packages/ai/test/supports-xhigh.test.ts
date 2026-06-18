@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getModel, getSupportedThinkingLevels } from "../src/models.ts";
+import { getModel, getSupportedThinkingLevels, thinkingLevelLabel } from "../src/models.ts";
 
 describe("getSupportedThinkingLevels", () => {
 	it("includes xhigh for Anthropic Opus 4.6 on anthropic-messages API", () => {
@@ -101,5 +101,27 @@ describe("getSupportedThinkingLevels", () => {
 		expect(model).toBeDefined();
 		expect(getSupportedThinkingLevels(model!)).toContain("xhigh");
 		expect(getSupportedThinkingLevels(model!)).not.toContain("off");
+	});
+});
+
+describe("thinkingLevelLabel", () => {
+	it("shows the provider's own name for the budget top tier (DeepSeek V4 Flash xhigh -> max)", () => {
+		const model = getModel("opencode-go", "deepseek-v4-flash");
+		expect(model).toBeDefined();
+		expect(model!.thinkingLevelMap?.xhigh).toBe("max");
+		expect(thinkingLevelLabel(model!, "xhigh")).toBe("max");
+	});
+
+	it("keeps the generic name when the provider term equals the generic level (gpt-5.5-pro xhigh -> xhigh)", () => {
+		const model = getModel("openai", "gpt-5.5-pro");
+		expect(model).toBeDefined();
+		expect(thinkingLevelLabel(model!, "xhigh")).toBe("xhigh");
+		expect(thinkingLevelLabel(model!, "high")).toBe("high");
+	});
+
+	it("falls back to the generic level for off and when there is no model", () => {
+		const model = getModel("opencode-go", "deepseek-v4-flash");
+		expect(thinkingLevelLabel(model!, "off")).toBe("off");
+		expect(thinkingLevelLabel(undefined, "high")).toBe("high");
 	});
 });
