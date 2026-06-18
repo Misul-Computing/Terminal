@@ -114,6 +114,7 @@ import { FooterComponent } from "./components/footer.ts";
 import { formatKeyText, keyDisplayText, keyText } from "./components/keybinding-hints.ts";
 import { LoginDialogComponent } from "./components/login-dialog.ts";
 import { ModelSelectorComponent } from "./components/model-selector.ts";
+import { SkillsSelectorComponent } from "./components/skills-selector.ts";
 import { ThinkingSelectorComponent } from "./components/thinking-selector.ts";
 import { type AuthSelectorProvider, OAuthSelectorComponent } from "./components/oauth-selector.ts";
 import { ScopedModelsSelectorComponent } from "./components/scoped-models-selector.ts";
@@ -314,9 +315,6 @@ export class InteractiveMode {
 
 	// Thinking block visibility state
 	private hideThinkingBlock = false;
-
-	// Skill commands: command name -> skill file path
-	private skillCommands = new Map<string, string>();
 
 	// Agent subscription unsubscribe function
 	private unsubscribe?: () => void;
@@ -552,22 +550,11 @@ export class InteractiveMode {
 				getArgumentCompletions: cmd.getArgumentCompletions,
 			}));
 
-		// Build skill commands from session.skills (if enabled)
-		this.skillCommands.clear();
-		const skillCommandList: SlashCommand[] = [];
-		if (this.settingsManager.getEnableSkillCommands()) {
-			for (const skill of this.session.resourceLoader.getSkills().skills) {
-				const commandName = `skill:${skill.name}`;
-				this.skillCommands.set(commandName, skill.filePath);
-				skillCommandList.push({
-					name: commandName,
-					description: this.prefixAutocompleteDescription(skill.description, skill.sourceInfo),
-				});
-			}
-		}
-
+		// Individual skills are NOT exposed as separate slash commands; they are
+		// browsed and run via the single /skills menu (and still expand via
+		// /skill:<name> when typed directly).
 		return new CombinedAutocompleteProvider(
-			[...slashCommands, ...templateCommands, ...extensionCommands, ...skillCommandList],
+			[...slashCommands, ...templateCommands, ...extensionCommands],
 			this.sessionManager.getCwd(),
 			this.fdPath,
 		);
@@ -2517,6 +2504,11 @@ export class InteractiveMode {
 				this.showThinkingSelector();
 				return;
 			}
+			if (text === "/skills") {
+				this.editor.setText("");
+				this.showSkillsSelector();
+				return;
+			}
 			if (text === "/export" || text.startsWith("/export ")) {
 				await this.handleExportCommand(text);
 				this.editor.setText("");
@@ -4223,6 +4215,31 @@ export class InteractiveMode {
 		});
 	}
 
+	private showSkillsSelector(): void {
+		const skills = this.session.resourceLoader.getSkills().skills;
+		if (skills.length === 0) {
+			this.showStatus("No skills available");
+			return;
+		}
+		this.showSelector((done) => {
+			const selector = new SkillsSelectorComponent(
+				skills.map((skill) => ({ name: skill.name, description: skill.description })),
+				(name) => {
+					done();
+					// Pre-fill the editor so the user can add arguments; /skill:<name> is
+					// expanded by the session on submit.
+					this.editor.setText(`/skill:${name} `);
+					this.ui.requestRender();
+				},
+				() => {
+					done();
+					this.ui.requestRender();
+				},
+			);
+			return { component: selector, focus: selector.getSelectList() };
+		});
+	}
+
 	private showThinkingSelector(): void {
 		this.showSelector((done) => {
 			const selector = new ThinkingSelectorComponent(
@@ -4239,6 +4256,7 @@ export class InteractiveMode {
 					done();
 					this.ui.requestRender();
 				},
+				this.session.model?.thinkingLevelMap,
 			);
 			// The component is a Container wrapping a SelectList; focus the list so it
 			// receives keyboard input (matches the settings/session selector pattern).

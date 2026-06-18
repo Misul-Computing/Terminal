@@ -33,12 +33,17 @@ export class ThinkingSelectorComponent extends Container {
 		availableLevels: ThinkingLevel[],
 		onSelect: (level: ThinkingLevel) => void,
 		onCancel: () => void,
+		thinkingLevelMap?: Partial<Record<ThinkingLevel, string | null>>,
 	) {
 		super();
 
 		const thinkingLevels: SelectItem[] = availableLevels.map((level) => ({
 			value: level,
-			label: level,
+			// Show the provider's own name for the top budget tier (e.g. "max" on
+			// Anthropic/DeepSeek) so it matches what the provider/OpenCode calls it;
+			// lower tiers share the generic effort name across providers. The value
+			// stays the generic ThinkingLevel, which the session maps when calling.
+			label: level === "xhigh" && typeof thinkingLevelMap?.xhigh === "string" ? thinkingLevelMap.xhigh : level,
 			description: LEVEL_DESCRIPTIONS[level],
 		}));
 
