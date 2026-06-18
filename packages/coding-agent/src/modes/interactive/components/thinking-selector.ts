@@ -20,7 +20,8 @@ const LEVEL_DESCRIPTIONS: Record<ThinkingLevel, string> = {
 	low: "Low reasoning effort",
 	medium: "Medium reasoning effort",
 	high: "High reasoning effort",
-	xhigh: "Maximum reasoning effort",
+	xhigh: "Extra-high reasoning effort",
+	max: "Maximum reasoning effort",
 };
 
 /**

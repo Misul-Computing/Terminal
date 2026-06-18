@@ -439,7 +439,10 @@ export const streamSimpleOpenAICompletions: StreamFunction<"openai-completions",
 
 	const base = buildBaseOptions(model, options, apiKey);
 	const clampedReasoning = options?.reasoning ? clampThinkingLevel(model, options.reasoning) : undefined;
-	const reasoningEffort = clampedReasoning === "off" ? undefined : clampedReasoning;
+	// `max` is an Anthropic/budget tier OpenAI never accepts; supported-level gating
+	// means it won't occur for OpenAI models, but fold it to the top OpenAI tier for safety.
+	const reasoningEffort =
+		clampedReasoning === "off" ? undefined : clampedReasoning === "max" ? "xhigh" : clampedReasoning;
 	const toolChoice = (options as OpenAICompletionsOptions | undefined)?.toolChoice;
 
 	return streamOpenAICompletions(model, context, {

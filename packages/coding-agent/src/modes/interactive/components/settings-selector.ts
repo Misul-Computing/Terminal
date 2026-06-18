@@ -24,11 +24,12 @@ const SETTINGS_SUBMENU_SELECT_LIST_LAYOUT: SelectListLayoutOptions = {
 
 const THINKING_DESCRIPTIONS: Record<ThinkingLevel, string> = {
 	off: "No reasoning",
-	minimal: "Very brief reasoning (~1k tokens)",
-	low: "Light reasoning (~2k tokens)",
-	medium: "Moderate reasoning (~8k tokens)",
-	high: "Deep reasoning (~16k tokens)",
-	xhigh: "Maximum reasoning (~32k tokens)",
+	minimal: "Minimal reasoning effort",
+	low: "Low reasoning effort",
+	medium: "Medium reasoning effort",
+	high: "High reasoning effort",
+	xhigh: "Extra-high reasoning effort",
+	max: "Maximum reasoning effort",
 };
 
 const DEFAULT_PROJECT_TRUST_LABELS: Record<DefaultProjectTrust, string> = {

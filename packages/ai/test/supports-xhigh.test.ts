@@ -105,11 +105,14 @@ describe("getSupportedThinkingLevels", () => {
 });
 
 describe("thinkingLevelLabel", () => {
-	it("shows the provider's own name for the budget top tier (DeepSeek V4 Flash xhigh -> max)", () => {
+	it("shows the clean generic level name, not the raw provider param", () => {
 		const model = getModel("opencode-go", "deepseek-v4-flash");
 		expect(model).toBeDefined();
-		expect(model!.thinkingLevelMap?.xhigh).toBe("max");
-		expect(thinkingLevelLabel(model!, "xhigh")).toBe("max");
+		// `max` is now a real level, so the top budget tier is the dedicated `max`
+		// tier — the label is always the clean generic level name, even where the
+		// provider param differs (e.g. an uppercase/alias value).
+		expect(thinkingLevelLabel(model!, "xhigh")).toBe("xhigh");
+		expect(thinkingLevelLabel(model!, "max")).toBe("max");
 	});
 
 	it("keeps the generic name when the provider term equals the generic level (gpt-5.5-pro xhigh -> xhigh)", () => {
