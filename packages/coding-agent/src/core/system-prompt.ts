@@ -2,6 +2,7 @@
  * System prompt construction and project context loading
  */
 
+import type { LoadedMemory } from "./memory.ts";
 import { MISUL_CONSTITUTION } from "./misul-system-prompt.ts";
 import { formatSkillsForPrompt, type Skill } from "./skills.ts";
 
@@ -22,6 +23,8 @@ export interface BuildSystemPromptOptions {
 	contextFiles?: Array<{ path: string; content: string }>;
 	/** Pre-loaded skills. */
 	skills?: Skill[];
+	/** Persistent agent memory, injected at session start (see core/memory.ts). */
+	memory?: LoadedMemory;
 }
 
 /** Build the system prompt with tools, guidelines, and context */
@@ -47,6 +50,13 @@ export function buildSystemPrompt(options: BuildSystemPromptOptions): string {
 
 	const appendSection = appendSystemPrompt ? `\n\n${appendSystemPrompt}` : "";
 
+	// Persistent memory from earlier sessions. Injected before project context so
+	// it is treated as durable knowledge, applied silently (not announced), and
+	// kept accurate by updating the file itself.
+	const memorySection = options.memory
+		? `\n\n<memory path="${options.memory.path}">\nPersistent memory from earlier sessions. Apply it silently — do not announce that you are using memory — and keep it accurate by editing this file when durable facts change.\n\n${options.memory.content}\n</memory>\n`
+		: "";
+
 	const contextFiles = providedContextFiles ?? [];
 	const skills = providedSkills ?? [];
 
@@ -56,6 +66,7 @@ export function buildSystemPrompt(options: BuildSystemPromptOptions): string {
 		if (appendSection) {
 			prompt += appendSection;
 		}
+		prompt += memorySection;
 
 		// Append project context files
 		if (contextFiles.length > 0) {
@@ -135,6 +146,7 @@ ${guidelines}`;
 	if (appendSection) {
 		prompt += appendSection;
 	}
+	prompt += memorySection;
 
 	// Append project context files
 	if (contextFiles.length > 0) {
