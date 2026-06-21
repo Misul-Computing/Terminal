@@ -2730,7 +2730,7 @@ export class InteractiveMode {
 				} else if (event.message.role === "assistant") {
 					this.streamingComponent = new AssistantMessageComponent(
 						undefined,
-						this.hideThinkingBlock,
+						false, // always show the thinking trace live while streaming; it collapses on message_end
 						this.getMarkdownThemeWithSettings(),
 						this.hiddenThinkingLabel,
 					);
@@ -2790,6 +2790,9 @@ export class InteractiveMode {
 						this.streamingMessage.errorMessage = errorMessage;
 					}
 					this.streamingComponent.updateContent(this.streamingMessage);
+					// Message complete: collapse the live thinking trace to the toggle
+					// state (hidden by default; app.thinking.toggle reveals/hides it).
+					this.streamingComponent.setHideThinkingBlock(this.hideThinkingBlock);
 
 					if (this.streamingMessage.stopReason === "aborted" || this.streamingMessage.stopReason === "error") {
 						if (!errorMessage) {

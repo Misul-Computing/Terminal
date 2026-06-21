@@ -1,4 +1,4 @@
-import { Box, Container, Markdown, type MarkdownTheme } from "@misul/tui";
+import { Container, Markdown, type MarkdownTheme } from "@misul/tui";
 import { getMarkdownTheme, theme } from "../theme/theme.ts";
 
 const OSC133_ZONE_START = "\x1b]133;A\x07";
@@ -6,27 +6,23 @@ const OSC133_ZONE_END = "\x1b]133;B\x07";
 const OSC133_ZONE_FINAL = "\x1b]133;C\x07";
 
 /**
- * Component that renders a user message
+ * Renders a user message as plain, boxless text in a muted tone — no big colored
+ * fill. The muted colour distinguishes the user's turn from the model's reply
+ * (which renders in the default foreground) without a heavy background block.
  */
 export class UserMessageComponent extends Container {
-	private contentBox: Box;
-
 	constructor(text: string, markdownTheme: MarkdownTheme = getMarkdownTheme()) {
 		super();
-		this.contentBox = new Box(1, 1, (content: string) => theme.bg("userMessageBg", content));
-		this.contentBox.addChild(
+		this.addChild(
 			new Markdown(
 				text,
-				0,
+				1,
 				0,
 				markdownTheme,
-				{
-					color: (content: string) => theme.fg("userMessageText", content),
-				},
+				{ color: (content: string) => theme.fg("muted", content) },
 				{ preserveOrderedListMarkers: true },
 			),
 		);
-		this.addChild(this.contentBox);
 	}
 
 	override render(width: number): string[] {

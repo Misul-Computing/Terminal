@@ -8,18 +8,17 @@ const OSC133_ZONE_FINAL = "\x1b]133;C\x07";
 const BG_RESET = "\x1b[49m";
 
 describe("UserMessageComponent", () => {
-	test("keeps user message height stable while moving closing OSC markers off line end", () => {
+	test("renders the user message boxless (no colored background) with OSC zone markers", () => {
 		initTheme("dark");
 
 		const component = new UserMessageComponent("hello");
 		const lines = component.render(20);
+		const joined = lines.join("\n");
 
-		expect(lines).toHaveLength(3);
+		expect(joined).toContain("hello");
 		expect(lines[0]).toContain(OSC133_ZONE_START);
-		expect(lines[0].endsWith(BG_RESET)).toBe(true);
-		expect(lines[0]).not.toContain(OSC133_ZONE_END);
-		expect(lines[1]).toContain("hello");
-		expect(lines[2].startsWith(OSC133_ZONE_END + OSC133_ZONE_FINAL)).toBe(true);
-		expect(lines[2].endsWith(BG_RESET)).toBe(true);
+		expect(lines[lines.length - 1]).toContain(OSC133_ZONE_END + OSC133_ZONE_FINAL);
+		// No big colored box: no background fill/reset sequence anywhere.
+		expect(joined).not.toContain(BG_RESET);
 	});
 });

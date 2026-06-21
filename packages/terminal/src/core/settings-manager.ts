@@ -831,7 +831,9 @@ export class SettingsManager {
 	}
 
 	getHideThinkingBlock(): boolean {
-		return this.settings.hideThinkingBlock ?? false;
+		// Completed thinking traces are hidden by default; shown live while
+		// streaming, then collapsed on completion (app.thinking.toggle reveals).
+		return this.settings.hideThinkingBlock ?? true;
 	}
 
 	setHideThinkingBlock(hide: boolean): void {
