@@ -4,12 +4,13 @@ description: >
   Universal frontend design guidance that lifts any model's UI output above
   templated, AI-generated defaults. Gives both aesthetic direction (intentional
   palette, typography, layout, a signature element) AND concrete execution
-  scaffolding (explicit design-token scales, modern layout patterns, an
-  accessibility/quality floor, an anti-"AI-look" checklist) so a weak model gets
-  the mechanics it lacks and a strong model gets the taste it needs. Use whenever
-  building, styling, or redesigning any user interface — web pages, components,
-  landing pages, dashboards, apps — or when frontend output looks generic,
-  templated, or "AI-generated".
+  scaffolding (explicit design-token scales, modern layout patterns,
+  micro-interaction and animation polish, an accessibility/quality floor, an
+  anti-"AI-look" checklist) so a weak model gets the mechanics it lacks and a
+  strong model gets the taste it needs. Use whenever building, styling, or
+  redesigning any user interface — web pages, components, landing pages,
+  dashboards, apps, micro-interactions/animations — or when frontend output looks
+  generic, templated, or "AI-generated".
 license: MIT
 ---
 
@@ -101,6 +102,45 @@ motion is itself an AI tell. Always wrap non-essential motion in
 - Respect `prefers-reduced-motion` and `prefers-color-scheme` where relevant.
 - Images have `alt`; interactive controls have accessible names.
 
+## 9. Micro-details that make it feel built, not generated
+
+Polish is the compounding of small, correct details. Apply whichever fit:
+
+- **Concentric radius**: a nested element's outer radius = inner radius + padding.
+  Mismatched nested radii are the single most common thing that reads as "off".
+- **Optical, not geometric, alignment**: nudge icons, play triangles, and
+  asymmetric shapes off the mathematical center until they *look* centered.
+- **Layered shadows**: stack a few low-opacity `box-shadow`s for natural depth
+  instead of one hard shadow; prefer shadows to solid borders — they adapt to any
+  background.
+- **Image edges**: give images a `1px` outline at ~10% opacity — pure black in
+  light mode (`rgba(0,0,0,.1)`), pure white in dark (`rgba(255,255,255,.1)`). A
+  tinted/gray outline reads as dirt.
+- **Tactile press**: `scale(0.96)` on `:active` for buttons; never below `0.95`
+  (smaller feels exaggerated).
+- **Hit area**: interactive controls get ≥ 40×40px of hit area; extend a smaller
+  visible control with a transparent pseudo-element.
+- **Live numbers**: `font-variant-numeric: tabular-nums` on anything that updates
+  (timers, counts, prices) so the width doesn't jump.
+- **Text wrap**: `text-wrap: balance` on headings, `text-wrap: pretty` on body —
+  kills orphans.
+- **Crisp text**: `-webkit-font-smoothing: antialiased` on the root (macOS).
+
+Motion details (extend §7):
+
+- Use CSS **transitions** for interactive state changes — they interrupt cleanly
+  when the user changes intent mid-gesture; reserve `@keyframes` for one-shot
+  staged sequences.
+- Always name the properties — `transition-property: transform, opacity`, never
+  `transition: all`.
+- Split an entering view into semantic chunks and **stagger** them ~100ms apart
+  instead of animating one container; make **exits subtler** than enters (a small
+  fixed `translateY`, not the full height); skip the enter animation on first render.
+- Icon swaps: cross-fade both icons with `scale 0.25→1, opacity 0→1, blur 4px→0`
+  (spring with `bounce: 0`).
+- `will-change` only for `transform`/`opacity`/`filter`, and only once you
+  actually see first-frame stutter; never `will-change: all`.
+
 ## Process: plan, critique, build, critique again
 
 1. **Plan** the token system (§2) + a one-line layout concept + the signature
@@ -129,4 +169,6 @@ case, plain verbs, no filler; one element, one job.
 *Original Misul Terminal skill (MIT). Aesthetic principles informed by
 Anthropic's `frontend-design` skill (Apache-2.0); the execution scaffolding,
 token system, and quality floor are added to make the guidance universal across
-models. No text is copied from that skill.*
+models. The §9 micro-detail techniques are informed by Jakub Krehel's "Details
+that make interfaces feel better" (jakub.kr). No text is copied from either
+source — all guidance is expressed in our own words.*
