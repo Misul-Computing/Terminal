@@ -10,6 +10,7 @@ import {
 	CLOUDFLARE_WORKERS_AI_BASE_URL,
 } from "../src/providers/cloudflare.ts";
 import type { AnthropicMessagesCompat, Api, KnownProvider, Model, OpenAICompletionsCompat } from "../src/types.ts";
+import { thinkingLevelMapFor } from "./thinking-efforts.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -170,33 +171,6 @@ const EAGER_TOOL_INPUT_STREAMING_UNSUPPORTED_ANTHROPIC_MODELS = new Set([
 	"github-copilot:claude-sonnet-4.5",
 ]);
 
-const DEEPSEEK_V4_THINKING_LEVEL_MAP = {
-	minimal: null,
-	low: null,
-	medium: null,
-	high: "high",
-	xhigh: "max",
-} as const;
-
-const ANT_LING_RING_THINKING_LEVEL_MAP = {
-	off: null,
-	minimal: null,
-	low: null,
-	medium: null,
-	high: "high",
-	xhigh: "xhigh",
-} as const;
-
-const OPENAI_RESPONSES_NONE_REASONING_MODELS = new Set([
-	"gpt-5.1",
-	"gpt-5.2",
-	"gpt-5.3-codex",
-	"gpt-5.4",
-	"gpt-5.4-mini",
-	"gpt-5.4-nano",
-	"gpt-5.5",
-]);
-
 const OPENCODE_OPENAI_COMPLETIONS_LONG_CACHE_RETENTION_UNSUPPORTED_MODELS = new Set([
 	"opencode:deepseek-v4-flash",
 	"opencode:deepseek-v4-pro",
@@ -209,8 +183,8 @@ const OPENCODE_OPENAI_COMPLETIONS_LONG_CACHE_RETENTION_UNSUPPORTED_MODELS = new 
 // Checked manually against the authenticated GitHub Copilot /models endpoint on 2026-06-15.
 // Keep this to narrow corrections over models.dev metadata instead of snapshotting Copilot's catalog.
 const GITHUB_COPILOT_THINKING_LEVEL_OVERRIDES = {
-	"claude-opus-4.7": { minimal: "low" },
-	"claude-opus-4.8": { minimal: "low" },
+	"claude-opus-4.7": { minimal: "low", xhigh: "xhigh" },
+	"claude-opus-4.8": { minimal: "low", xhigh: "xhigh" },
 	"claude-sonnet-4.6": { minimal: "low", xhigh: "max" },
 } satisfies Record<string, NonNullable<Model<Api>["thinkingLevelMap"]>>;
 
@@ -237,19 +211,6 @@ function getTogetherThinkingLevelMap(
 	return { ...TOGETHER_TOGGLE_REASONING_LEVEL_MAP };
 }
 
-function supportsOpenAiXhigh(modelId: string): boolean {
-	return (
-		modelId.includes("gpt-5.2") ||
-		modelId.includes("gpt-5.3") ||
-		modelId.includes("gpt-5.4") ||
-		modelId.includes("gpt-5.5")
-	);
-}
-
-function isGoogleThinkingApi(model: Model<any>): boolean {
-	return model.api === "google-generative-ai" || model.api === "google-vertex";
-}
-
 function isAnthropicAdaptiveThinkingModel(modelId: string): boolean {
 	return (
 		modelId.includes("opus-4-6") ||
@@ -273,124 +234,39 @@ function mergeAnthropicMessagesCompat(model: Model<Api>, compat: AnthropicMessag
 	model.compat = { ...(model.compat as AnthropicMessagesCompat | undefined), ...compat };
 }
 
-function isGemini3ProModel(modelId: string): boolean {
-	return /gemini-3(?:\.\d+)?-pro/.test(modelId.toLowerCase());
-}
-
-function isGemini3FlashModel(modelId: string): boolean {
-	const id = modelId.toLowerCase();
-	return /gemini-3(?:\.\d+)?-flash/.test(id) || id === "gemini-flash-latest" || id === "gemini-flash-lite-latest";
-}
-
-function isGemma4Model(modelId: string): boolean {
-	return /gemma-?4/.test(modelId.toLowerCase());
-}
-
 function applyThinkingLevelMetadata(model: Model<any>): void {
-	if (
-		(model.api === "openai-responses" || model.api === "azure-openai-responses") &&
-		model.id.startsWith("gpt-5")
-	) {
+	// Thinking-level SET from OpenCode's host-aware effort logic (scripts/
+	// thinking-efforts.ts) — the source of truth for which reasoning tiers each
+	// model exposes. Skipped when construction already set a provider-specific map
+	// (Z.ai GLM-5.2, Together), which is kept because OpenCode is stale there.
+	if (model.reasoning && !model.thinkingLevelMap) {
+		const map = thinkingLevelMapFor({ id: model.id, provider: model.provider, api: model.api, reasoning: true });
+		if (map) mergeThinkingLevelMap(model, map);
+	}
+
+	// Verified provider-specific corrections OpenCode lacks or gets wrong, applied
+	// over the port. Copilot overrides were checked against the live /models
+	// endpoint; groq qwen3-32b uses a "default" effort value; Mercury 2's instant
+	// mode (reasoning_effort:"none") disables tool calling, so keep off unsupported.
+	if (model.provider === "github-copilot") {
+		const override = GITHUB_COPILOT_THINKING_LEVEL_OVERRIDES[model.id];
+		if (override) mergeThinkingLevelMap(model, override);
+	}
+	if (model.provider === "groq" && model.id === "qwen/qwen3-32b") {
+		mergeThinkingLevelMap(model, { high: "default" });
+	}
+	if (model.provider === "openrouter" && model.id.startsWith("inception/mercury-2")) {
 		mergeThinkingLevelMap(model, { off: null });
 	}
-	if (model.provider === "github-copilot" && model.id.startsWith("gpt-5")) {
-		mergeThinkingLevelMap(model, { minimal: "low" });
-	}
-	if (
-		model.api === "openai-responses" &&
-		model.provider === "openai" &&
-		OPENAI_RESPONSES_NONE_REASONING_MODELS.has(model.id)
-	) {
-		mergeThinkingLevelMap(model, { off: "none" });
-	}
-	if (supportsOpenAiXhigh(model.id)) {
-		mergeThinkingLevelMap(model, { xhigh: "xhigh" });
-	}
-	if (model.provider === "openai" && model.id === "gpt-5.5") {
-		mergeThinkingLevelMap(model, { minimal: null });
-	}
-	if (model.id.endsWith("gpt-5.5-pro")) {
-		mergeThinkingLevelMap(model, { off: null, minimal: null, low: null });
-	}
-	if (model.id.includes("opus-4-6") || model.id.includes("opus-4.6")) {
-		mergeThinkingLevelMap(model, { xhigh: "max" });
-	}
-	if (
-		model.id.includes("opus-4-7") ||
-		model.id.includes("opus-4.7") ||
-		model.id.includes("opus-4-8") ||
-		model.id.includes("opus-4.8")
-	) {
-		mergeThinkingLevelMap(model, { xhigh: "xhigh" });
-	}
-	if (
-		(model.api === "anthropic-messages" || model.api === "bedrock-converse-stream") &&
-		model.id.includes("fable-5")
-	) {
-		mergeThinkingLevelMap(model, { off: null, xhigh: "xhigh" });
-	}
+
+	// Request-shape compat for Anthropic adaptive thinking — this controls HOW the
+	// request is sent (effort vs budget, temperature support), not which tiers are
+	// offered, so it stays as an explicit correction.
 	if (model.api === "anthropic-messages" && isAnthropicAdaptiveThinkingModel(model.id)) {
 		mergeAnthropicMessagesCompat(model, { forceAdaptiveThinking: true });
 	}
 	if (model.api === "anthropic-messages" && isAnthropicTemperatureUnsupportedModel(model.id)) {
 		mergeAnthropicMessagesCompat(model, { supportsTemperature: false });
-	}
-	if (model.api === "openai-completions" && model.id.includes("deepseek-v4")) {
-		mergeThinkingLevelMap(
-			model,
-			model.provider === "openrouter"
-				? { ...DEEPSEEK_V4_THINKING_LEVEL_MAP, xhigh: "xhigh" }
-				: DEEPSEEK_V4_THINKING_LEVEL_MAP,
-		);
-	}
-	if (isGoogleThinkingApi(model) && isGemini3ProModel(model.id)) {
-		mergeThinkingLevelMap(model, { off: null, minimal: null, low: "LOW", medium: null, high: "HIGH" });
-	}
-	if (isGoogleThinkingApi(model) && isGemini3FlashModel(model.id)) {
-		mergeThinkingLevelMap(model, { off: null });
-	}
-	if (isGoogleThinkingApi(model) && isGemma4Model(model.id)) {
-		mergeThinkingLevelMap(model, { off: null, minimal: "MINIMAL", low: null, medium: null, high: "HIGH" });
-	}
-	if (model.provider === "groq" && model.id === "qwen/qwen3-32b") {
-		mergeThinkingLevelMap(model, { minimal: null, low: null, medium: null, high: "default" });
-	}
-	if (model.provider === "openai-codex" && supportsOpenAiXhigh(model.id)) {
-		mergeThinkingLevelMap(model, { minimal: "low" });
-	}
-	if (
-		(model.provider === "moonshotai" || model.provider === "moonshotai-cn") &&
-		(model.id === "kimi-k2.7-code" || model.id === "kimi-k2.7-code-highspeed")
-	) {
-		// Kimi K2.7 Code is always-thinking. Official docs say
-		// `thinking: { type: "disabled" }` is rejected, and callers can omit
-		// the thinking parameter to use the enabled default.
-		mergeThinkingLevelMap(model, { off: null });
-	}
-	if (model.provider === "openrouter" && model.id.startsWith("inception/mercury-2")) {
-		// Mercury 2 in instant mode (reasoning_effort: "none") disables tool calling.
-		// Mark "off" unsupported so the openai-completions provider omits the reasoning param
-		// instead of defaulting to {reasoning:{effort:"none"}} (see openai-completions.ts:575).
-		// Pi's low/medium/high pass through verbatim; OpenRouter normalizes to Mercury's vocabulary.
-		mergeThinkingLevelMap(model, { off: null });
-	}
-	if (model.provider === "opencode-go" && model.id === "kimi-k2.6") {
-		// OpenCode Go exposes Kimi K2.6 thinking as on/off, not distinct effort tiers.
-		mergeThinkingLevelMap(model, { minimal: null, low: null, medium: null });
-	}
-	if (model.provider === "opencode" && model.id === "grok-build-0.1") {
-		// OpenCode Zen Grok Build reasons by default but rejects explicit reasoningEffort.
-		mergeThinkingLevelMap(model, { off: null, minimal: null, low: null, medium: null });
-	}
-	if (model.provider === "ant-ling" && model.reasoning) {
-		// Ring reasons by default. Only high/xhigh have documented explicit effort controls.
-		mergeThinkingLevelMap(model, ANT_LING_RING_THINKING_LEVEL_MAP);
-	}
-	if (model.provider === "github-copilot") {
-		const override = GITHUB_COPILOT_THINKING_LEVEL_OVERRIDES[model.id];
-		if (override) {
-			mergeThinkingLevelMap(model, override);
-		}
 	}
 }
 

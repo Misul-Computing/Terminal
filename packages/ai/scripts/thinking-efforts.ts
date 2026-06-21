@@ -163,6 +163,11 @@ export function openCodeEfforts(model: ThinkingModelInput): string[] | "binary" 
 		return googleEfforts(id);
 	}
 
+	// Provider-specific sets where OpenCode is stale or absent (verified against the
+	// providers' own docs — OpenCode treats all GLM as binary and omits these):
+	if (provider === "ant-ling") return ["high", "xhigh"]; // Ring: documented high/xhigh only
+	if (model.api === "mistral-conversations") return "binary"; // Mistral: high | none (on/off)
+
 	// No-effort binary providers.
 	if (isNoEffortModel(id)) return "binary";
 
@@ -194,31 +199,44 @@ export function openCodeEfforts(model: ThinkingModelInput): string[] | "binary" 
 
 const ALL_TIERS = ["minimal", "low", "medium", "high", "xhigh", "max"] as const;
 
+// Models whose reasoning cannot be turned off (always-on). `off` is unavailable
+// for these; everything else keeps Misul's disable capability.
+function cannotDisableThinking(model: ThinkingModelInput, efforts: string[]): boolean {
+	const id = model.id.toLowerCase();
+	if (id.includes("kimi-k2.7-code") || id.includes("grok-build") || id.includes("qwq")) return true;
+	if (id.includes("fable-5") || id.includes("mythos-5")) return true; // always-on adaptive thinking
+	if (model.provider === "ant-ling") return true; // Ring reasons by default
+	// GPT-5 family (any host) disables only via the "none" effort tier.
+	if (GPT5_FAMILY_RE.test(id)) return !efforts.includes("none");
+	if (model.api === "google-generative-ai" || model.api === "google-vertex") {
+		// Gemini 3.x, Gemma 4, and 2.5 Pro cannot fully disable thinking.
+		return id.includes("gemini-3") || /gemma-?4/.test(id) || (id.includes("2.5") && id.includes("pro") && !id.includes("flash"));
+	}
+	if (model.api === "openai-responses" || model.api === "azure-openai-responses" || model.api === "openai-codex-responses") {
+		return !efforts.includes("none"); // native OpenAI disables only via the "none" tier
+	}
+	return false;
+}
+
 /**
  * Translate the OpenCode effort set into a Misul thinkingLevelMap: supported
- * tiers map to their effort name, others are null. `none` => off is supported.
- * Binary models expose off + high only. Returns undefined for non-reasoning models.
+ * tiers map to their effort name, others are null. `off` is supported (disable)
+ * unless the model is always-on. Binary models expose off + high only. Returns
+ * undefined for non-reasoning models.
  */
 export function thinkingLevelMapFor(model: ThinkingModelInput): LevelMap | undefined {
 	const efforts = openCodeEfforts(model);
 	if (efforts === null) return undefined;
 
-	const map: LevelMap = {};
-	if (efforts === "binary") {
-		// On/off only: disable supported, single "on" tier at high, no graded tiers.
-		map.off = "off";
-		map.minimal = null;
-		map.low = null;
-		map.medium = null;
-		map.high = "high";
-		map.xhigh = null;
-		map.max = null;
-		return map;
-	}
+	const tiers = efforts === "binary" ? ["high"] : efforts;
+	const canDisable = !cannotDisableThinking(model, tiers);
 
-	map.off = efforts.includes("none") ? "none" : null;
+	const map: LevelMap = {};
+	// off: disable supported unless always-on. OpenAI exposes it as the "none"
+	// tier; elsewhere it is "run without thinking".
+	map.off = canDisable ? (tiers.includes("none") ? "none" : "off") : null;
 	for (const tier of ALL_TIERS) {
-		map[tier] = efforts.includes(tier) ? tier : null;
+		map[tier] = tiers.includes(tier) ? tier : null;
 	}
 	return map;
 }

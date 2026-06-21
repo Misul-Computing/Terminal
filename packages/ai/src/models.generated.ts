@@ -12,6 +12,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.33,
@@ -80,6 +81,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 1,
@@ -97,6 +99,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -114,6 +117,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -131,7 +135,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"max"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -149,7 +153,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -167,7 +171,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -185,6 +189,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -202,6 +207,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -219,6 +225,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 1,
@@ -236,7 +243,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"max"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 16.5,
@@ -254,7 +261,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -272,6 +279,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -289,6 +297,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 3.3,
@@ -306,6 +315,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1.35,
@@ -323,6 +333,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.58,
@@ -340,6 +351,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.62,
@@ -357,7 +369,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.eu-central-1.amazonaws.com",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 11,
@@ -375,6 +387,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.eu-central-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 1,
@@ -392,6 +405,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.eu-central-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -409,7 +423,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.eu-central-1.amazonaws.com",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"max"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 5.5,
@@ -427,7 +441,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.eu-central-1.amazonaws.com",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 5.5,
@@ -445,7 +459,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.eu-central-1.amazonaws.com",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 5.5,
@@ -463,6 +477,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.eu-central-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 3.3,
@@ -480,6 +495,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.eu-central-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 3.3,
@@ -497,7 +513,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 10,
@@ -515,6 +531,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 1,
@@ -532,6 +549,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -549,7 +567,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"max"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -567,7 +585,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -585,7 +603,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -603,6 +621,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -620,6 +639,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -671,7 +691,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -689,7 +709,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -707,6 +727,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -724,6 +745,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -826,6 +848,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -843,6 +866,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -860,6 +884,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -894,6 +919,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.5,
@@ -1030,6 +1056,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.6,
@@ -1047,6 +1074,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.6,
@@ -1081,6 +1109,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.06,
@@ -1115,6 +1144,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.15,
@@ -1132,7 +1162,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 2.75,
@@ -1150,7 +1180,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 5.5,
@@ -1168,6 +1198,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.15,
@@ -1185,6 +1216,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.15,
@@ -1202,6 +1234,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.07,
@@ -1219,6 +1252,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.07,
@@ -1287,6 +1321,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.15,
@@ -1338,6 +1373,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.22,
@@ -1389,7 +1425,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 10,
@@ -1407,6 +1443,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 1,
@@ -1424,6 +1461,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -1441,6 +1479,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -1458,7 +1497,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"max"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -1476,7 +1515,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -1494,7 +1533,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -1512,6 +1551,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -1529,6 +1569,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -1546,6 +1587,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1.35,
@@ -1597,6 +1639,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 2.5,
@@ -1614,6 +1657,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.6,
@@ -1631,6 +1675,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.6,
@@ -1648,6 +1693,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.07,
@@ -1665,6 +1711,7 @@ export const MODELS = {
 			provider: "amazon-bedrock",
 			baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1,
@@ -1721,7 +1768,7 @@ export const MODELS = {
 			baseUrl: "https://api.ant-ling.com/v1",
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false,"maxTokensField":"max_tokens","supportsLongCacheRetention":false,"thinkingFormat":"ant-ling"},
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":null,"high":"high","xhigh":"xhigh"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":null,"high":"high","xhigh":"xhigh","max":null},
 			input: ["text"],
 			cost: {
 				input: 0.06,
@@ -1809,6 +1856,7 @@ export const MODELS = {
 			provider: "anthropic",
 			baseUrl: "https://api.anthropic.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -1878,7 +1926,7 @@ export const MODELS = {
 			baseUrl: "https://api.anthropic.com",
 			compat: {"forceAdaptiveThinking":true},
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 10,
@@ -1896,6 +1944,7 @@ export const MODELS = {
 			provider: "anthropic",
 			baseUrl: "https://api.anthropic.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 1,
@@ -1913,6 +1962,7 @@ export const MODELS = {
 			provider: "anthropic",
 			baseUrl: "https://api.anthropic.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 1,
@@ -1930,6 +1980,7 @@ export const MODELS = {
 			provider: "anthropic",
 			baseUrl: "https://api.anthropic.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -1947,6 +1998,7 @@ export const MODELS = {
 			provider: "anthropic",
 			baseUrl: "https://api.anthropic.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -1964,6 +2016,7 @@ export const MODELS = {
 			provider: "anthropic",
 			baseUrl: "https://api.anthropic.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -1981,6 +2034,7 @@ export const MODELS = {
 			provider: "anthropic",
 			baseUrl: "https://api.anthropic.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -1998,6 +2052,7 @@ export const MODELS = {
 			provider: "anthropic",
 			baseUrl: "https://api.anthropic.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -2015,6 +2070,7 @@ export const MODELS = {
 			provider: "anthropic",
 			baseUrl: "https://api.anthropic.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -2033,7 +2089,7 @@ export const MODELS = {
 			baseUrl: "https://api.anthropic.com",
 			compat: {"forceAdaptiveThinking":true},
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"max"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -2052,7 +2108,7 @@ export const MODELS = {
 			baseUrl: "https://api.anthropic.com",
 			compat: {"forceAdaptiveThinking":true,"supportsTemperature":false},
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -2071,7 +2127,7 @@ export const MODELS = {
 			baseUrl: "https://api.anthropic.com",
 			compat: {"forceAdaptiveThinking":true,"supportsTemperature":false},
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -2089,6 +2145,7 @@ export const MODELS = {
 			provider: "anthropic",
 			baseUrl: "https://api.anthropic.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -2106,6 +2163,7 @@ export const MODELS = {
 			provider: "anthropic",
 			baseUrl: "https://api.anthropic.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -2123,6 +2181,7 @@ export const MODELS = {
 			provider: "anthropic",
 			baseUrl: "https://api.anthropic.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -2140,6 +2199,7 @@ export const MODELS = {
 			provider: "anthropic",
 			baseUrl: "https://api.anthropic.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -2158,6 +2218,7 @@ export const MODELS = {
 			baseUrl: "https://api.anthropic.com",
 			compat: {"forceAdaptiveThinking":true},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -2347,7 +2408,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -2365,7 +2426,6 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: false,
-			thinkingLevelMap: {"off":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -2383,7 +2443,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -2401,7 +2461,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.25,
@@ -2419,7 +2479,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.05,
@@ -2437,7 +2497,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -2455,7 +2515,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -2473,7 +2533,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":"medium","high":null,"xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -2491,7 +2551,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -2509,7 +2569,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -2527,7 +2587,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.25,
@@ -2545,7 +2605,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -2563,7 +2623,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":"medium","high":null,"xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -2581,7 +2641,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -2599,7 +2659,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 21,
@@ -2617,7 +2677,6 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: false,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh"},
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -2635,7 +2694,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -2653,7 +2712,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -2671,7 +2730,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 2.5,
@@ -2689,7 +2748,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.75,
@@ -2707,7 +2766,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.2,
@@ -2725,7 +2784,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 30,
@@ -2743,7 +2802,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -2761,7 +2820,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh","minimal":null,"low":null},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 30,
@@ -2779,6 +2838,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -2796,6 +2856,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 150,
@@ -2813,6 +2874,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -2830,6 +2892,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":"medium","high":null,"xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 10,
@@ -2847,6 +2910,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1.1,
@@ -2864,6 +2928,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 20,
@@ -2881,6 +2946,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.1,
@@ -2898,6 +2964,7 @@ export const MODELS = {
 			provider: "azure-openai-responses",
 			baseUrl: "",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":"medium","high":null,"xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -2917,6 +2984,7 @@ export const MODELS = {
 			provider: "cerebras",
 			baseUrl: "https://api.cerebras.ai/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.35,
@@ -2934,6 +3002,7 @@ export const MODELS = {
 			provider: "cerebras",
 			baseUrl: "https://api.cerebras.ai/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 2.25,
@@ -3056,7 +3125,7 @@ export const MODELS = {
 			baseUrl: "https://gateway.ai.cloudflare.com/v1/{CLOUDFLARE_ACCOUNT_ID}/{CLOUDFLARE_GATEWAY_ID}/anthropic",
 			compat: {"forceAdaptiveThinking":true},
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 10,
@@ -3074,6 +3143,7 @@ export const MODELS = {
 			provider: "cloudflare-ai-gateway",
 			baseUrl: "https://gateway.ai.cloudflare.com/v1/{CLOUDFLARE_ACCOUNT_ID}/{CLOUDFLARE_GATEWAY_ID}/anthropic",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 1,
@@ -3091,6 +3161,7 @@ export const MODELS = {
 			provider: "cloudflare-ai-gateway",
 			baseUrl: "https://gateway.ai.cloudflare.com/v1/{CLOUDFLARE_ACCOUNT_ID}/{CLOUDFLARE_GATEWAY_ID}/anthropic",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -3108,6 +3179,7 @@ export const MODELS = {
 			provider: "cloudflare-ai-gateway",
 			baseUrl: "https://gateway.ai.cloudflare.com/v1/{CLOUDFLARE_ACCOUNT_ID}/{CLOUDFLARE_GATEWAY_ID}/anthropic",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -3125,6 +3197,7 @@ export const MODELS = {
 			provider: "cloudflare-ai-gateway",
 			baseUrl: "https://gateway.ai.cloudflare.com/v1/{CLOUDFLARE_ACCOUNT_ID}/{CLOUDFLARE_GATEWAY_ID}/anthropic",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -3143,7 +3216,7 @@ export const MODELS = {
 			baseUrl: "https://gateway.ai.cloudflare.com/v1/{CLOUDFLARE_ACCOUNT_ID}/{CLOUDFLARE_GATEWAY_ID}/anthropic",
 			compat: {"forceAdaptiveThinking":true},
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"max"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -3162,7 +3235,7 @@ export const MODELS = {
 			baseUrl: "https://gateway.ai.cloudflare.com/v1/{CLOUDFLARE_ACCOUNT_ID}/{CLOUDFLARE_GATEWAY_ID}/anthropic",
 			compat: {"forceAdaptiveThinking":true,"supportsTemperature":false},
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -3181,7 +3254,7 @@ export const MODELS = {
 			baseUrl: "https://gateway.ai.cloudflare.com/v1/{CLOUDFLARE_ACCOUNT_ID}/{CLOUDFLARE_GATEWAY_ID}/anthropic",
 			compat: {"forceAdaptiveThinking":true,"supportsTemperature":false},
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -3199,6 +3272,7 @@ export const MODELS = {
 			provider: "cloudflare-ai-gateway",
 			baseUrl: "https://gateway.ai.cloudflare.com/v1/{CLOUDFLARE_ACCOUNT_ID}/{CLOUDFLARE_GATEWAY_ID}/anthropic",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -3216,6 +3290,7 @@ export const MODELS = {
 			provider: "cloudflare-ai-gateway",
 			baseUrl: "https://gateway.ai.cloudflare.com/v1/{CLOUDFLARE_ACCOUNT_ID}/{CLOUDFLARE_GATEWAY_ID}/anthropic",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -3234,6 +3309,7 @@ export const MODELS = {
 			baseUrl: "https://gateway.ai.cloudflare.com/v1/{CLOUDFLARE_ACCOUNT_ID}/{CLOUDFLARE_GATEWAY_ID}/anthropic",
 			compat: {"forceAdaptiveThinking":true},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -3319,7 +3395,7 @@ export const MODELS = {
 			provider: "cloudflare-ai-gateway",
 			baseUrl: "https://gateway.ai.cloudflare.com/v1/{CLOUDFLARE_ACCOUNT_ID}/{CLOUDFLARE_GATEWAY_ID}/openai",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -3337,7 +3413,7 @@ export const MODELS = {
 			provider: "cloudflare-ai-gateway",
 			baseUrl: "https://gateway.ai.cloudflare.com/v1/{CLOUDFLARE_ACCOUNT_ID}/{CLOUDFLARE_GATEWAY_ID}/openai",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -3355,7 +3431,7 @@ export const MODELS = {
 			provider: "cloudflare-ai-gateway",
 			baseUrl: "https://gateway.ai.cloudflare.com/v1/{CLOUDFLARE_ACCOUNT_ID}/{CLOUDFLARE_GATEWAY_ID}/openai",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -3373,7 +3449,7 @@ export const MODELS = {
 			provider: "cloudflare-ai-gateway",
 			baseUrl: "https://gateway.ai.cloudflare.com/v1/{CLOUDFLARE_ACCOUNT_ID}/{CLOUDFLARE_GATEWAY_ID}/openai",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -3391,7 +3467,7 @@ export const MODELS = {
 			provider: "cloudflare-ai-gateway",
 			baseUrl: "https://gateway.ai.cloudflare.com/v1/{CLOUDFLARE_ACCOUNT_ID}/{CLOUDFLARE_GATEWAY_ID}/openai",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -3409,7 +3485,7 @@ export const MODELS = {
 			provider: "cloudflare-ai-gateway",
 			baseUrl: "https://gateway.ai.cloudflare.com/v1/{CLOUDFLARE_ACCOUNT_ID}/{CLOUDFLARE_GATEWAY_ID}/openai",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 2.5,
@@ -3427,7 +3503,7 @@ export const MODELS = {
 			provider: "cloudflare-ai-gateway",
 			baseUrl: "https://gateway.ai.cloudflare.com/v1/{CLOUDFLARE_ACCOUNT_ID}/{CLOUDFLARE_GATEWAY_ID}/openai",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -3445,6 +3521,7 @@ export const MODELS = {
 			provider: "cloudflare-ai-gateway",
 			baseUrl: "https://gateway.ai.cloudflare.com/v1/{CLOUDFLARE_ACCOUNT_ID}/{CLOUDFLARE_GATEWAY_ID}/openai",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -3462,6 +3539,7 @@ export const MODELS = {
 			provider: "cloudflare-ai-gateway",
 			baseUrl: "https://gateway.ai.cloudflare.com/v1/{CLOUDFLARE_ACCOUNT_ID}/{CLOUDFLARE_GATEWAY_ID}/openai",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -3479,6 +3557,7 @@ export const MODELS = {
 			provider: "cloudflare-ai-gateway",
 			baseUrl: "https://gateway.ai.cloudflare.com/v1/{CLOUDFLARE_ACCOUNT_ID}/{CLOUDFLARE_GATEWAY_ID}/openai",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1.1,
@@ -3496,6 +3575,7 @@ export const MODELS = {
 			provider: "cloudflare-ai-gateway",
 			baseUrl: "https://gateway.ai.cloudflare.com/v1/{CLOUDFLARE_ACCOUNT_ID}/{CLOUDFLARE_GATEWAY_ID}/openai",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 20,
@@ -3513,6 +3593,7 @@ export const MODELS = {
 			provider: "cloudflare-ai-gateway",
 			baseUrl: "https://gateway.ai.cloudflare.com/v1/{CLOUDFLARE_ACCOUNT_ID}/{CLOUDFLARE_GATEWAY_ID}/openai",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.1,
@@ -3531,6 +3612,7 @@ export const MODELS = {
 			baseUrl: "https://gateway.ai.cloudflare.com/v1/{CLOUDFLARE_ACCOUNT_ID}/{CLOUDFLARE_GATEWAY_ID}/compat",
 			compat: {"sendSessionAffinityHeaders":true},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.6,
@@ -3549,6 +3631,7 @@ export const MODELS = {
 			baseUrl: "https://gateway.ai.cloudflare.com/v1/{CLOUDFLARE_ACCOUNT_ID}/{CLOUDFLARE_GATEWAY_ID}/compat",
 			compat: {"sendSessionAffinityHeaders":true},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.95,
@@ -3567,6 +3650,7 @@ export const MODELS = {
 			baseUrl: "https://gateway.ai.cloudflare.com/v1/{CLOUDFLARE_ACCOUNT_ID}/{CLOUDFLARE_GATEWAY_ID}/compat",
 			compat: {"sendSessionAffinityHeaders":true},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.5,
@@ -3585,6 +3669,7 @@ export const MODELS = {
 			baseUrl: "https://gateway.ai.cloudflare.com/v1/{CLOUDFLARE_ACCOUNT_ID}/{CLOUDFLARE_GATEWAY_ID}/compat",
 			compat: {"sendSessionAffinityHeaders":true},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.06,
@@ -3605,6 +3690,7 @@ export const MODELS = {
 			baseUrl: "https://api.cloudflare.com/client/v4/accounts/{CLOUDFLARE_ACCOUNT_ID}/ai/v1",
 			compat: {"sendSessionAffinityHeaders":true},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.1,
@@ -3695,6 +3781,7 @@ export const MODELS = {
 			baseUrl: "https://api.cloudflare.com/client/v4/accounts/{CLOUDFLARE_ACCOUNT_ID}/ai/v1",
 			compat: {"sendSessionAffinityHeaders":true},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.95,
@@ -3713,6 +3800,7 @@ export const MODELS = {
 			baseUrl: "https://api.cloudflare.com/client/v4/accounts/{CLOUDFLARE_ACCOUNT_ID}/ai/v1",
 			compat: {"sendSessionAffinityHeaders":true},
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.95,
@@ -3731,6 +3819,7 @@ export const MODELS = {
 			baseUrl: "https://api.cloudflare.com/client/v4/accounts/{CLOUDFLARE_ACCOUNT_ID}/ai/v1",
 			compat: {"sendSessionAffinityHeaders":true},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.5,
@@ -3749,6 +3838,7 @@ export const MODELS = {
 			baseUrl: "https://api.cloudflare.com/client/v4/accounts/{CLOUDFLARE_ACCOUNT_ID}/ai/v1",
 			compat: {"sendSessionAffinityHeaders":true},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.35,
@@ -3767,6 +3857,7 @@ export const MODELS = {
 			baseUrl: "https://api.cloudflare.com/client/v4/accounts/{CLOUDFLARE_ACCOUNT_ID}/ai/v1",
 			compat: {"sendSessionAffinityHeaders":true},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.2,
@@ -3785,6 +3876,7 @@ export const MODELS = {
 			baseUrl: "https://api.cloudflare.com/client/v4/accounts/{CLOUDFLARE_ACCOUNT_ID}/ai/v1",
 			compat: {"sendSessionAffinityHeaders":true},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.0509,
@@ -3803,6 +3895,7 @@ export const MODELS = {
 			baseUrl: "https://api.cloudflare.com/client/v4/accounts/{CLOUDFLARE_ACCOUNT_ID}/ai/v1",
 			compat: {"sendSessionAffinityHeaders":true},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.0605,
@@ -3821,6 +3914,7 @@ export const MODELS = {
 			baseUrl: "https://api.cloudflare.com/client/v4/accounts/{CLOUDFLARE_ACCOUNT_ID}/ai/v1",
 			compat: {"sendSessionAffinityHeaders":true},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1.4,
@@ -3841,7 +3935,7 @@ export const MODELS = {
 			baseUrl: "https://api.deepseek.com",
 			compat: {"requiresReasoningContentOnAssistantMessages":true,"thinkingFormat":"deepseek"},
 			reasoning: true,
-			thinkingLevelMap: {"minimal":null,"low":null,"medium":null,"high":"high","xhigh":"max"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":"max"},
 			input: ["text"],
 			cost: {
 				input: 0.14,
@@ -3860,7 +3954,7 @@ export const MODELS = {
 			baseUrl: "https://api.deepseek.com",
 			compat: {"requiresReasoningContentOnAssistantMessages":true,"thinkingFormat":"deepseek"},
 			reasoning: true,
-			thinkingLevelMap: {"minimal":null,"low":null,"medium":null,"high":"high","xhigh":"max"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":"max"},
 			input: ["text"],
 			cost: {
 				input: 0.435,
@@ -3881,11 +3975,12 @@ export const MODELS = {
 			baseUrl: "https://api.fireworks.ai/inference",
 			compat: {"sendSessionAffinityHeaders":true,"supportsEagerToolInputStreaming":false,"supportsCacheControlOnTools":false,"supportsLongCacheRetention":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":"max"},
 			input: ["text"],
 			cost: {
 				input: 0.14,
 				output: 0.28,
-				cacheRead: 0.03,
+				cacheRead: 0.028,
 				cacheWrite: 0,
 			},
 			contextWindow: 1000000,
@@ -3899,6 +3994,7 @@ export const MODELS = {
 			baseUrl: "https://api.fireworks.ai/inference",
 			compat: {"sendSessionAffinityHeaders":true,"supportsEagerToolInputStreaming":false,"supportsCacheControlOnTools":false,"supportsLongCacheRetention":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":"max"},
 			input: ["text"],
 			cost: {
 				input: 1.74,
@@ -3917,6 +4013,7 @@ export const MODELS = {
 			baseUrl: "https://api.fireworks.ai/inference",
 			compat: {"sendSessionAffinityHeaders":true,"supportsEagerToolInputStreaming":false,"supportsCacheControlOnTools":false,"supportsLongCacheRetention":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1.4,
@@ -3927,6 +4024,25 @@ export const MODELS = {
 			contextWindow: 202800,
 			maxTokens: 131072,
 		} satisfies Model<"anthropic-messages">,
+		"accounts/fireworks/models/glm-5p2": {
+			id: "accounts/fireworks/models/glm-5p2",
+			name: "GLM 5.2",
+			api: "anthropic-messages",
+			provider: "fireworks",
+			baseUrl: "https://api.fireworks.ai/inference",
+			compat: {"sendSessionAffinityHeaders":true,"supportsEagerToolInputStreaming":false,"supportsCacheControlOnTools":false,"supportsLongCacheRetention":false},
+			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
+			input: ["text"],
+			cost: {
+				input: 1.4,
+				output: 4.4,
+				cacheRead: 0.26,
+				cacheWrite: 0,
+			},
+			contextWindow: 1048576,
+			maxTokens: 131072,
+		} satisfies Model<"anthropic-messages">,
 		"accounts/fireworks/models/gpt-oss-120b": {
 			id: "accounts/fireworks/models/gpt-oss-120b",
 			name: "GPT OSS 120B",
@@ -3935,11 +4051,12 @@ export const MODELS = {
 			baseUrl: "https://api.fireworks.ai/inference",
 			compat: {"sendSessionAffinityHeaders":true,"supportsEagerToolInputStreaming":false,"supportsCacheControlOnTools":false,"supportsLongCacheRetention":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.15,
 				output: 0.6,
-				cacheRead: 0.01,
+				cacheRead: 0.015,
 				cacheWrite: 0,
 			},
 			contextWindow: 131072,
@@ -3953,6 +4070,7 @@ export const MODELS = {
 			baseUrl: "https://api.fireworks.ai/inference",
 			compat: {"sendSessionAffinityHeaders":true,"supportsEagerToolInputStreaming":false,"supportsCacheControlOnTools":false,"supportsLongCacheRetention":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.07,
@@ -3971,6 +4089,7 @@ export const MODELS = {
 			baseUrl: "https://api.fireworks.ai/inference",
 			compat: {"sendSessionAffinityHeaders":true,"supportsEagerToolInputStreaming":false,"supportsCacheControlOnTools":false,"supportsLongCacheRetention":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.95,
@@ -3989,6 +4108,7 @@ export const MODELS = {
 			baseUrl: "https://api.fireworks.ai/inference",
 			compat: {"sendSessionAffinityHeaders":true,"supportsEagerToolInputStreaming":false,"supportsCacheControlOnTools":false,"supportsLongCacheRetention":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.95,
@@ -4007,6 +4127,7 @@ export const MODELS = {
 			baseUrl: "https://api.fireworks.ai/inference",
 			compat: {"sendSessionAffinityHeaders":true,"supportsEagerToolInputStreaming":false,"supportsCacheControlOnTools":false,"supportsLongCacheRetention":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -4025,6 +4146,7 @@ export const MODELS = {
 			baseUrl: "https://api.fireworks.ai/inference",
 			compat: {"sendSessionAffinityHeaders":true,"supportsEagerToolInputStreaming":false,"supportsCacheControlOnTools":false,"supportsLongCacheRetention":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -4043,6 +4165,7 @@ export const MODELS = {
 			baseUrl: "https://api.fireworks.ai/inference",
 			compat: {"sendSessionAffinityHeaders":true,"supportsEagerToolInputStreaming":false,"supportsCacheControlOnTools":false,"supportsLongCacheRetention":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.4,
@@ -4061,6 +4184,7 @@ export const MODELS = {
 			baseUrl: "https://api.fireworks.ai/inference",
 			compat: {"sendSessionAffinityHeaders":true,"supportsEagerToolInputStreaming":false,"supportsCacheControlOnTools":false,"supportsLongCacheRetention":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 2.8,
@@ -4079,6 +4203,7 @@ export const MODELS = {
 			baseUrl: "https://api.fireworks.ai/inference",
 			compat: {"sendSessionAffinityHeaders":true,"supportsEagerToolInputStreaming":false,"supportsCacheControlOnTools":false,"supportsLongCacheRetention":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -4097,6 +4222,7 @@ export const MODELS = {
 			baseUrl: "https://api.fireworks.ai/inference",
 			compat: {"sendSessionAffinityHeaders":true,"supportsEagerToolInputStreaming":false,"supportsCacheControlOnTools":false,"supportsLongCacheRetention":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -4115,9 +4241,10 @@ export const MODELS = {
 			baseUrl: "https://api.fireworks.ai/inference",
 			compat: {"sendSessionAffinityHeaders":true,"supportsEagerToolInputStreaming":false,"supportsCacheControlOnTools":false,"supportsLongCacheRetention":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
-				input: 2,
+				input: 1.9,
 				output: 8,
 				cacheRead: 0.38,
 				cacheWrite: 0,
@@ -4136,6 +4263,7 @@ export const MODELS = {
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 10,
@@ -4155,6 +4283,7 @@ export const MODELS = {
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			compat: {"supportsEagerToolInputStreaming":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1,
@@ -4173,6 +4302,7 @@ export const MODELS = {
 			baseUrl: "https://api.individual.githubcopilot.com",
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -4192,7 +4322,7 @@ export const MODELS = {
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			compat: {"forceAdaptiveThinking":true},
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"max"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -4212,7 +4342,7 @@ export const MODELS = {
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			compat: {"forceAdaptiveThinking":true,"supportsTemperature":false},
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh","minimal":"low"},
+			thinkingLevelMap: {"off":"off","minimal":"low","low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -4232,7 +4362,7 @@ export const MODELS = {
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			compat: {"forceAdaptiveThinking":true,"supportsTemperature":false},
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh","minimal":"low"},
+			thinkingLevelMap: {"off":"off","minimal":"low","low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -4252,6 +4382,7 @@ export const MODELS = {
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			compat: {"supportsEagerToolInputStreaming":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -4271,6 +4402,7 @@ export const MODELS = {
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			compat: {"supportsEagerToolInputStreaming":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -4290,7 +4422,7 @@ export const MODELS = {
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			compat: {"forceAdaptiveThinking":true},
 			reasoning: true,
-			thinkingLevelMap: {"minimal":"low","xhigh":"max"},
+			thinkingLevelMap: {"off":"off","minimal":"low","low":"low","medium":"medium","high":"high","xhigh":"max","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -4310,6 +4442,7 @@ export const MODELS = {
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -4329,6 +4462,7 @@ export const MODELS = {
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.5,
@@ -4348,6 +4482,7 @@ export const MODELS = {
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -4367,6 +4502,7 @@ export const MODELS = {
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.5,
@@ -4404,7 +4540,7 @@ export const MODELS = {
 			baseUrl: "https://api.individual.githubcopilot.com",
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"minimal":"low"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.25,
@@ -4423,7 +4559,7 @@ export const MODELS = {
 			baseUrl: "https://api.individual.githubcopilot.com",
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"minimal":"low","xhigh":"xhigh"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -4442,7 +4578,7 @@ export const MODELS = {
 			baseUrl: "https://api.individual.githubcopilot.com",
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"minimal":"low","xhigh":"xhigh"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -4461,7 +4597,7 @@ export const MODELS = {
 			baseUrl: "https://api.individual.githubcopilot.com",
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"minimal":"low","xhigh":"xhigh"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -4480,7 +4616,7 @@ export const MODELS = {
 			baseUrl: "https://api.individual.githubcopilot.com",
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"minimal":"low","xhigh":"xhigh"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 2.5,
@@ -4499,7 +4635,7 @@ export const MODELS = {
 			baseUrl: "https://api.individual.githubcopilot.com",
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"minimal":"low","xhigh":"xhigh"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.75,
@@ -4518,7 +4654,7 @@ export const MODELS = {
 			baseUrl: "https://api.individual.githubcopilot.com",
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"minimal":"low","xhigh":"xhigh"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.2,
@@ -4537,7 +4673,7 @@ export const MODELS = {
 			baseUrl: "https://api.individual.githubcopilot.com",
 			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"minimal":"low","xhigh":"xhigh"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -4548,25 +4684,6 @@ export const MODELS = {
 			contextWindow: 400000,
 			maxTokens: 128000,
 		} satisfies Model<"openai-responses">,
-		"raptor-mini": {
-			id: "raptor-mini",
-			name: "Raptor mini",
-			api: "openai-completions",
-			provider: "github-copilot",
-			baseUrl: "https://api.individual.githubcopilot.com",
-			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
-			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false},
-			reasoning: true,
-			input: ["text", "image"],
-			cost: {
-				input: 0.25,
-				output: 2,
-				cacheRead: 0.025,
-				cacheWrite: 0,
-			},
-			contextWindow: 400000,
-			maxTokens: 128000,
-		} satisfies Model<"openai-completions">,
 	},
 	"google": {
 		"gemini-2.0-flash": {
@@ -4610,6 +4727,7 @@ export const MODELS = {
 			provider: "google",
 			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 0.3,
@@ -4627,6 +4745,7 @@ export const MODELS = {
 			provider: "google",
 			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 0.1,
@@ -4644,6 +4763,7 @@ export const MODELS = {
 			provider: "google",
 			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -4661,7 +4781,7 @@ export const MODELS = {
 			provider: "google",
 			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.5,
@@ -4679,7 +4799,7 @@ export const MODELS = {
 			provider: "google",
 			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"minimal":null,"low":"LOW","medium":null,"high":"HIGH"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -4697,7 +4817,7 @@ export const MODELS = {
 			provider: "google",
 			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.25,
@@ -4715,7 +4835,7 @@ export const MODELS = {
 			provider: "google",
 			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.25,
@@ -4733,7 +4853,7 @@ export const MODELS = {
 			provider: "google",
 			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"minimal":null,"low":"LOW","medium":null,"high":"HIGH"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -4751,7 +4871,7 @@ export const MODELS = {
 			provider: "google",
 			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"minimal":null,"low":"LOW","medium":null,"high":"HIGH"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -4769,7 +4889,7 @@ export const MODELS = {
 			provider: "google",
 			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.5,
@@ -4787,7 +4907,7 @@ export const MODELS = {
 			provider: "google",
 			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.5,
@@ -4805,7 +4925,7 @@ export const MODELS = {
 			provider: "google",
 			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.25,
@@ -4823,7 +4943,7 @@ export const MODELS = {
 			provider: "google",
 			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"minimal":"MINIMAL","low":null,"medium":null,"high":"HIGH"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -4841,7 +4961,7 @@ export const MODELS = {
 			provider: "google",
 			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"minimal":"MINIMAL","low":null,"medium":null,"high":"HIGH"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -4852,42 +4972,6 @@ export const MODELS = {
 			contextWindow: 262144,
 			maxTokens: 32768,
 		} satisfies Model<"google-generative-ai">,
-		"gemma-4-E2B-it": {
-			id: "gemma-4-E2B-it",
-			name: "Gemma 4 E2B IT",
-			api: "google-generative-ai",
-			provider: "google",
-			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
-			reasoning: true,
-			thinkingLevelMap: {"off":null,"minimal":"MINIMAL","low":null,"medium":null,"high":"HIGH"},
-			input: ["text", "image"],
-			cost: {
-				input: 0,
-				output: 0,
-				cacheRead: 0,
-				cacheWrite: 0,
-			},
-			contextWindow: 131072,
-			maxTokens: 8192,
-		} satisfies Model<"google-generative-ai">,
-		"gemma-4-E4B-it": {
-			id: "gemma-4-E4B-it",
-			name: "Gemma 4 E4B IT",
-			api: "google-generative-ai",
-			provider: "google",
-			baseUrl: "https://generativelanguage.googleapis.com/v1beta",
-			reasoning: true,
-			thinkingLevelMap: {"off":null,"minimal":"MINIMAL","low":null,"medium":null,"high":"HIGH"},
-			input: ["text", "image"],
-			cost: {
-				input: 0,
-				output: 0,
-				cacheRead: 0,
-				cacheWrite: 0,
-			},
-			contextWindow: 131072,
-			maxTokens: 8192,
-		} satisfies Model<"google-generative-ai">,
 	},
 	"google-vertex": {
 		"gemini-2.5-flash": {
@@ -4897,6 +4981,7 @@ export const MODELS = {
 			provider: "google-vertex",
 			baseUrl: "https://{location}-aiplatform.googleapis.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 0.3,
@@ -4914,6 +4999,7 @@ export const MODELS = {
 			provider: "google-vertex",
 			baseUrl: "https://{location}-aiplatform.googleapis.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 0.1,
@@ -4931,6 +5017,7 @@ export const MODELS = {
 			provider: "google-vertex",
 			baseUrl: "https://{location}-aiplatform.googleapis.com",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -4948,7 +5035,7 @@ export const MODELS = {
 			provider: "google-vertex",
 			baseUrl: "https://{location}-aiplatform.googleapis.com",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.5,
@@ -4966,7 +5053,7 @@ export const MODELS = {
 			provider: "google-vertex",
 			baseUrl: "https://{location}-aiplatform.googleapis.com",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.25,
@@ -4984,7 +5071,7 @@ export const MODELS = {
 			provider: "google-vertex",
 			baseUrl: "https://{location}-aiplatform.googleapis.com",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"minimal":null,"low":"LOW","medium":null,"high":"HIGH"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -5002,7 +5089,7 @@ export const MODELS = {
 			provider: "google-vertex",
 			baseUrl: "https://{location}-aiplatform.googleapis.com",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"minimal":null,"low":"LOW","medium":null,"high":"HIGH"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -5020,7 +5107,7 @@ export const MODELS = {
 			provider: "google-vertex",
 			baseUrl: "https://{location}-aiplatform.googleapis.com",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.5,
@@ -5038,7 +5125,7 @@ export const MODELS = {
 			provider: "google-vertex",
 			baseUrl: "https://{location}-aiplatform.googleapis.com",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.5,
@@ -5056,7 +5143,7 @@ export const MODELS = {
 			provider: "google-vertex",
 			baseUrl: "https://{location}-aiplatform.googleapis.com",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.25,
@@ -5127,6 +5214,7 @@ export const MODELS = {
 			provider: "groq",
 			baseUrl: "https://api.groq.com/openai/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.15,
@@ -5144,6 +5232,7 @@ export const MODELS = {
 			provider: "groq",
 			baseUrl: "https://api.groq.com/openai/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.075,
@@ -5161,6 +5250,7 @@ export const MODELS = {
 			provider: "groq",
 			baseUrl: "https://api.groq.com/openai/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.075,
@@ -5178,7 +5268,7 @@ export const MODELS = {
 			provider: "groq",
 			baseUrl: "https://api.groq.com/openai/v1",
 			reasoning: true,
-			thinkingLevelMap: {"minimal":null,"low":null,"medium":null,"high":"default"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"default","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.29,
@@ -5199,6 +5289,7 @@ export const MODELS = {
 			baseUrl: "https://router.huggingface.co/v1",
 			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -5217,6 +5308,7 @@ export const MODELS = {
 			baseUrl: "https://router.huggingface.co/v1",
 			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -5235,6 +5327,7 @@ export const MODELS = {
 			baseUrl: "https://router.huggingface.co/v1",
 			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -5253,6 +5346,7 @@ export const MODELS = {
 			baseUrl: "https://router.huggingface.co/v1",
 			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -5343,6 +5437,7 @@ export const MODELS = {
 			baseUrl: "https://router.huggingface.co/v1",
 			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.6,
@@ -5361,6 +5456,7 @@ export const MODELS = {
 			baseUrl: "https://router.huggingface.co/v1",
 			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.1,
@@ -5379,6 +5475,7 @@ export const MODELS = {
 			baseUrl: "https://router.huggingface.co/v1",
 			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 3,
@@ -5397,6 +5494,7 @@ export const MODELS = {
 			baseUrl: "https://router.huggingface.co/v1",
 			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.28,
@@ -5415,6 +5513,7 @@ export const MODELS = {
 			baseUrl: "https://router.huggingface.co/v1",
 			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":"max"},
 			input: ["text"],
 			cost: {
 				input: 0.435,
@@ -5469,6 +5568,7 @@ export const MODELS = {
 			baseUrl: "https://router.huggingface.co/v1",
 			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.6,
@@ -5487,6 +5587,7 @@ export const MODELS = {
 			baseUrl: "https://router.huggingface.co/v1",
 			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.6,
@@ -5505,6 +5606,7 @@ export const MODELS = {
 			baseUrl: "https://router.huggingface.co/v1",
 			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.95,
@@ -5523,6 +5625,7 @@ export const MODELS = {
 			baseUrl: "https://router.huggingface.co/v1",
 			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.6,
@@ -5541,6 +5644,7 @@ export const MODELS = {
 			baseUrl: "https://router.huggingface.co/v1",
 			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -5559,6 +5663,7 @@ export const MODELS = {
 			baseUrl: "https://router.huggingface.co/v1",
 			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1,
@@ -5577,6 +5682,7 @@ export const MODELS = {
 			baseUrl: "https://router.huggingface.co/v1",
 			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1,
@@ -5597,6 +5703,7 @@ export const MODELS = {
 			baseUrl: "https://api.kimi.com/coding",
 			headers: {"User-Agent":"KimiCLI/1.5"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -5615,6 +5722,7 @@ export const MODELS = {
 			baseUrl: "https://api.kimi.com/coding",
 			headers: {"User-Agent":"KimiCLI/1.5"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -5633,6 +5741,7 @@ export const MODELS = {
 			baseUrl: "https://api.kimi.com/coding",
 			headers: {"User-Agent":"KimiCLI/1.5"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -5652,6 +5761,7 @@ export const MODELS = {
 			provider: "minimax",
 			baseUrl: "https://api.minimax.io/anthropic",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -5669,6 +5779,7 @@ export const MODELS = {
 			provider: "minimax",
 			baseUrl: "https://api.minimax.io/anthropic",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.6,
@@ -5686,6 +5797,7 @@ export const MODELS = {
 			provider: "minimax",
 			baseUrl: "https://api.minimax.io/anthropic",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.6,
@@ -5705,6 +5817,7 @@ export const MODELS = {
 			provider: "minimax-cn",
 			baseUrl: "https://api.minimaxi.com/anthropic",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -5722,6 +5835,7 @@ export const MODELS = {
 			provider: "minimax-cn",
 			baseUrl: "https://api.minimaxi.com/anthropic",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.6,
@@ -5739,6 +5853,7 @@ export const MODELS = {
 			provider: "minimax-cn",
 			baseUrl: "https://api.minimaxi.com/anthropic",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.6,
@@ -5894,6 +6009,7 @@ export const MODELS = {
 			provider: "mistral",
 			baseUrl: "https://api.mistral.ai",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 2,
@@ -5911,6 +6027,7 @@ export const MODELS = {
 			provider: "mistral",
 			baseUrl: "https://api.mistral.ai",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.5,
@@ -6047,6 +6164,7 @@ export const MODELS = {
 			provider: "mistral",
 			baseUrl: "https://api.mistral.ai",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.5,
@@ -6064,6 +6182,7 @@ export const MODELS = {
 			provider: "mistral",
 			baseUrl: "https://api.mistral.ai",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.5,
@@ -6132,6 +6251,7 @@ export const MODELS = {
 			provider: "mistral",
 			baseUrl: "https://api.mistral.ai",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.15,
@@ -6149,6 +6269,7 @@ export const MODELS = {
 			provider: "mistral",
 			baseUrl: "https://api.mistral.ai",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.15,
@@ -6307,6 +6428,7 @@ export const MODELS = {
 			baseUrl: "https://api.moonshot.ai/v1",
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false,"maxTokensField":"max_tokens","supportsStrictMode":false,"thinkingFormat":"deepseek"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.6,
@@ -6325,6 +6447,7 @@ export const MODELS = {
 			baseUrl: "https://api.moonshot.ai/v1",
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false,"maxTokensField":"max_tokens","supportsStrictMode":false,"thinkingFormat":"deepseek"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1.15,
@@ -6361,6 +6484,7 @@ export const MODELS = {
 			baseUrl: "https://api.moonshot.ai/v1",
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false,"maxTokensField":"max_tokens","supportsStrictMode":false,"thinkingFormat":"deepseek"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.6,
@@ -6379,6 +6503,7 @@ export const MODELS = {
 			baseUrl: "https://api.moonshot.ai/v1",
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false,"maxTokensField":"max_tokens","supportsStrictMode":false,"thinkingFormat":"deepseek"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.95,
@@ -6397,7 +6522,7 @@ export const MODELS = {
 			baseUrl: "https://api.moonshot.ai/v1",
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false,"maxTokensField":"max_tokens","supportsStrictMode":false,"thinkingFormat":"deepseek"},
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.95,
@@ -6416,7 +6541,7 @@ export const MODELS = {
 			baseUrl: "https://api.moonshot.ai/v1",
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false,"maxTokensField":"max_tokens","supportsStrictMode":false,"thinkingFormat":"deepseek"},
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.9,
@@ -6473,6 +6598,7 @@ export const MODELS = {
 			baseUrl: "https://api.moonshot.cn/v1",
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false,"maxTokensField":"max_tokens","supportsStrictMode":false,"thinkingFormat":"deepseek"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.6,
@@ -6491,6 +6617,7 @@ export const MODELS = {
 			baseUrl: "https://api.moonshot.cn/v1",
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false,"maxTokensField":"max_tokens","supportsStrictMode":false,"thinkingFormat":"deepseek"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1.15,
@@ -6527,6 +6654,7 @@ export const MODELS = {
 			baseUrl: "https://api.moonshot.cn/v1",
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false,"maxTokensField":"max_tokens","supportsStrictMode":false,"thinkingFormat":"deepseek"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.6,
@@ -6545,6 +6673,7 @@ export const MODELS = {
 			baseUrl: "https://api.moonshot.cn/v1",
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false,"maxTokensField":"max_tokens","supportsStrictMode":false,"thinkingFormat":"deepseek"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.95,
@@ -6563,7 +6692,7 @@ export const MODELS = {
 			baseUrl: "https://api.moonshot.cn/v1",
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false,"maxTokensField":"max_tokens","supportsStrictMode":false,"thinkingFormat":"deepseek"},
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.95,
@@ -6582,7 +6711,7 @@ export const MODELS = {
 			baseUrl: "https://api.moonshot.cn/v1",
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false,"maxTokensField":"max_tokens","supportsStrictMode":false,"thinkingFormat":"deepseek"},
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.9,
@@ -6718,6 +6847,7 @@ export const MODELS = {
 			headers: {"NVCF-POLL-SECONDS":"3600"},
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false,"maxTokensField":"max_tokens","supportsStrictMode":false,"supportsLongCacheRetention":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -6737,6 +6867,7 @@ export const MODELS = {
 			headers: {"NVCF-POLL-SECONDS":"3600"},
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false,"maxTokensField":"max_tokens","supportsStrictMode":false,"supportsLongCacheRetention":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -6756,6 +6887,7 @@ export const MODELS = {
 			headers: {"NVCF-POLL-SECONDS":"3600"},
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false,"maxTokensField":"max_tokens","supportsStrictMode":false,"supportsLongCacheRetention":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -6775,6 +6907,7 @@ export const MODELS = {
 			headers: {"NVCF-POLL-SECONDS":"3600"},
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false,"maxTokensField":"max_tokens","supportsStrictMode":false,"supportsLongCacheRetention":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -6794,6 +6927,7 @@ export const MODELS = {
 			headers: {"NVCF-POLL-SECONDS":"3600"},
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false,"maxTokensField":"max_tokens","supportsStrictMode":false,"supportsLongCacheRetention":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.2,
@@ -6813,6 +6947,7 @@ export const MODELS = {
 			headers: {"NVCF-POLL-SECONDS":"3600"},
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false,"maxTokensField":"max_tokens","supportsStrictMode":false,"supportsLongCacheRetention":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.5,
@@ -6832,6 +6967,7 @@ export const MODELS = {
 			headers: {"NVCF-POLL-SECONDS":"3600"},
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false,"maxTokensField":"max_tokens","supportsStrictMode":false,"supportsLongCacheRetention":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -6851,6 +6987,7 @@ export const MODELS = {
 			headers: {"NVCF-POLL-SECONDS":"3600"},
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false,"maxTokensField":"max_tokens","supportsStrictMode":false,"supportsLongCacheRetention":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -6870,6 +7007,7 @@ export const MODELS = {
 			headers: {"NVCF-POLL-SECONDS":"3600"},
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false,"maxTokensField":"max_tokens","supportsStrictMode":false,"supportsLongCacheRetention":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -6889,6 +7027,7 @@ export const MODELS = {
 			headers: {"NVCF-POLL-SECONDS":"3600"},
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false,"maxTokensField":"max_tokens","supportsStrictMode":false,"supportsLongCacheRetention":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -6908,6 +7047,7 @@ export const MODELS = {
 			headers: {"NVCF-POLL-SECONDS":"3600"},
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false,"maxTokensField":"max_tokens","supportsStrictMode":false,"supportsLongCacheRetention":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -6927,6 +7067,7 @@ export const MODELS = {
 			headers: {"NVCF-POLL-SECONDS":"3600"},
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false,"maxTokensField":"max_tokens","supportsStrictMode":false,"supportsLongCacheRetention":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -6946,6 +7087,7 @@ export const MODELS = {
 			headers: {"NVCF-POLL-SECONDS":"3600"},
 			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false,"maxTokensField":"max_tokens","supportsStrictMode":false,"supportsLongCacheRetention":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -7135,7 +7277,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -7153,7 +7295,6 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: false,
-			thinkingLevelMap: {"off":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -7171,7 +7312,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -7189,7 +7330,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.25,
@@ -7207,7 +7348,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.05,
@@ -7225,7 +7366,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -7243,7 +7384,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":"none"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -7261,7 +7402,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":"medium","high":null,"xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -7279,7 +7420,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -7297,7 +7438,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -7315,7 +7456,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.25,
@@ -7333,7 +7474,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":"none","xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -7351,7 +7492,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":"medium","high":null,"xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -7369,7 +7510,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -7387,7 +7528,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 21,
@@ -7405,7 +7546,6 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: false,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh"},
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -7423,7 +7563,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":"none","xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -7441,7 +7581,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -7459,7 +7599,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":"none","xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 2.5,
@@ -7477,7 +7617,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":"none","xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.75,
@@ -7495,7 +7635,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":"none","xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.2,
@@ -7513,7 +7653,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 30,
@@ -7531,7 +7671,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":"none","xhigh":"xhigh","minimal":null},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -7549,7 +7689,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh","minimal":null,"low":null},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 30,
@@ -7567,6 +7707,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -7584,6 +7725,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 150,
@@ -7601,6 +7743,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -7618,6 +7761,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":"medium","high":null,"xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 10,
@@ -7635,6 +7779,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1.1,
@@ -7652,6 +7797,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 20,
@@ -7669,6 +7815,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.1,
@@ -7686,6 +7833,7 @@ export const MODELS = {
 			provider: "openai",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":"medium","high":null,"xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -7705,7 +7853,7 @@ export const MODELS = {
 			provider: "openai-codex",
 			baseUrl: "https://chatgpt.com/backend-api",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh","minimal":"low"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text"],
 			cost: {
 				input: 1.75,
@@ -7723,7 +7871,7 @@ export const MODELS = {
 			provider: "openai-codex",
 			baseUrl: "https://chatgpt.com/backend-api",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh","minimal":"low"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 2.5,
@@ -7741,7 +7889,7 @@ export const MODELS = {
 			provider: "openai-codex",
 			baseUrl: "https://chatgpt.com/backend-api",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh","minimal":"low"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.75,
@@ -7759,7 +7907,7 @@ export const MODELS = {
 			provider: "openai-codex",
 			baseUrl: "https://chatgpt.com/backend-api",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh","minimal":"low"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -7780,6 +7928,7 @@ export const MODELS = {
 			baseUrl: "https://opencode.ai/zen/v1",
 			compat: {"maxTokensField":"max_tokens"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -7797,6 +7946,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 1,
@@ -7814,6 +7964,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -7831,6 +7982,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -7849,7 +8001,7 @@ export const MODELS = {
 			baseUrl: "https://opencode.ai/zen",
 			compat: {"forceAdaptiveThinking":true},
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"max"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -7868,7 +8020,7 @@ export const MODELS = {
 			baseUrl: "https://opencode.ai/zen",
 			compat: {"forceAdaptiveThinking":true,"supportsTemperature":false},
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -7887,7 +8039,7 @@ export const MODELS = {
 			baseUrl: "https://opencode.ai/zen",
 			compat: {"forceAdaptiveThinking":true,"supportsTemperature":false},
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -7905,6 +8057,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -7922,6 +8075,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -7940,6 +8094,7 @@ export const MODELS = {
 			baseUrl: "https://opencode.ai/zen",
 			compat: {"forceAdaptiveThinking":true},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -7958,7 +8113,7 @@ export const MODELS = {
 			baseUrl: "https://opencode.ai/zen/v1",
 			compat: {"maxTokensField":"max_tokens","supportsLongCacheRetention":false,"requiresReasoningContentOnAssistantMessages":true},
 			reasoning: true,
-			thinkingLevelMap: {"minimal":null,"low":null,"medium":null,"high":"high","xhigh":"max"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":"max"},
 			input: ["text"],
 			cost: {
 				input: 0.14,
@@ -7977,7 +8132,7 @@ export const MODELS = {
 			baseUrl: "https://opencode.ai/zen/v1",
 			compat: {"maxTokensField":"max_tokens","requiresReasoningContentOnAssistantMessages":true},
 			reasoning: true,
-			thinkingLevelMap: {"minimal":null,"low":null,"medium":null,"high":"high","xhigh":"max"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":"max"},
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -7996,7 +8151,7 @@ export const MODELS = {
 			baseUrl: "https://opencode.ai/zen/v1",
 			compat: {"maxTokensField":"max_tokens","supportsLongCacheRetention":false,"requiresReasoningContentOnAssistantMessages":true},
 			reasoning: true,
-			thinkingLevelMap: {"minimal":null,"low":null,"medium":null,"high":"high","xhigh":"max"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":"max"},
 			input: ["text"],
 			cost: {
 				input: 1.74,
@@ -8014,7 +8169,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.5,
@@ -8032,7 +8187,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"minimal":null,"low":"LOW","medium":null,"high":"HIGH"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -8050,7 +8205,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.5,
@@ -8069,6 +8224,7 @@ export const MODELS = {
 			baseUrl: "https://opencode.ai/zen/v1",
 			compat: {"maxTokensField":"max_tokens"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1,
@@ -8087,6 +8243,7 @@ export const MODELS = {
 			baseUrl: "https://opencode.ai/zen/v1",
 			compat: {"maxTokensField":"max_tokens"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1.4,
@@ -8104,7 +8261,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.07,
@@ -8122,7 +8279,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.07,
@@ -8140,7 +8297,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.05,
@@ -8158,7 +8315,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.07,
@@ -8176,7 +8333,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.07,
@@ -8194,7 +8351,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -8212,7 +8369,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.25,
@@ -8230,7 +8387,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -8248,7 +8405,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -8266,7 +8423,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -8284,7 +8441,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 2.5,
@@ -8302,7 +8459,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.75,
@@ -8320,7 +8477,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.2,
@@ -8338,7 +8495,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 30,
@@ -8356,7 +8513,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -8374,7 +8531,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"xhigh":"xhigh","minimal":null,"low":null},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 30,
@@ -8393,7 +8550,7 @@ export const MODELS = {
 			baseUrl: "https://opencode.ai/zen/v1",
 			compat: {"supportsReasoningEffort":false,"maxTokensField":"max_tokens"},
 			reasoning: true,
-			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":null},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1,
@@ -8412,6 +8569,7 @@ export const MODELS = {
 			baseUrl: "https://opencode.ai/zen/v1",
 			compat: {"maxTokensField":"max_tokens","supportsLongCacheRetention":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.6,
@@ -8430,6 +8588,7 @@ export const MODELS = {
 			baseUrl: "https://opencode.ai/zen/v1",
 			compat: {"thinkingFormat":"deepseek","supportsReasoningEffort":false,"maxTokensField":"max_tokens","supportsLongCacheRetention":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.95,
@@ -8448,6 +8607,7 @@ export const MODELS = {
 			baseUrl: "https://opencode.ai/zen/v1",
 			compat: {"maxTokensField":"max_tokens"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -8466,6 +8626,7 @@ export const MODELS = {
 			baseUrl: "https://opencode.ai/zen/v1",
 			compat: {"maxTokensField":"max_tokens"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -8484,6 +8645,7 @@ export const MODELS = {
 			baseUrl: "https://opencode.ai/zen/v1",
 			compat: {"maxTokensField":"max_tokens","supportsLongCacheRetention":false},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -8502,6 +8664,7 @@ export const MODELS = {
 			baseUrl: "https://opencode.ai/zen/v1",
 			compat: {"maxTokensField":"max_tokens"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -8520,6 +8683,7 @@ export const MODELS = {
 			baseUrl: "https://opencode.ai/zen/v1",
 			compat: {"maxTokensField":"max_tokens"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"none","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -8537,6 +8701,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.2,
@@ -8554,6 +8719,7 @@ export const MODELS = {
 			provider: "opencode",
 			baseUrl: "https://opencode.ai/zen",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.5,
@@ -8574,7 +8740,7 @@ export const MODELS = {
 			baseUrl: "https://opencode.ai/zen/go/v1",
 			compat: {"maxTokensField":"max_tokens","requiresReasoningContentOnAssistantMessages":true},
 			reasoning: true,
-			thinkingLevelMap: {"minimal":null,"low":null,"medium":null,"high":"high","xhigh":"max"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":"max"},
 			input: ["text"],
 			cost: {
 				input: 0.14,
@@ -8593,7 +8759,7 @@ export const MODELS = {
 			baseUrl: "https://opencode.ai/zen/go/v1",
 			compat: {"maxTokensField":"max_tokens","requiresReasoningContentOnAssistantMessages":true},
 			reasoning: true,
-			thinkingLevelMap: {"minimal":null,"low":null,"medium":null,"high":"high","xhigh":"max"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":"max"},
 			input: ["text"],
 			cost: {
 				input: 1.74,
@@ -8604,24 +8770,6 @@ export const MODELS = {
 			contextWindow: 1000000,
 			maxTokens: 384000,
 		} satisfies Model<"openai-completions">,
-		"glm-5": {
-			id: "glm-5",
-			name: "GLM-5",
-			api: "openai-completions",
-			provider: "opencode-go",
-			baseUrl: "https://opencode.ai/zen/go/v1",
-			compat: {"maxTokensField":"max_tokens"},
-			reasoning: true,
-			input: ["text"],
-			cost: {
-				input: 1,
-				output: 3.2,
-				cacheRead: 0.2,
-				cacheWrite: 0,
-			},
-			contextWindow: 202752,
-			maxTokens: 32768,
-		} satisfies Model<"openai-completions">,
 		"glm-5.1": {
 			id: "glm-5.1",
 			name: "GLM-5.1",
@@ -8630,6 +8778,7 @@ export const MODELS = {
 			baseUrl: "https://opencode.ai/zen/go/v1",
 			compat: {"maxTokensField":"max_tokens"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1.4,
@@ -8640,6 +8789,25 @@ export const MODELS = {
 			contextWindow: 202752,
 			maxTokens: 32768,
 		} satisfies Model<"openai-completions">,
+		"glm-5.2": {
+			id: "glm-5.2",
+			name: "GLM-5.2",
+			api: "openai-completions",
+			provider: "opencode-go",
+			baseUrl: "https://opencode.ai/zen/go/v1",
+			compat: {"maxTokensField":"max_tokens"},
+			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
+			input: ["text"],
+			cost: {
+				input: 1.4,
+				output: 4.4,
+				cacheRead: 0.26,
+				cacheWrite: 0,
+			},
+			contextWindow: 1000000,
+			maxTokens: 131072,
+		} satisfies Model<"openai-completions">,
 		"kimi-k2.6": {
 			id: "kimi-k2.6",
 			name: "Kimi K2.6",
@@ -8648,7 +8816,7 @@ export const MODELS = {
 			baseUrl: "https://opencode.ai/zen/go/v1",
 			compat: {"thinkingFormat":"deepseek","supportsReasoningEffort":false,"maxTokensField":"max_tokens","supportsLongCacheRetention":false},
 			reasoning: true,
-			thinkingLevelMap: {"minimal":null,"low":null,"medium":null},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.95,
@@ -8667,6 +8835,7 @@ export const MODELS = {
 			baseUrl: "https://opencode.ai/zen/go/v1",
 			compat: {"maxTokensField":"max_tokens"},
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.95,
@@ -8685,6 +8854,7 @@ export const MODELS = {
 			baseUrl: "https://opencode.ai/zen/go/v1",
 			compat: {"maxTokensField":"max_tokens"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.14,
@@ -8703,6 +8873,7 @@ export const MODELS = {
 			baseUrl: "https://opencode.ai/zen/go/v1",
 			compat: {"maxTokensField":"max_tokens"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1.74,
@@ -8721,6 +8892,7 @@ export const MODELS = {
 			baseUrl: "https://opencode.ai/zen/go/v1",
 			compat: {"maxTokensField":"max_tokens"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -8738,6 +8910,7 @@ export const MODELS = {
 			provider: "opencode-go",
 			baseUrl: "https://opencode.ai/zen/go",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.1,
@@ -8756,6 +8929,7 @@ export const MODELS = {
 			baseUrl: "https://opencode.ai/zen/go/v1",
 			compat: {"thinkingFormat":"qwen","maxTokensField":"max_tokens"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.5,
@@ -8773,6 +8947,7 @@ export const MODELS = {
 			provider: "opencode-go",
 			baseUrl: "https://opencode.ai/zen/go",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 2.5,
@@ -8790,6 +8965,7 @@ export const MODELS = {
 			provider: "opencode-go",
 			baseUrl: "https://opencode.ai/zen/go",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.4,
@@ -8826,6 +9002,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.3,
@@ -8945,6 +9122,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 10,
@@ -8962,6 +9140,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 1,
@@ -8979,6 +9158,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -8996,6 +9176,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -9013,6 +9194,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -9030,7 +9212,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"max"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -9048,7 +9230,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"max"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 30,
@@ -9066,7 +9248,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -9084,7 +9266,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 30,
@@ -9102,7 +9284,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -9120,7 +9302,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 10,
@@ -9138,6 +9320,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -9155,6 +9338,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -9172,6 +9356,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -9189,15 +9374,16 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
-				input: 0.22,
-				output: 0.85,
+				input: 0.25,
+				output: 0.8,
 				cacheRead: 0.06,
 				cacheWrite: 0,
 			},
 			contextWindow: 262144,
-			maxTokens: 262144,
+			maxTokens: 80000,
 		} satisfies Model<"openai-completions">,
 		"arcee-ai/trinity-mini": {
 			id: "arcee-ai/trinity-mini",
@@ -9206,6 +9392,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.045,
@@ -9240,6 +9427,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -9257,6 +9445,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.25,
@@ -9274,6 +9463,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.075,
@@ -9291,6 +9481,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.25,
@@ -9308,6 +9499,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.1,
@@ -9352,6 +9544,24 @@ export const MODELS = {
 			contextWindow: 128000,
 			maxTokens: 4000,
 		} satisfies Model<"openai-completions">,
+		"cohere/north-mini-code:free": {
+			id: "cohere/north-mini-code:free",
+			name: "Cohere: North Mini Code (free)",
+			api: "openai-completions",
+			provider: "openrouter",
+			baseUrl: "https://openrouter.ai/api/v1",
+			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
+			input: ["text"],
+			cost: {
+				input: 0,
+				output: 0,
+				cacheRead: 0,
+				cacheWrite: 0,
+			},
+			contextWindow: 256000,
+			maxTokens: 64000,
+		} satisfies Model<"openai-completions">,
 		"deepseek/deepseek-chat": {
 			id: "deepseek/deepseek-chat",
 			name: "DeepSeek: DeepSeek V3",
@@ -9393,6 +9603,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.21,
@@ -9410,6 +9621,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.7,
@@ -9427,6 +9639,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.5,
@@ -9444,6 +9657,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.27,
@@ -9461,6 +9675,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.2288,
@@ -9478,6 +9693,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.27,
@@ -9496,16 +9712,16 @@ export const MODELS = {
 			baseUrl: "https://openrouter.ai/api/v1",
 			compat: {"requiresReasoningContentOnAssistantMessages":true},
 			reasoning: true,
-			thinkingLevelMap: {"minimal":null,"low":null,"medium":null,"high":"high","xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":"max"},
 			input: ["text"],
 			cost: {
-				input: 0.098,
-				output: 0.196,
+				input: 0.09,
+				output: 0.18,
 				cacheRead: 0.02,
 				cacheWrite: 0,
 			},
 			contextWindow: 1048576,
-			maxTokens: 4096,
+			maxTokens: 65536,
 		} satisfies Model<"openai-completions">,
 		"deepseek/deepseek-v4-pro": {
 			id: "deepseek/deepseek-v4-pro",
@@ -9515,7 +9731,7 @@ export const MODELS = {
 			baseUrl: "https://openrouter.ai/api/v1",
 			compat: {"requiresReasoningContentOnAssistantMessages":true},
 			reasoning: true,
-			thinkingLevelMap: {"minimal":null,"low":null,"medium":null,"high":"high","xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":"max"},
 			input: ["text"],
 			cost: {
 				input: 0.435,
@@ -9550,6 +9766,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.3,
@@ -9567,6 +9784,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.1,
@@ -9584,6 +9802,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.1,
@@ -9601,6 +9820,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -9618,6 +9838,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -9635,6 +9856,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -9652,6 +9874,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.5,
@@ -9660,7 +9883,25 @@ export const MODELS = {
 				cacheWrite: 0.083333,
 			},
 			contextWindow: 1048576,
-			maxTokens: 65536,
+			maxTokens: 65535,
+		} satisfies Model<"openai-completions">,
+		"google/gemini-3-pro-image": {
+			id: "google/gemini-3-pro-image",
+			name: "Google: Nano Banana Pro (Gemini 3 Pro Image)",
+			api: "openai-completions",
+			provider: "openrouter",
+			baseUrl: "https://openrouter.ai/api/v1",
+			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
+			input: ["text", "image"],
+			cost: {
+				input: 2,
+				output: 12,
+				cacheRead: 0.2,
+				cacheWrite: 0.375,
+			},
+			contextWindow: 65536,
+			maxTokens: 32768,
 		} satisfies Model<"openai-completions">,
 		"google/gemini-3.1-flash-lite": {
 			id: "google/gemini-3.1-flash-lite",
@@ -9669,6 +9910,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.25,
@@ -9686,6 +9928,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.25,
@@ -9703,6 +9946,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -9720,6 +9964,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -9737,6 +9982,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.5,
@@ -9788,6 +10034,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.06,
@@ -9805,6 +10052,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -9822,6 +10070,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.12,
@@ -9839,6 +10088,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -9847,7 +10097,7 @@ export const MODELS = {
 				cacheWrite: 0,
 			},
 			contextWindow: 262144,
-			maxTokens: 32768,
+			maxTokens: 8192,
 		} satisfies Model<"openai-completions">,
 		"ibm-granite/granite-4.1-8b": {
 			id: "ibm-granite/granite-4.1-8b",
@@ -9873,7 +10123,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":null},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.25,
@@ -9925,6 +10175,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.075,
@@ -9951,6 +10202,24 @@ export const MODELS = {
 			},
 			contextWindow: 256000,
 			maxTokens: 80000,
+		} satisfies Model<"openai-completions">,
+		"liquid/lfm-2.5-1.2b-thinking:free": {
+			id: "liquid/lfm-2.5-1.2b-thinking:free",
+			name: "LiquidAI: LFM2.5-1.2B-Thinking (free)",
+			api: "openai-completions",
+			provider: "openrouter",
+			baseUrl: "https://openrouter.ai/api/v1",
+			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
+			input: ["text"],
+			cost: {
+				input: 0,
+				output: 0,
+				cacheRead: 0,
+				cacheWrite: 0,
+			},
+			contextWindow: 32768,
+			maxTokens: 4096,
 		} satisfies Model<"openai-completions">,
 		"meta-llama/llama-3.1-70b-instruct": {
 			id: "meta-llama/llama-3.1-70b-instruct",
@@ -10061,6 +10330,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.4,
@@ -10078,6 +10348,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.255,
@@ -10095,6 +10366,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.29,
@@ -10112,6 +10384,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.15,
@@ -10129,6 +10402,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.25,
@@ -10146,6 +10420,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.3,
@@ -10316,6 +10591,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.5,
@@ -10384,6 +10660,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.15,
@@ -10486,6 +10763,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.6,
@@ -10503,6 +10781,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.41,
@@ -10521,15 +10800,16 @@ export const MODELS = {
 			baseUrl: "https://openrouter.ai/api/v1",
 			compat: {"supportsDeveloperRole":false,"requiresReasoningContentOnAssistantMessages":true},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
-				input: 0.68,
-				output: 3.41,
-				cacheRead: 0.34,
+				input: 0.66,
+				output: 3.5,
+				cacheRead: 0.33,
 				cacheWrite: 0,
 			},
 			contextWindow: 262144,
-			maxTokens: 262142,
+			maxTokens: 65535,
 		} satisfies Model<"openai-completions">,
 		"moonshotai/kimi-k2.7-code": {
 			id: "moonshotai/kimi-k2.7-code",
@@ -10538,11 +10818,12 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
-				input: 0.75,
-				output: 3.5,
-				cacheRead: 0.16,
+				input: 0.612,
+				output: 3.069,
+				cacheRead: 0.1296,
 				cacheWrite: 0,
 			},
 			contextWindow: 262144,
@@ -10555,6 +10836,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -10572,6 +10854,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.4,
@@ -10589,6 +10872,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.05,
@@ -10606,6 +10890,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -10623,6 +10908,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -10640,6 +10926,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.09,
@@ -10657,6 +10944,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -10674,11 +10962,12 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.5,
-				output: 2.5,
-				cacheRead: 0.15,
+				output: 2.2,
+				cacheRead: 0.1,
 				cacheWrite: 0,
 			},
 			contextWindow: 1000000,
@@ -10691,6 +10980,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -10708,6 +10998,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -10725,6 +11016,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -10997,6 +11289,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"none","minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -11014,6 +11307,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -11031,6 +11325,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"none","minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.25,
@@ -11048,6 +11343,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"none","minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.05,
@@ -11065,6 +11361,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -11082,6 +11379,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -11116,6 +11414,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -11133,6 +11432,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -11150,6 +11450,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.25,
@@ -11167,7 +11468,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -11185,7 +11486,6 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
-			thinkingLevelMap: {"xhigh":"xhigh"},
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -11203,7 +11503,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -11221,7 +11521,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 21,
@@ -11239,7 +11539,6 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
-			thinkingLevelMap: {"xhigh":"xhigh"},
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -11257,7 +11556,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -11275,7 +11574,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 2.5,
@@ -11293,7 +11592,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.75,
@@ -11311,7 +11610,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.2,
@@ -11329,7 +11628,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 30,
@@ -11347,7 +11646,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -11365,7 +11664,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh","off":null,"minimal":null,"low":null},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 30,
@@ -11434,6 +11733,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"none","minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text"],
 			cost: {
 				input: 0.039,
@@ -11451,6 +11751,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"none","minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -11468,6 +11769,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"none","minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text"],
 			cost: {
 				input: 0.029,
@@ -11485,6 +11787,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"none","minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -11493,7 +11796,7 @@ export const MODELS = {
 				cacheWrite: 0,
 			},
 			contextWindow: 131072,
-			maxTokens: 8192,
+			maxTokens: 32768,
 		} satisfies Model<"openai-completions">,
 		"openai/gpt-oss-safeguard-20b": {
 			id: "openai/gpt-oss-safeguard-20b",
@@ -11502,11 +11805,12 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"none","minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text"],
 			cost: {
 				input: 0.075,
 				output: 0.3,
-				cacheRead: 0.037,
+				cacheRead: 0.0375,
 				cacheWrite: 0,
 			},
 			contextWindow: 131072,
@@ -11519,6 +11823,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"none","minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -11536,6 +11841,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"none","minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -11553,6 +11859,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"none","minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 10,
@@ -11570,6 +11877,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"none","minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text"],
 			cost: {
 				input: 1.1,
@@ -11587,6 +11895,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"none","minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text"],
 			cost: {
 				input: 1.1,
@@ -11604,6 +11913,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"none","minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 20,
@@ -11621,6 +11931,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"none","minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.1,
@@ -11638,6 +11949,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"none","minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -11655,6 +11967,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"none","minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.1,
@@ -11672,6 +11985,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: -1000000,
@@ -11689,6 +12003,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -11716,6 +12031,24 @@ export const MODELS = {
 			contextWindow: 1048756,
 			maxTokens: 262144,
 		} satisfies Model<"openai-completions">,
+		"poolside/laguna-m.1": {
+			id: "poolside/laguna-m.1",
+			name: "Poolside: Laguna M.1",
+			api: "openai-completions",
+			provider: "openrouter",
+			baseUrl: "https://openrouter.ai/api/v1",
+			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
+			input: ["text"],
+			cost: {
+				input: 0.2,
+				output: 0.4,
+				cacheRead: 0.1,
+				cacheWrite: 0,
+			},
+			contextWindow: 262144,
+			maxTokens: 32768,
+		} satisfies Model<"openai-completions">,
 		"poolside/laguna-m.1:free": {
 			id: "poolside/laguna-m.1:free",
 			name: "Poolside: Laguna M.1 (free)",
@@ -11723,11 +12056,30 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0,
 				output: 0,
 				cacheRead: 0,
+				cacheWrite: 0,
+			},
+			contextWindow: 262144,
+			maxTokens: 32768,
+		} satisfies Model<"openai-completions">,
+		"poolside/laguna-xs.2": {
+			id: "poolside/laguna-xs.2",
+			name: "Poolside: Laguna XS.2",
+			api: "openai-completions",
+			provider: "openrouter",
+			baseUrl: "https://openrouter.ai/api/v1",
+			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
+			input: ["text"],
+			cost: {
+				input: 0.1,
+				output: 0.2,
+				cacheRead: 0.05,
 				cacheWrite: 0,
 			},
 			contextWindow: 262144,
@@ -11740,6 +12092,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -11757,6 +12110,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.2,
@@ -11783,6 +12137,23 @@ export const MODELS = {
 			},
 			contextWindow: 131072,
 			maxTokens: 16384,
+		} satisfies Model<"openai-completions">,
+		"qwen/qwen-2.5-7b-instruct": {
+			id: "qwen/qwen-2.5-7b-instruct",
+			name: "Qwen: Qwen2.5 7B Instruct",
+			api: "openai-completions",
+			provider: "openrouter",
+			baseUrl: "https://openrouter.ai/api/v1",
+			reasoning: false,
+			input: ["text"],
+			cost: {
+				input: 0.04,
+				output: 0.1,
+				cacheRead: 0,
+				cacheWrite: 0,
+			},
+			contextWindow: 131072,
+			maxTokens: 32768,
 		} satisfies Model<"openai-completions">,
 		"qwen/qwen-plus": {
 			id: "qwen/qwen-plus",
@@ -11825,6 +12196,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.26,
@@ -11842,6 +12214,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.1,
@@ -11859,6 +12232,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.455,
@@ -11893,6 +12267,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.1,
@@ -11910,6 +12285,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.12,
@@ -11944,6 +12320,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.08,
@@ -11961,6 +12338,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.08,
@@ -11978,6 +12356,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.05,
@@ -12114,6 +12493,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.78,
@@ -12165,6 +12545,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.0975,
@@ -12199,6 +12580,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.26,
@@ -12233,6 +12615,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.13,
@@ -12284,6 +12667,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.117,
@@ -12301,6 +12685,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.26,
@@ -12318,6 +12703,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.195,
@@ -12335,15 +12721,16 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.14,
 				output: 1,
-				cacheRead: 0.05,
+				cacheRead: 0,
 				cacheWrite: 0,
 			},
 			contextWindow: 262144,
-			maxTokens: 81920,
+			maxTokens: 262144,
 		} satisfies Model<"openai-completions">,
 		"qwen/qwen3.5-397b-a17b": {
 			id: "qwen/qwen3.5-397b-a17b",
@@ -12352,6 +12739,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.385,
@@ -12369,6 +12757,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.1,
@@ -12386,6 +12775,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.065,
@@ -12403,6 +12793,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.26,
@@ -12420,6 +12811,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.3,
@@ -12437,6 +12829,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.2885,
@@ -12454,11 +12847,12 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
-				input: 0.15,
+				input: 0.14,
 				output: 1,
-				cacheRead: 0.05,
+				cacheRead: 0,
 				cacheWrite: 0,
 			},
 			contextWindow: 262144,
@@ -12471,6 +12865,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.1875,
@@ -12488,6 +12883,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1.04,
@@ -12505,6 +12901,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.325,
@@ -12522,6 +12919,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1.25,
@@ -12539,6 +12937,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.32,
@@ -12607,6 +13006,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.09,
@@ -12624,6 +13024,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.2,
@@ -12641,15 +13042,16 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
-				input: 0.066,
-				output: 0.26,
-				cacheRead: 0.029,
+				input: 0.063,
+				output: 0.21,
+				cacheRead: 0.021,
 				cacheWrite: 0,
 			},
 			contextWindow: 262144,
-			maxTokens: 262144,
+			maxTokens: 4096,
 		} satisfies Model<"openai-completions">,
 		"thedrummer/rocinante-12b": {
 			id: "thedrummer/rocinante-12b",
@@ -12692,6 +13094,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.15,
@@ -12709,6 +13112,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -12726,6 +13130,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -12743,6 +13148,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1,
@@ -12753,23 +13159,6 @@ export const MODELS = {
 			contextWindow: 256000,
 			maxTokens: 4096,
 		} satisfies Model<"openai-completions">,
-		"xiaomi/mimo-v2-flash": {
-			id: "xiaomi/mimo-v2-flash",
-			name: "Xiaomi: MiMo-V2-Flash",
-			api: "openai-completions",
-			provider: "openrouter",
-			baseUrl: "https://openrouter.ai/api/v1",
-			reasoning: true,
-			input: ["text"],
-			cost: {
-				input: 0.1,
-				output: 0.3,
-				cacheRead: 0.01,
-				cacheWrite: 0,
-			},
-			contextWindow: 262144,
-			maxTokens: 65536,
-		} satisfies Model<"openai-completions">,
 		"xiaomi/mimo-v2.5": {
 			id: "xiaomi/mimo-v2.5",
 			name: "Xiaomi: MiMo-V2.5",
@@ -12777,6 +13166,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.14,
@@ -12794,6 +13184,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.435,
@@ -12811,6 +13202,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.6,
@@ -12828,6 +13220,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.13,
@@ -12845,6 +13238,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.6,
@@ -12862,6 +13256,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.43,
@@ -12879,6 +13274,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.3,
@@ -12896,6 +13292,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.4,
@@ -12913,6 +13310,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.06,
@@ -12930,6 +13328,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.6,
@@ -12947,6 +13346,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1.2,
@@ -12964,15 +13364,16 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.98,
 				output: 3.08,
-				cacheRead: 0.182,
+				cacheRead: 0.49,
 				cacheWrite: 0,
 			},
 			contextWindow: 202752,
-			maxTokens: 4096,
+			maxTokens: 65535,
 		} satisfies Model<"openai-completions">,
 		"z-ai/glm-5.2": {
 			id: "z-ai/glm-5.2",
@@ -12981,15 +13382,16 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
-				input: 1.4,
-				output: 4.4,
-				cacheRead: 0.26,
+				input: 1,
+				output: 4,
+				cacheRead: 0.18,
 				cacheWrite: 0,
 			},
 			contextWindow: 1048576,
-			maxTokens: 131072,
+			maxTokens: 32768,
 		} satisfies Model<"openai-completions">,
 		"~anthropic/claude-fable-latest": {
 			id: "~anthropic/claude-fable-latest",
@@ -12998,6 +13400,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 10,
@@ -13015,6 +13418,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 1,
@@ -13032,6 +13436,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -13049,6 +13454,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -13066,6 +13472,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.5,
@@ -13083,6 +13490,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -13100,15 +13508,16 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
-				input: 0.68,
-				output: 3.41,
-				cacheRead: 0.34,
+				input: 0.66,
+				output: 3.5,
+				cacheRead: 0.33,
 				cacheWrite: 0,
 			},
 			contextWindow: 262144,
-			maxTokens: 262142,
+			maxTokens: 65535,
 		} satisfies Model<"openai-completions">,
 		"~openai/gpt-latest": {
 			id: "~openai/gpt-latest",
@@ -13117,6 +13526,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"none","minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -13134,6 +13544,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"none","minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.75,
@@ -13511,6 +13922,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.12,
@@ -13528,6 +13940,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.22,
@@ -13545,6 +13958,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.12,
@@ -13562,6 +13976,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.16,
@@ -13579,6 +13994,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1.3,
@@ -13596,6 +14012,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.4,
@@ -13613,6 +14030,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1.5,
@@ -13630,6 +14048,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.15,
@@ -13647,6 +14066,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.5,
@@ -13715,6 +14135,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1.2,
@@ -13749,6 +14170,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.15,
@@ -13766,6 +14188,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.4,
@@ -13783,6 +14206,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.1,
@@ -13800,6 +14224,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.4,
@@ -13817,6 +14242,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.6,
@@ -13834,6 +14260,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.5,
@@ -13851,6 +14278,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1.25,
@@ -13868,6 +14296,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.4,
@@ -13919,6 +14348,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 1,
@@ -13936,6 +14366,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -13953,6 +14384,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -13970,6 +14402,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -13988,7 +14421,7 @@ export const MODELS = {
 			baseUrl: "https://ai-gateway.vercel.sh",
 			compat: {"forceAdaptiveThinking":true},
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"max"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -14007,7 +14440,7 @@ export const MODELS = {
 			baseUrl: "https://ai-gateway.vercel.sh",
 			compat: {"forceAdaptiveThinking":true,"supportsTemperature":false},
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -14026,7 +14459,7 @@ export const MODELS = {
 			baseUrl: "https://ai-gateway.vercel.sh",
 			compat: {"forceAdaptiveThinking":true,"supportsTemperature":false},
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -14044,6 +14477,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -14061,6 +14495,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -14079,6 +14514,7 @@ export const MODELS = {
 			baseUrl: "https://ai-gateway.vercel.sh",
 			compat: {"forceAdaptiveThinking":true},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 3,
@@ -14113,6 +14549,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.25,
@@ -14130,6 +14567,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.25,
@@ -14164,6 +14602,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1.35,
@@ -14198,6 +14637,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.56,
@@ -14215,6 +14655,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.27,
@@ -14232,6 +14673,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.28,
@@ -14249,6 +14691,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.62,
@@ -14266,6 +14709,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":"max"},
 			input: ["text", "image"],
 			cost: {
 				input: 0.14,
@@ -14283,6 +14727,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":"max"},
 			input: ["text"],
 			cost: {
 				input: 0.435,
@@ -14300,6 +14745,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.3,
@@ -14317,6 +14763,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.1,
@@ -14334,6 +14781,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -14351,6 +14799,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.5,
@@ -14368,6 +14817,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -14385,6 +14835,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.25,
@@ -14402,6 +14853,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.25,
@@ -14419,6 +14871,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -14436,6 +14889,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.5,
@@ -14453,6 +14907,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.15,
@@ -14487,6 +14942,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.25,
@@ -14521,6 +14977,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -14674,6 +15131,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -14691,6 +15149,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -14708,6 +15167,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -14725,6 +15185,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -14742,6 +15203,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.6,
@@ -14759,6 +15221,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.3,
@@ -14776,6 +15239,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.6,
@@ -14793,6 +15257,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.3,
@@ -14929,6 +15394,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1.5,
@@ -14948,13 +15414,13 @@ export const MODELS = {
 			reasoning: false,
 			input: ["text"],
 			cost: {
-				input: 0.02,
-				output: 0.04,
+				input: 0.15,
+				output: 0.15,
 				cacheRead: 0,
 				cacheWrite: 0,
 			},
-			contextWindow: 131072,
-			maxTokens: 131072,
+			contextWindow: 128000,
+			maxTokens: 128000,
 		} satisfies Model<"anthropic-messages">,
 		"mistral/mistral-small": {
 			id: "mistral/mistral-small",
@@ -15031,6 +15497,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.6,
@@ -15048,6 +15515,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.6,
@@ -15065,6 +15533,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.95,
@@ -15082,6 +15551,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.95,
@@ -15099,6 +15569,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.9,
@@ -15107,7 +15578,7 @@ export const MODELS = {
 				cacheWrite: 0,
 			},
 			contextWindow: 262144,
-			maxTokens: 4096,
+			maxTokens: 32768,
 		} satisfies Model<"anthropic-messages">,
 		"nvidia/nemotron-3-super-120b-a12b": {
 			id: "nvidia/nemotron-3-super-120b-a12b",
@@ -15116,6 +15587,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.15,
@@ -15133,6 +15605,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.6,
@@ -15150,6 +15623,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.2,
@@ -15167,6 +15641,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.06,
@@ -15286,6 +15761,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"none","minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -15303,6 +15779,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":null,"high":null,"xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -15320,6 +15797,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -15337,6 +15815,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"none","minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.25,
@@ -15354,6 +15833,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"none","minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.05,
@@ -15371,6 +15851,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -15388,6 +15869,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -15405,6 +15887,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -15422,6 +15905,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.25,
@@ -15439,6 +15923,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -15456,6 +15941,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -15473,7 +15959,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -15491,7 +15977,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":"medium","high":null,"xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -15509,7 +15995,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -15527,7 +16013,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 21,
@@ -15545,7 +16031,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":"medium","high":null,"xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -15563,7 +16049,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.75,
@@ -15581,7 +16067,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 2.5,
@@ -15599,7 +16085,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.75,
@@ -15617,7 +16103,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.2,
@@ -15635,7 +16121,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 30,
@@ -15653,7 +16139,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh"},
+			thinkingLevelMap: {"off":"none","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 5,
@@ -15671,7 +16157,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
-			thinkingLevelMap: {"xhigh":"xhigh","off":null,"minimal":null,"low":null},
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 30,
@@ -15689,6 +16175,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"none","minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text"],
 			cost: {
 				input: 0.35,
@@ -15706,6 +16193,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"none","minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text"],
 			cost: {
 				input: 0.05,
@@ -15723,6 +16211,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"none","minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text"],
 			cost: {
 				input: 0.075,
@@ -15740,6 +16229,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"none","minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 15,
@@ -15757,6 +16247,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"none","minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 2,
@@ -15774,6 +16265,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"none","minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 10,
@@ -15791,6 +16283,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"none","minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text"],
 			cost: {
 				input: 1.1,
@@ -15808,6 +16301,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"none","minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 20,
@@ -15825,6 +16319,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"none","minimal":"minimal","low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.1,
@@ -15876,12 +16371,13 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.09,
 				output: 0.3,
-				cacheRead: 0,
-				cacheWrite: 0.02,
+				cacheRead: 0.02,
+				cacheWrite: 0,
 			},
 			contextWindow: 262114,
 			maxTokens: 262114,
@@ -15893,6 +16389,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.2,
@@ -15927,6 +16424,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.2,
@@ -15944,6 +16442,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -15961,6 +16460,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -16012,6 +16512,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -16029,6 +16530,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -16046,6 +16548,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -16063,6 +16566,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1,
@@ -16080,6 +16584,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.1,
@@ -16097,6 +16602,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1,
@@ -16114,6 +16620,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.14,
@@ -16131,6 +16638,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.435,
@@ -16148,6 +16656,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.6,
@@ -16165,6 +16674,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.2,
@@ -16182,6 +16692,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.6,
@@ -16199,6 +16710,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.6,
@@ -16216,6 +16728,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.3,
@@ -16233,6 +16746,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -16250,6 +16764,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 2.25,
@@ -16267,6 +16782,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.07,
@@ -16284,6 +16800,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.06,
@@ -16301,6 +16818,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1,
@@ -16318,6 +16836,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1.2,
@@ -16335,6 +16854,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.4,
@@ -16352,11 +16872,12 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
-				input: 1.4,
-				output: 4.4,
-				cacheRead: 0.26,
+				input: 1.5,
+				output: 4.5,
+				cacheRead: 0.3,
 				cacheWrite: 0,
 			},
 			contextWindow: 1000000,
@@ -16369,6 +16890,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.2,
@@ -16439,6 +16961,7 @@ export const MODELS = {
 			provider: "xai",
 			baseUrl: "https://api.x.ai/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -16456,6 +16979,7 @@ export const MODELS = {
 			provider: "xai",
 			baseUrl: "https://api.x.ai/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1.25,
@@ -16473,6 +16997,7 @@ export const MODELS = {
 			provider: "xai",
 			baseUrl: "https://api.x.ai/v1",
 			reasoning: true,
+			thinkingLevelMap: {"off":null,"minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 1,
@@ -16510,6 +17035,7 @@ export const MODELS = {
 			baseUrl: "https://api.xiaomimimo.com/v1",
 			compat: {"requiresReasoningContentOnAssistantMessages":true,"thinkingFormat":"deepseek"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0.1,
@@ -16528,6 +17054,7 @@ export const MODELS = {
 			baseUrl: "https://api.xiaomimimo.com/v1",
 			compat: {"requiresReasoningContentOnAssistantMessages":true,"thinkingFormat":"deepseek"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.4,
@@ -16546,6 +17073,7 @@ export const MODELS = {
 			baseUrl: "https://api.xiaomimimo.com/v1",
 			compat: {"requiresReasoningContentOnAssistantMessages":true,"thinkingFormat":"deepseek"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1,
@@ -16564,6 +17092,7 @@ export const MODELS = {
 			baseUrl: "https://api.xiaomimimo.com/v1",
 			compat: {"requiresReasoningContentOnAssistantMessages":true,"thinkingFormat":"deepseek"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.4,
@@ -16582,6 +17111,7 @@ export const MODELS = {
 			baseUrl: "https://api.xiaomimimo.com/v1",
 			compat: {"requiresReasoningContentOnAssistantMessages":true,"thinkingFormat":"deepseek"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1,
@@ -16600,6 +17130,7 @@ export const MODELS = {
 			baseUrl: "https://api.xiaomimimo.com/v1",
 			compat: {"requiresReasoningContentOnAssistantMessages":true,"thinkingFormat":"deepseek"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1.305,
@@ -16620,6 +17151,7 @@ export const MODELS = {
 			baseUrl: "https://token-plan-ams.xiaomimimo.com/v1",
 			compat: {"requiresReasoningContentOnAssistantMessages":true,"thinkingFormat":"deepseek"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.4,
@@ -16638,6 +17170,7 @@ export const MODELS = {
 			baseUrl: "https://token-plan-ams.xiaomimimo.com/v1",
 			compat: {"requiresReasoningContentOnAssistantMessages":true,"thinkingFormat":"deepseek"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1,
@@ -16656,6 +17189,7 @@ export const MODELS = {
 			baseUrl: "https://token-plan-ams.xiaomimimo.com/v1",
 			compat: {"requiresReasoningContentOnAssistantMessages":true,"thinkingFormat":"deepseek"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.4,
@@ -16674,6 +17208,7 @@ export const MODELS = {
 			baseUrl: "https://token-plan-ams.xiaomimimo.com/v1",
 			compat: {"requiresReasoningContentOnAssistantMessages":true,"thinkingFormat":"deepseek"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1,
@@ -16692,6 +17227,7 @@ export const MODELS = {
 			baseUrl: "https://token-plan-ams.xiaomimimo.com/v1",
 			compat: {"requiresReasoningContentOnAssistantMessages":true,"thinkingFormat":"deepseek"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1.305,
@@ -16712,6 +17248,7 @@ export const MODELS = {
 			baseUrl: "https://token-plan-cn.xiaomimimo.com/v1",
 			compat: {"requiresReasoningContentOnAssistantMessages":true,"thinkingFormat":"deepseek"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.4,
@@ -16730,6 +17267,7 @@ export const MODELS = {
 			baseUrl: "https://token-plan-cn.xiaomimimo.com/v1",
 			compat: {"requiresReasoningContentOnAssistantMessages":true,"thinkingFormat":"deepseek"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1,
@@ -16748,6 +17286,7 @@ export const MODELS = {
 			baseUrl: "https://token-plan-cn.xiaomimimo.com/v1",
 			compat: {"requiresReasoningContentOnAssistantMessages":true,"thinkingFormat":"deepseek"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.4,
@@ -16766,6 +17305,7 @@ export const MODELS = {
 			baseUrl: "https://token-plan-cn.xiaomimimo.com/v1",
 			compat: {"requiresReasoningContentOnAssistantMessages":true,"thinkingFormat":"deepseek"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1,
@@ -16784,6 +17324,7 @@ export const MODELS = {
 			baseUrl: "https://token-plan-cn.xiaomimimo.com/v1",
 			compat: {"requiresReasoningContentOnAssistantMessages":true,"thinkingFormat":"deepseek"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1.305,
@@ -16804,6 +17345,7 @@ export const MODELS = {
 			baseUrl: "https://token-plan-sgp.xiaomimimo.com/v1",
 			compat: {"requiresReasoningContentOnAssistantMessages":true,"thinkingFormat":"deepseek"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.4,
@@ -16822,6 +17364,7 @@ export const MODELS = {
 			baseUrl: "https://token-plan-sgp.xiaomimimo.com/v1",
 			compat: {"requiresReasoningContentOnAssistantMessages":true,"thinkingFormat":"deepseek"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1,
@@ -16840,6 +17383,7 @@ export const MODELS = {
 			baseUrl: "https://token-plan-sgp.xiaomimimo.com/v1",
 			compat: {"requiresReasoningContentOnAssistantMessages":true,"thinkingFormat":"deepseek"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0.4,
@@ -16858,6 +17402,7 @@ export const MODELS = {
 			baseUrl: "https://token-plan-sgp.xiaomimimo.com/v1",
 			compat: {"requiresReasoningContentOnAssistantMessages":true,"thinkingFormat":"deepseek"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1,
@@ -16876,6 +17421,7 @@ export const MODELS = {
 			baseUrl: "https://token-plan-sgp.xiaomimimo.com/v1",
 			compat: {"requiresReasoningContentOnAssistantMessages":true,"thinkingFormat":"deepseek"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 1.305,
@@ -16896,6 +17442,7 @@ export const MODELS = {
 			baseUrl: "https://api.z.ai/api/coding/paas/v4",
 			compat: {"supportsDeveloperRole":false,"thinkingFormat":"zai"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -16914,6 +17461,7 @@ export const MODELS = {
 			baseUrl: "https://api.z.ai/api/coding/paas/v4",
 			compat: {"supportsDeveloperRole":false,"thinkingFormat":"zai","zaiToolStream":true},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -16932,6 +17480,7 @@ export const MODELS = {
 			baseUrl: "https://api.z.ai/api/coding/paas/v4",
 			compat: {"supportsDeveloperRole":false,"thinkingFormat":"zai","zaiToolStream":true},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -16950,6 +17499,7 @@ export const MODELS = {
 			baseUrl: "https://api.z.ai/api/coding/paas/v4",
 			compat: {"supportsDeveloperRole":false,"thinkingFormat":"zai","zaiToolStream":true},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -16987,6 +17537,7 @@ export const MODELS = {
 			baseUrl: "https://api.z.ai/api/coding/paas/v4",
 			compat: {"supportsDeveloperRole":false,"thinkingFormat":"zai","zaiToolStream":true},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0,
@@ -17007,6 +17558,7 @@ export const MODELS = {
 			baseUrl: "https://open.bigmodel.cn/api/coding/paas/v4",
 			compat: {"supportsDeveloperRole":false,"thinkingFormat":"zai"},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -17025,6 +17577,7 @@ export const MODELS = {
 			baseUrl: "https://open.bigmodel.cn/api/coding/paas/v4",
 			compat: {"supportsDeveloperRole":false,"thinkingFormat":"zai","zaiToolStream":true},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -17043,6 +17596,7 @@ export const MODELS = {
 			baseUrl: "https://open.bigmodel.cn/api/coding/paas/v4",
 			compat: {"supportsDeveloperRole":false,"thinkingFormat":"zai","zaiToolStream":true},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -17061,6 +17615,7 @@ export const MODELS = {
 			baseUrl: "https://open.bigmodel.cn/api/coding/paas/v4",
 			compat: {"supportsDeveloperRole":false,"thinkingFormat":"zai","zaiToolStream":true},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -17098,6 +17653,7 @@ export const MODELS = {
 			baseUrl: "https://open.bigmodel.cn/api/coding/paas/v4",
 			compat: {"supportsDeveloperRole":false,"thinkingFormat":"zai","zaiToolStream":true},
 			reasoning: true,
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":null},
 			input: ["text", "image"],
 			cost: {
 				input: 0,

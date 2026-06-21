@@ -29,8 +29,9 @@ describe("thinking-efforts port (OpenCode parity)", () => {
 		expect(supported(m("gpt-5.2", "openai", "openai-responses"))).toEqual(["off", "low", "medium", "high", "xhigh"]);
 	});
 
-	it("Anthropic Opus 4.8: low/medium/high/xhigh/max (no off, no minimal)", () => {
+	it("Anthropic Opus 4.8: off + low/medium/high/xhigh/max (no minimal; off kept for disable)", () => {
 		expect(supported(m("claude-opus-4-8", "anthropic", "anthropic-messages"))).toEqual([
+			"off",
 			"low",
 			"medium",
 			"high",
@@ -39,8 +40,9 @@ describe("thinking-efforts port (OpenCode parity)", () => {
 		]);
 	});
 
-	it("Anthropic Opus 4.6: low/medium/high/max (no xhigh)", () => {
+	it("Anthropic Opus 4.6: off + low/medium/high/max (no xhigh)", () => {
 		expect(supported(m("claude-opus-4-6", "anthropic", "anthropic-messages"))).toEqual([
+			"off",
 			"low",
 			"medium",
 			"high",
@@ -48,8 +50,8 @@ describe("thinking-efforts port (OpenCode parity)", () => {
 		]);
 	});
 
-	it("Anthropic Sonnet 4.5 (older): high/max budget tiers", () => {
-		expect(supported(m("claude-sonnet-4-5", "anthropic", "anthropic-messages"))).toEqual(["high", "max"]);
+	it("Anthropic Sonnet 4.5 (older): off + high/max budget tiers", () => {
+		expect(supported(m("claude-sonnet-4-5", "anthropic", "anthropic-messages"))).toEqual(["off", "high", "max"]);
 	});
 
 	it("Gemini 3.1 Pro: low/medium/high (now includes the medium tier)", () => {
@@ -69,8 +71,9 @@ describe("thinking-efforts port (OpenCode parity)", () => {
 		]);
 	});
 
-	it("DeepSeek V4 Flash: low/medium/high/max (compatible default, gains max)", () => {
+	it("DeepSeek V4 Flash: off + low/medium/high/max (compatible default, gains max)", () => {
 		expect(supported(m("deepseek-v4-flash", "opencode-go", "openai-completions"))).toEqual([
+			"off",
 			"low",
 			"medium",
 			"high",
