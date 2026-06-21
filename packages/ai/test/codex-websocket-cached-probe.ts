@@ -3,13 +3,13 @@
  * Live probe for OpenAI Codex Responses websocket-cached mode.
  *
  * Runs a simple tool loop directly against the pi-ai provider source so it does not
- * depend on built dist packages or coding-agent SDK wiring.
+ * depend on built dist packages or terminal SDK wiring.
  */
 
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { Type } from "typebox";
-import { AuthStorage } from "../../coding-agent/src/core/auth-storage.ts";
+import { AuthStorage } from "../../terminal/src/core/auth-storage.ts";
 import { getModel } from "../src/models.ts";
 import {
 	closeOpenAICodexWebSocketSessions,
@@ -162,7 +162,7 @@ async function main(): Promise<void> {
 	const authStorage = AuthStorage.create();
 	const apiKey = (await authStorage.getApiKey("openai-codex")) ?? (await authStorage.getApiKey("openai"));
 	if (!apiKey) {
-		throw new Error("No OpenAI Codex API key found in coding-agent auth storage.");
+		throw new Error("No OpenAI Codex API key found in terminal auth storage.");
 	}
 	const context: Context = {
 		systemPrompt:
