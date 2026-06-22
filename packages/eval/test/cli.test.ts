@@ -75,9 +75,12 @@ describe("formatReport", () => {
 			runsPassed: 1,
 			qpd: 25,
 			costOfPass: 0.04,
+			meanOutputTokens: 140,
+			meanTotalTokens: 43416,
 		});
 		expect(text).toContain("demo");
 		expect(text).toContain("QpD");
+		expect(text).toContain("meanOutTok=140");
 	});
 });
 

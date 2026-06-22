@@ -136,6 +136,7 @@ export function formatReport(report: QpdReport): string {
 		`tasks=${report.tasksTotal} runs=${report.runsTotal} passed=${report.runsPassed}`,
 		`meanScore=${report.meanScore.toFixed(3)} meanCost=${usd(report.meanCostUsd)} totalCost=${usd(report.totalCostUsd)}`,
 		`QpD=${report.qpd.toFixed(3)} cost_of_pass=${usd(report.costOfPass)}`,
+		`meanOutTok=${report.meanOutputTokens.toFixed(0)} meanTotalTok=${report.meanTotalTokens.toFixed(0)}`,
 	].join("\n");
 }
 

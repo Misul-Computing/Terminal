@@ -20,10 +20,14 @@ export function buildQpdReport(label: string, runs: ScoredRun[]): QpdReport {
 
 	let scoreSum = 0;
 	let costSum = 0;
+	let outputTokenSum = 0;
+	let totalTokenSum = 0;
 	let runsPassed = 0;
 	for (const run of runs) {
 		scoreSum += run.score;
 		costSum += run.costUsd;
+		outputTokenSum += run.tokens.output;
+		totalTokenSum += run.tokens.total;
 		if (isPassed(run)) runsPassed += 1;
 	}
 
@@ -43,5 +47,7 @@ export function buildQpdReport(label: string, runs: ScoredRun[]): QpdReport {
 		runsPassed,
 		qpd,
 		costOfPass,
+		meanOutputTokens: runsTotal > 0 ? outputTokenSum / runsTotal : 0,
+		meanTotalTokens: runsTotal > 0 ? totalTokenSum / runsTotal : 0,
 	};
 }

@@ -8,9 +8,9 @@ import { cleanupRunDir, cloneToRunDir } from "../src/isolation.ts";
 const fixturesRoot = fileURLToPath(new URL("../fixtures", import.meta.url));
 
 describe("loadFixtures", () => {
-	it("loads all 5 Tier-1 fixtures with valid contracts", () => {
+	it("loads all Tier-1 fixtures with valid contracts", () => {
 		const fixtures = loadFixtures(fixturesRoot);
-		expect(fixtures.length).toBe(5);
+		expect(fixtures.length).toBe(7);
 		const ids = fixtures.map((f) => f.id).sort();
 		expect(ids).toEqual([
 			"01-add-return-type",
@@ -18,6 +18,8 @@ describe("loadFixtures", () => {
 			"03-rename-symbol",
 			"04-add-error-case",
 			"05-extract-constant",
+			"06-cross-file-rename",
+			"07-event-pipeline",
 		]);
 		for (const f of fixtures) {
 			expect(f.prompt.length).toBeGreaterThan(0);

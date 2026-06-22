@@ -81,6 +81,14 @@ export interface QpdReport {
 	qpd: number;
 	/** totalCostUsd / runsPassed (Infinity when nothing passed). */
 	costOfPass: number;
+	/**
+	 * Mean output (completion) tokens per run — the clean efficiency signal when
+	 * cost is 0 (free model) and pass rate is at ceiling: a better scaffolding
+	 * reaches the same correct result with fewer output tokens.
+	 */
+	meanOutputTokens: number;
+	/** Mean total tokens per run (includes cache reads; noisier than output). */
+	meanTotalTokens: number;
 }
 
 /** McNemar paired-significance result for an A/B comparison. */
