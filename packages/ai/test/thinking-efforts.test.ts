@@ -29,9 +29,8 @@ describe("thinking-efforts port (OpenCode parity)", () => {
 		expect(supported(m("gpt-5.2", "openai", "openai-responses"))).toEqual(["off", "low", "medium", "high", "xhigh"]);
 	});
 
-	it("Anthropic Opus 4.8: off + low/medium/high/xhigh/max (no minimal; off kept for disable)", () => {
+	it("Anthropic Opus 4.8: low/medium/high/xhigh/max, NO off (always-on adaptive, can't disable)", () => {
 		expect(supported(m("claude-opus-4-8", "anthropic", "anthropic-messages"))).toEqual([
-			"off",
 			"low",
 			"medium",
 			"high",
@@ -54,6 +53,15 @@ describe("thinking-efforts port (OpenCode parity)", () => {
 		expect(supported(m("claude-sonnet-4-5", "anthropic", "anthropic-messages"))).toEqual(["off", "high", "max"]);
 	});
 
+	it("Anthropic dated alias is not misparsed as a newer version (opus-4-20250514 == opus-4-0)", () => {
+		// The 8-digit date must not be read as minor version 20250514 (>=7), which would
+		// over-offer the Opus 4.7+ adaptive tier set. The dated id must match its base alias.
+		const dated = supported(m("claude-opus-4-20250514", "anthropic", "anthropic-messages"));
+		const base = supported(m("claude-opus-4-0", "anthropic", "anthropic-messages"));
+		expect(dated).toEqual(base);
+		expect(dated).toEqual(["off", "high", "max"]);
+	});
+
 	it("Gemini 3.1 Pro: low/medium/high (now includes the medium tier)", () => {
 		expect(supported(m("gemini-3.1-pro-preview", "google", "google-generative-ai"))).toEqual([
 			"low",
@@ -71,11 +79,9 @@ describe("thinking-efforts port (OpenCode parity)", () => {
 		]);
 	});
 
-	it("DeepSeek V4 Flash: off + low/medium/high/max (compatible default, gains max)", () => {
+	it("DeepSeek V4 Flash: off + high/max only (reasoning_effort accepts exactly high|max)", () => {
 		expect(supported(m("deepseek-v4-flash", "opencode-go", "openai-completions"))).toEqual([
 			"off",
-			"low",
-			"medium",
 			"high",
 			"max",
 		]);

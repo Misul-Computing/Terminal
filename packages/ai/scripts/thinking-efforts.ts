@@ -78,7 +78,10 @@ function openaiCompatibleEfforts(id: string): string[] {
 }
 
 function anthropicOpus47OrLater(id: string): boolean {
-	const m = /opus-(\d+)[.-](\d+)|claude-(\d+)[.-](\d+)-opus/.exec(id);
+	// Minor must be 1-2 digits: an 8-digit date suffix (opus-4-20250514) is NOT a
+	// minor version. Without `(?!\d)` the date parses as minor 20250514 (>=7), so a
+	// dated alias of Opus 4.0 was misread as Opus 4.7+ and over-offered tiers.
+	const m = /opus-(\d+)[.-](\d{1,2})(?!\d)|claude-(\d+)[.-](\d{1,2})(?!\d)-opus/.exec(id);
 	if (!m) return false;
 	const major = Number(m[1] ?? m[3]);
 	const minor = Number(m[2] ?? m[4]);
@@ -185,16 +188,15 @@ export function openCodeEfforts(model: ThinkingModelInput): string[] | "binary" 
 	// OpenRouter / gateways: OpenAI-shaped for gpt models, widely-supported otherwise.
 	if (provider === "openrouter" || provider.includes("gateway") || provider.includes("vercel")) {
 		if (id.startsWith("openai/") || id.includes("gpt")) return openaiCompatibleEfforts(id);
-		const efforts = [...WIDELY];
-		if (id.includes("deepseek-v4")) efforts.push("max");
-		return efforts;
+		if (id.includes("deepseek-v4")) return ["high", "max"];
+		return [...WIDELY];
 	}
 
 	// Default OpenAI-compatible upstreams (cerebras/together/xai/deepinfra/...).
 	if (id.includes("north-mini-code")) return ["none", "high"];
-	const efforts = [...WIDELY];
-	if (id.includes("deepseek-v4")) efforts.push("max");
-	return efforts;
+	// DeepSeek V4 reasoning_effort accepts exactly high|max (per DeepSeek API docs).
+	if (id.includes("deepseek-v4")) return ["high", "max"];
+	return [...WIDELY];
 }
 
 const ALL_TIERS = ["minimal", "low", "medium", "high", "xhigh", "max"] as const;
@@ -204,7 +206,9 @@ const ALL_TIERS = ["minimal", "low", "medium", "high", "xhigh", "max"] as const;
 function cannotDisableThinking(model: ThinkingModelInput, efforts: string[]): boolean {
 	const id = model.id.toLowerCase();
 	if (id.includes("kimi-k2.7-code") || id.includes("grok-build") || id.includes("qwq")) return true;
-	if (id.includes("fable-5") || id.includes("mythos-5")) return true; // always-on adaptive thinking
+	// Always-on adaptive thinking: Anthropic returns 400 on thinking:{type:"disabled"} for
+	// Opus 4.7+, Fable 5, Mythos 5 — so "off" must not be offered.
+	if (anthropicOpus47OrLater(id) || id.includes("fable-5") || id.includes("mythos-5")) return true;
 	if (model.provider === "ant-ling") return true; // Ring reasons by default
 	// GPT-5 family (any host) disables only via the "none" effort tier.
 	if (GPT5_FAMILY_RE.test(id)) return !efforts.includes("none");

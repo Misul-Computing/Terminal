@@ -51,16 +51,16 @@ describe("getSupportedThinkingLevels", () => {
 		expect(getSupportedThinkingLevels(model!)).toEqual(["medium", "high", "xhigh"]);
 	});
 
-	it("includes only high/xhigh plus off for DeepSeek V4 Flash on the DeepSeek provider", () => {
+	it("includes only high/max plus off for DeepSeek V4 Flash on the DeepSeek provider", () => {
 		const model = getModel("deepseek", "deepseek-v4-flash");
 		expect(model).toBeDefined();
-		expect(getSupportedThinkingLevels(model!)).toEqual(["off", "low", "medium", "high", "max"]);
+		expect(getSupportedThinkingLevels(model!)).toEqual(["off", "high", "max"]);
 	});
 
-	it("includes only high/xhigh plus off for DeepSeek V4 Flash on opencode-go", () => {
+	it("includes only high/max plus off for DeepSeek V4 Flash on opencode-go", () => {
 		const model = getModel("opencode-go", "deepseek-v4-flash");
 		expect(model).toBeDefined();
-		expect(getSupportedThinkingLevels(model!)).toEqual(["off", "low", "medium", "high", "max"]);
+		expect(getSupportedThinkingLevels(model!)).toEqual(["off", "high", "max"]);
 	});
 
 	it("includes only high plus off for OpenCode Go Kimi K2.6", () => {
@@ -84,10 +84,10 @@ describe("getSupportedThinkingLevels", () => {
 		expect(getSupportedThinkingLevels(model!)).toEqual(["high"]);
 	});
 
-	it("includes only high/xhigh plus off for DeepSeek V4 Flash on OpenRouter", () => {
+	it("includes only high/max plus off for DeepSeek V4 Flash on OpenRouter", () => {
 		const model = getModel("openrouter", "deepseek/deepseek-v4-flash");
 		expect(model).toBeDefined();
-		expect(getSupportedThinkingLevels(model!)).toEqual(["off", "low", "medium", "high", "max"]);
+		expect(getSupportedThinkingLevels(model!)).toEqual(["off", "high", "max"]);
 	});
 
 	it("offers off/low/medium/high/max (not xhigh) for OpenRouter Opus 4.6", () => {
