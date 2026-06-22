@@ -342,9 +342,19 @@ export function findCutPoint(
 
 	for (let i = endIndex - 1; i >= startIndex; i--) {
 		const entry = entries[i];
-		if (entry.type !== "message") continue;
-		const messageTokens = estimateTokens(entry.message as AgentMessage);
-		accumulatedTokens += messageTokens;
+		// Count every entry buildSessionContext emits to context (message, custom_message,
+		// branch_summary) — not just "message" — or the kept window silently exceeds
+		// keepRecentTokens.
+		let message: AgentMessage | undefined;
+		if (entry.type === "message") {
+			message = entry.message as AgentMessage;
+		} else if (entry.type === "custom_message") {
+			message = getMessageFromEntry(entry);
+		} else if (entry.type === "branch_summary" && entry.summary) {
+			message = getMessageFromEntry(entry);
+		}
+		if (!message) continue;
+		accumulatedTokens += estimateTokens(message);
 		if (accumulatedTokens >= keepRecentTokens) {
 			for (let c = 0; c < cutPoints.length; c++) {
 				if (cutPoints[c] >= i) {

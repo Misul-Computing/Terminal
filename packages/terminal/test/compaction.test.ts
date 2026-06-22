@@ -307,6 +307,33 @@ describe("findCutPoint", () => {
 			expect(result.turnStartIndex).toBe(2); // Turn 2 starts at index 2
 		}
 	});
+
+	it("counts custom_message tokens toward the keep-window budget", () => {
+		// buildSessionContext emits custom_message entries to context, so their tokens must
+		// count when choosing the cut — otherwise the kept window exceeds keepRecentTokens.
+		const bigNote = "x".repeat(12000); // ~3000 estimated tokens, alone over the 2000 budget
+		const customEntry = {
+			type: "custom_message",
+			id: "test-custom",
+			parentId: null,
+			timestamp: new Date().toISOString(),
+			customType: "note",
+			content: bigNote,
+		} as unknown as SessionEntry;
+		const entries: SessionEntry[] = [
+			createMessageEntry(createUserMessage("u0")),
+			createMessageEntry(createAssistantMessage("a0")),
+			createMessageEntry(createUserMessage("u1")),
+			customEntry, // index 3 — a valid cut point that alone exceeds the budget
+			createMessageEntry(createAssistantMessage("a1")),
+		];
+
+		const result = findCutPoint(entries, 0, entries.length, 2000);
+
+		// The large custom_message alone exceeds the budget, so the cut lands at it (keep
+		// from index 3), not at the start (which would keep the whole history).
+		expect(result.firstKeptEntryIndex).toBe(3);
+	});
 });
 
 describe("buildSessionContext", () => {

@@ -401,11 +401,20 @@ export function findCutPoint(
 
 	for (let i = endIndex - 1; i >= startIndex; i--) {
 		const entry = entries[i];
-		if (entry.type !== "message") continue;
+		// Count every entry buildSessionContext emits to context (mirror appendMessage):
+		// message, custom_message, and branch_summary all cost tokens. Counting only
+		// "message" let the kept window silently exceed keepRecentTokens.
+		let message: AgentMessage | undefined;
+		if (entry.type === "message") {
+			message = entry.message;
+		} else if (entry.type === "custom_message") {
+			message = getMessageFromEntry(entry);
+		} else if (entry.type === "branch_summary" && entry.summary) {
+			message = getMessageFromEntry(entry);
+		}
+		if (!message) continue;
 
-		// Estimate this message's size
-		const messageTokens = estimateTokens(entry.message);
-		accumulatedTokens += messageTokens;
+		accumulatedTokens += estimateTokens(message);
 
 		// Check if we've exceeded the budget
 		if (accumulatedTokens >= keepRecentTokens) {
