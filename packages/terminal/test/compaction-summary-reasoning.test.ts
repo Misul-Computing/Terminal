@@ -116,6 +116,27 @@ describe("generateSummary reasoning options", () => {
 		expect(completeSimpleMock.mock.calls[0][2]).not.toHaveProperty("reasoning");
 	});
 
+	it("keeps the previous summary when a split turn has no new history to summarize", async () => {
+		// Re-compacted session whose first kept turn is itself split: messagesToSummarize is
+		// empty but a previous accumulated summary exists. It must not be replaced by the
+		// "No prior history." placeholder (that would silently drop all prior context).
+		const preparation: CompactionPreparation = {
+			firstKeptEntryId: "entry-keep",
+			messagesToSummarize: [],
+			turnPrefixMessages: messages,
+			isSplitTurn: true,
+			tokensBefore: 100000,
+			previousSummary: "## Goal\nPRIOR ACCUMULATED HISTORY that must survive",
+			fileOps: { read: new Set(), written: new Set(), edited: new Set() },
+			settings: { enabled: true, reserveTokens: 16384, keepRecentTokens: 20000 },
+		};
+
+		const result = await compact(preparation, createModel(false), "test-key");
+
+		expect(result.summary).toContain("PRIOR ACCUMULATED HISTORY that must survive");
+		expect(result.summary).not.toContain("No prior history.");
+	});
+
 	it("clamps compaction summary maxTokens to the model output cap", async () => {
 		const preparation: CompactionPreparation = {
 			firstKeptEntryId: "entry-keep",

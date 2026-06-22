@@ -788,7 +788,9 @@ export async function compact(
 						streamFn,
 						env,
 					)
-				: Promise.resolve("No prior history."),
+				: // No new history before the split turn, but a prior accumulated summary must
+					// not be dropped — the new compaction entry replaces the old one in context.
+					Promise.resolve(previousSummary ?? "No prior history."),
 			generateTurnPrefixSummary(
 				turnPrefixMessages,
 				model,

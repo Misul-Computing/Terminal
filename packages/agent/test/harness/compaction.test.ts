@@ -622,6 +622,26 @@ describe("harness compaction", () => {
 		expect(seenOptions[0]).toMatchObject({ reasoning: "high" });
 	});
 
+	it("preserves the previous summary when a split turn has no new history", async () => {
+		const messages: AgentMessage[] = [createUserMessage("Summarize this.")];
+		const { faux, model } = createFauxModel(false);
+		faux.setResponses([fauxAssistantMessage("## Original Request\nTurn prefix summary")]);
+		const preparation: CompactionPreparation = {
+			firstKeptEntryId: "entry-keep",
+			messagesToSummarize: [],
+			turnPrefixMessages: messages,
+			isSplitTurn: true,
+			tokensBefore: 100,
+			previousSummary: "## Goal\nPRIOR ACCUMULATED HISTORY that must survive",
+			fileOps: { read: new Set(), written: new Set(), edited: new Set() },
+			settings: { enabled: true, reserveTokens: 2000, keepRecentTokens: 20 },
+		};
+
+		const result = getOrThrow(await compact(preparation, model, "test-key"));
+		expect(result.summary).toContain("PRIOR ACCUMULATED HISTORY that must survive");
+		expect(result.summary).not.toContain("No prior history.");
+	});
+
 	it("returns turn-prefix compaction errors without throwing", async () => {
 		const messages: AgentMessage[] = [createUserMessage("Summarize this.")];
 		const preparation: CompactionPreparation = {

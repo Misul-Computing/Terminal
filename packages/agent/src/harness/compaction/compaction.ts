@@ -664,7 +664,9 @@ export async function compact(
 						previousSummary,
 						thinkingLevel,
 					)
-				: Promise.resolve(ok<string, CompactionError>("No prior history.")),
+				: // No new history before the split turn, but a prior accumulated summary must
+					// not be dropped — the new compaction entry replaces the old one in context.
+					Promise.resolve(ok<string, CompactionError>(previousSummary ?? "No prior history.")),
 			generateTurnPrefixSummary(
 				turnPrefixMessages,
 				model,
