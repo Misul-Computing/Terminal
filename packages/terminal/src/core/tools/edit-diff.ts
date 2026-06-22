@@ -183,12 +183,37 @@ function getNoChangeError(path: string, totalEdits: number): Error {
 }
 
 /**
+ * Map an index in the fuzzy-normalized form of `original` back to an index in
+ * `original` itself. Fuzzy normalization preserves newline count, so we walk
+ * line by line, advancing the fuzzy cursor by the normalized line length and the
+ * original cursor by the raw line length. Within the target line we assume a 1:1
+ * column mapping — smart-quote/dash/space swaps are length-preserving and
+ * trailing-whitespace stripping only affects the line end. Callers verify the
+ * resulting span and fall back when an exotic NFKC length change breaks that
+ * assumption.
+ */
+function mapFuzzyIndexToOriginal(original: string, fuzzyIndex: number): number {
+	const lines = original.split("\n");
+	let fuzzyCursor = 0;
+	let origCursor = 0;
+	for (let k = 0; k < lines.length; k++) {
+		const fuzzyLineLen = normalizeForFuzzyMatch(lines[k]).length;
+		if (fuzzyIndex <= fuzzyCursor + fuzzyLineLen) {
+			return origCursor + (fuzzyIndex - fuzzyCursor);
+		}
+		fuzzyCursor += fuzzyLineLen + 1; // + newline separator
+		origCursor += lines[k].length + 1;
+	}
+	return original.length;
+}
+
+/**
  * Apply one or more exact-text replacements to LF-normalized content.
  *
  * All edits are matched against the same original content. Replacements are
- * then applied in reverse order so offsets remain stable. If any edit needs
- * fuzzy matching, the operation runs in fuzzy-normalized content space to
- * preserve current single-edit behavior.
+ * then applied in reverse order so offsets remain stable. Fuzzy matching is used
+ * for finding, but replacements are spliced back into the original content so
+ * Unicode outside the edited regions is never silently rewritten.
  */
 export function applyEditsToNormalizedContent(
 	normalizedContent: string,
@@ -243,20 +268,52 @@ export function applyEditsToNormalizedContent(
 		}
 	}
 
-	let newContent = baseContent;
-	for (let i = matchedEdits.length - 1; i >= 0; i--) {
-		const edit = matchedEdits[i];
-		newContent =
-			newContent.substring(0, edit.matchIndex) +
-			edit.newText +
-			newContent.substring(edit.matchIndex + edit.matchLength);
+	// Choose the canvas to splice into. When no edit needed fuzzy matching,
+	// baseContent is the untouched original and matchedEdits index into it
+	// directly. When fuzzy matching rewrote baseContent into normalized space,
+	// splicing there would also rewrite Unicode OUTSIDE the edited regions
+	// (silent, and invisible in the diff). So we map each match back to the
+	// original content and splice there, preserving every byte we did not edit.
+	// If any span fails to map cleanly (an exotic NFKC length change), we fall
+	// back to the normalized canvas — the previous behavior.
+	let canvas = baseContent;
+	let splices = matchedEdits.map((edit) => ({
+		start: edit.matchIndex,
+		end: edit.matchIndex + edit.matchLength,
+		newText: edit.newText,
+	}));
+
+	if (baseContent !== normalizedContent) {
+		const mapped: typeof splices = [];
+		let allMapped = true;
+		for (const edit of matchedEdits) {
+			const start = mapFuzzyIndexToOriginal(normalizedContent, edit.matchIndex);
+			const end = mapFuzzyIndexToOriginal(normalizedContent, edit.matchIndex + edit.matchLength);
+			const matchedFuzzy = baseContent.slice(edit.matchIndex, edit.matchIndex + edit.matchLength);
+			if (normalizeForFuzzyMatch(normalizedContent.slice(start, end)) !== matchedFuzzy) {
+				allMapped = false;
+				break;
+			}
+			mapped.push({ start, end, newText: edit.newText });
+		}
+		if (allMapped) {
+			canvas = normalizedContent;
+			splices = mapped;
+		}
 	}
 
-	if (baseContent === newContent) {
+	splices.sort((a, b) => a.start - b.start);
+	let newContent = canvas;
+	for (let i = splices.length - 1; i >= 0; i--) {
+		const splice = splices[i];
+		newContent = newContent.substring(0, splice.start) + splice.newText + newContent.substring(splice.end);
+	}
+
+	if (canvas === newContent) {
 		throw getNoChangeError(path, normalizedEdits.length);
 	}
 
-	return { baseContent, newContent };
+	return { baseContent: canvas, newContent };
 }
 
 /** Generate a standard unified patch. */
