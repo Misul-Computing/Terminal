@@ -1,0 +1,5 @@
+{
+	"testCommand": "node pipeline.test.mjs",
+	"timeoutMs": 120000,
+	"tags": ["tier1", "multi-file", "long-horizon", "buried-requirement"]
+}
