@@ -208,6 +208,70 @@ function mapFuzzyIndexToOriginal(original: string, fuzzyIndex: number): number {
 }
 
 /**
+ * If every part line matches the corresponding file line ignoring leading
+ * whitespace, and each non-blank file line is its part line with one identical
+ * whitespace-only prefix prepended, return that prefix; otherwise null. This is
+ * the indent delta the model dropped (or added) uniformly across the block.
+ */
+function leadingIndentDelta(contentLines: string[], start: number, partLines: string[]): string | null {
+	const prefixes = new Set<string>();
+	for (let j = 0; j < partLines.length; j++) {
+		const whole = contentLines[start + j];
+		const part = partLines[j];
+		if (whole.trimStart() !== part.trimStart()) return null;
+		if (part.trim() === "") continue;
+		if (!whole.endsWith(part)) return null;
+		const prefix = whole.slice(0, whole.length - part.length);
+		if (/\S/.test(prefix)) return null;
+		prefixes.add(prefix);
+	}
+	if (prefixes.size !== 1) return null;
+	const [only] = [...prefixes];
+	// A zero-length delta means an exact match would already have succeeded.
+	return only.length === 0 ? null : only;
+}
+
+/**
+ * Repair an edit whose oldText differs from the file only by a uniform
+ * leading-indent delta — the single most common edit-match failure, where the
+ * model dedented (or re-indented) a copied block. Returns the file's exact
+ * matched text plus newText reindented by that delta, so the standard exact-match
+ * path can apply it. Returns null when there is no unique, unambiguous match.
+ * Conservative by design; relative indentation within the block is preserved.
+ */
+function matchWithLeadingIndent(
+	content: string,
+	oldText: string,
+	newText: string,
+): { oldText: string; newText: string } | null {
+	const contentLines = content.split("\n");
+	const partLines = oldText.split("\n");
+	const n = partLines.length;
+
+	let matchStartLine = -1;
+	let indent: string | null = null;
+	let matchCount = 0;
+	for (let i = 0; i + n <= contentLines.length; i++) {
+		const windowIndent = leadingIndentDelta(contentLines, i, partLines);
+		if (windowIndent !== null) {
+			matchCount++;
+			if (matchCount === 1) {
+				matchStartLine = i;
+				indent = windowIndent;
+			}
+		}
+	}
+	if (matchCount !== 1 || indent === null) return null;
+
+	const matchedText = contentLines.slice(matchStartLine, matchStartLine + n).join("\n");
+	const reindentedNewText = newText
+		.split("\n")
+		.map((line) => (line.trim() === "" ? line : indent + line))
+		.join("\n");
+	return { oldText: matchedText, newText: reindentedNewText };
+}
+
+/**
  * Apply one or more exact-text replacements to LF-normalized content.
  *
  * All edits are matched against the same original content. Replacements are
@@ -231,7 +295,26 @@ export function applyEditsToNormalizedContent(
 		}
 	}
 
-	const initialMatches = normalizedEdits.map((edit) => fuzzyFindText(normalizedContent, edit.oldText));
+	// Match each edit. When exact and fuzzy matching both miss, the usual cause is the
+	// model using a different base indentation than the file: repair such an edit into
+	// an exact one (and reindent its newText) so all downstream validation/splicing
+	// (and the leak-safe canvas) stay untouched.
+	const initialMatches: FuzzyMatchResult[] = [];
+	for (let i = 0; i < normalizedEdits.length; i++) {
+		let match = fuzzyFindText(normalizedContent, normalizedEdits[i].oldText);
+		if (!match.found) {
+			const repaired = matchWithLeadingIndent(
+				normalizedContent,
+				normalizedEdits[i].oldText,
+				normalizedEdits[i].newText,
+			);
+			if (repaired) {
+				normalizedEdits[i] = repaired;
+				match = fuzzyFindText(normalizedContent, repaired.oldText);
+			}
+		}
+		initialMatches.push(match);
+	}
 	const baseContent = initialMatches.some((match) => match.usedFuzzyMatch)
 		? normalizeForFuzzyMatch(normalizedContent)
 		: normalizedContent;
