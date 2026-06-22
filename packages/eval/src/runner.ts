@@ -64,12 +64,19 @@ export interface RunFixtureOptions {
 	/** Injected session factory (tests). Defaults to the real `createAgentSession`. */
 	createSession?: typeof createAgentSession;
 	/**
-	 * Scaffolding A/B lever: when set, the run uses a resource loader whose system
-	 * prompt is replaced by this override (everything else default), so a baseline
-	 * vs variant prompt can be compared on the same fixtures. Omit for the default
-	 * (production) system prompt.
+	 * Scaffolding A/B lever (REPLACE): when set, the run uses a resource loader whose
+	 * system prompt is replaced wholesale by this override. Note this drops the
+	 * auto-generated tools/guidelines sections, so it tests a full prompt rewrite.
+	 * For an ADDITIVE test, prefer `appendSystemPrompt`.
 	 */
 	systemPromptOverride?: () => string;
+	/**
+	 * Scaffolding A/B lever (ADDITIVE): when set, this text is appended to the FULL
+	 * default system prompt (after the tools + guidelines sections), so a baseline
+	 * vs "default + extra guidance" variant can be compared fairly. This is the right
+	 * lever for testing added workflow guidance (plan/verify/read-before-edit, etc.).
+	 */
+	appendSystemPrompt?: string;
 }
 
 export interface CostCrossCheckInput {
@@ -124,11 +131,13 @@ export async function runFixture(fixture: EvalFixture, options: RunFixtureOption
 		// mirroring createAgentSession's own default construction (it skips its internal
 		// loader when one is passed, so we reload it here ourselves).
 		let resourceLoader: DefaultResourceLoader | undefined;
-		if (options.systemPromptOverride) {
+		if (options.systemPromptOverride || options.appendSystemPrompt) {
+			const appendText = options.appendSystemPrompt;
 			resourceLoader = new DefaultResourceLoader({
 				cwd: runDir,
 				agentDir: options.agentDir ?? getAgentDir(),
-				systemPromptOverride: options.systemPromptOverride,
+				...(options.systemPromptOverride ? { systemPromptOverride: options.systemPromptOverride } : {}),
+				...(appendText ? { appendSystemPromptOverride: () => [appendText] } : {}),
 			});
 			await resourceLoader.reload();
 		}

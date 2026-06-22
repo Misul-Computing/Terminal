@@ -33,10 +33,14 @@ export interface RunEvalCliOptions {
 	variantModel?: Model<string>;
 	tools?: string[];
 	variantTools?: string[];
-	/** Baseline system-prompt override (scaffolding A/B). Omit for the production prompt. */
+	/** Baseline system-prompt override (scaffolding A/B, REPLACE). Omit for the production prompt. */
 	systemPromptOverride?: () => string;
 	/** Variant system-prompt override for `compare`; falls back to the baseline when omitted. */
 	variantSystemPromptOverride?: () => string;
+	/** Baseline additive guidance appended to the full default prompt (scaffolding A/B). */
+	appendSystemPrompt?: string;
+	/** Variant additive guidance for `compare`; falls back to the baseline when omitted. */
+	variantAppendSystemPrompt?: string;
 	agentDir?: string;
 	/** Injected auth/model registry for offline faux runs. */
 	authStorage?: AuthStorage;
@@ -49,6 +53,7 @@ interface RunConfig {
 	model?: Model<string>;
 	tools?: string[];
 	systemPromptOverride?: () => string;
+	appendSystemPrompt?: string;
 }
 
 /** Run one config over all (fixture, seed) pairs and score each run. */
@@ -67,6 +72,7 @@ async function runConfig(
 				model: config.model,
 				tools: config.tools,
 				systemPromptOverride: config.systemPromptOverride,
+				appendSystemPrompt: config.appendSystemPrompt,
 				agentDir: shared.agentDir,
 				authStorage: shared.authStorage,
 				modelRegistry: shared.modelRegistry,
@@ -97,7 +103,12 @@ export async function runEvalCli(options: RunEvalCliOptions): Promise<EvalCliRes
 		const baselineRuns = await runConfig(
 			fixtures,
 			seeds,
-			{ model: options.model, tools: options.tools, systemPromptOverride: options.systemPromptOverride },
+			{
+			model: options.model,
+			tools: options.tools,
+			systemPromptOverride: options.systemPromptOverride,
+			appendSystemPrompt: options.appendSystemPrompt,
+		},
 			shared,
 		);
 		const variantRuns = await runConfig(
@@ -107,6 +118,7 @@ export async function runEvalCli(options: RunEvalCliOptions): Promise<EvalCliRes
 				model: options.variantModel ?? options.model,
 				tools: options.variantTools ?? options.tools,
 				systemPromptOverride: options.variantSystemPromptOverride ?? options.systemPromptOverride,
+				appendSystemPrompt: options.variantAppendSystemPrompt ?? options.appendSystemPrompt,
 			},
 			shared,
 		);
@@ -118,7 +130,12 @@ export async function runEvalCli(options: RunEvalCliOptions): Promise<EvalCliRes
 	const runs = await runConfig(
 		fixtures,
 		seeds,
-		{ model: options.model, tools: options.tools, systemPromptOverride: options.systemPromptOverride },
+		{
+			model: options.model,
+			tools: options.tools,
+			systemPromptOverride: options.systemPromptOverride,
+			appendSystemPrompt: options.appendSystemPrompt,
+		},
 		shared,
 	);
 	return { kind: "run", report: buildQpdReport(options.label ?? "run", runs) };

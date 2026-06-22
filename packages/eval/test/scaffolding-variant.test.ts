@@ -50,4 +50,18 @@ describe("scaffolding systemPromptOverride wiring", () => {
 
 		expect(resourceLoaderDefined).toBe(false);
 	});
+
+	it("propagates appendSystemPrompt to the agent session's append list", async () => {
+		const [fixture] = loadFixtures(FIXTURES_ROOT, { ids: ["01-add-return-type"] });
+		const APPEND = "APPEND-SENTINEL-67890";
+		let capturedAppend: string[] | undefined;
+		const createSession = (async (opts: { resourceLoader?: { getAppendSystemPrompt(): string[] } }) => {
+			capturedAppend = opts.resourceLoader?.getAppendSystemPrompt();
+			return { session: fakeSession() };
+		}) as never;
+
+		await runFixture(fixture, { seed: 1, appendSystemPrompt: APPEND, createSession });
+
+		expect(capturedAppend).toContain(APPEND);
+	});
 });
