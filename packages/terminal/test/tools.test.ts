@@ -620,6 +620,22 @@ describe("Coding Agent Tools", () => {
 			expect(getTextOutput(result).trim()).toBe("€");
 		});
 
+		it("reports a signal-killed command (null exit) as an error, not success", async () => {
+			// null exit code = terminated by a signal that wasn't our timeout/abort (crash,
+			// OOM kill, external kill). It must surface as an error, never silent success.
+			const operations: BashOperations = {
+				exec: async (_command, _cwd, { onData }) => {
+					onData(Buffer.from("partial output before crash\n", "utf-8"));
+					return { exitCode: null };
+				},
+			};
+			const bash = createBashTool(testDir, { operations });
+
+			await expect(bash.execute("test-call-signal-kill", { command: "crash" })).rejects.toThrow(
+				/terminated by a signal/,
+			);
+		});
+
 		it("should expose local bash operations for extension reuse", async () => {
 			const ops = createLocalBashOperations();
 			const chunks: Buffer[] = [];

@@ -397,7 +397,14 @@ export function createBashToolDefinition(
 
 				const snapshot = await finishOutput();
 				const { text: outputText, details } = formatOutput(snapshot);
-				if (exitCode !== 0 && exitCode !== null) {
+				// A null exit code means the process was terminated by a signal that did NOT
+				// originate from our timeout/abort (those are thrown above) — e.g. a crash
+				// (SIGSEGV), an OOM kill, or an external kill. Surface it as an error instead
+				// of silently reporting success to the model.
+				if (exitCode === null) {
+					throw new Error(appendStatus(outputText, "Command was terminated by a signal"));
+				}
+				if (exitCode !== 0) {
 					throw new Error(appendStatus(outputText, `Command exited with code ${exitCode}`));
 				}
 				return { content: [{ type: "text", text: outputText }], details };
