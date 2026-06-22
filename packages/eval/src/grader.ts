@@ -1,12 +1,52 @@
 /** Tier-1 deterministic grader: run the fixture's test command, exit 0 = pass. */
 
 import { spawn } from "node:child_process";
+import { copyFileSync, mkdirSync, readdirSync } from "node:fs";
 import { platform } from "node:os";
+import { dirname, join, relative } from "node:path";
 import type { FixtureMetadata } from "./types.ts";
 
 const DEFAULT_TIMEOUT_MS = 120000;
 /** Cap per-stream capture to avoid OOM on a runaway test command. */
 const MAX_CAPTURE_BYTES = 1024 * 1024;
+/** Files treated as oracle/test files when a fixture doesn't list them explicitly. */
+const ORACLE_FILE_RE = /\.(test|spec)\.[cm]?[jt]sx?$/;
+
+/** Recursively find oracle/test files under `inputDir`, returned as relative paths. */
+function findOracleFiles(inputDir: string): string[] {
+	const out: string[] = [];
+	const walk = (dir: string): void => {
+		for (const entry of readdirSync(dir, { withFileTypes: true })) {
+			if (entry.isDirectory()) {
+				if (entry.name === "node_modules" || entry.name === ".git") continue;
+				walk(join(dir, entry.name));
+			} else if (ORACLE_FILE_RE.test(entry.name)) {
+				out.push(relative(inputDir, join(dir, entry.name)));
+			}
+		}
+	};
+	walk(inputDir);
+	return out;
+}
+
+/**
+ * Restore oracle files from the pristine `inputDir` over the agent-edited `runDir`
+ * before grading, so an agent cannot pass by editing the test itself. Uses the
+ * fixture's explicit `oracleFiles` list, or auto-detected `*.test.*`/`*.spec.*`
+ * files. Best-effort per file: a listed file missing from `inputDir` is skipped.
+ */
+export function restoreOracleFiles(runDir: string, inputDir: string, metadata: Pick<FixtureMetadata, "oracleFiles">): void {
+	const rels = metadata.oracleFiles ?? findOracleFiles(inputDir);
+	for (const rel of rels) {
+		try {
+			const dst = join(runDir, rel);
+			mkdirSync(dirname(dst), { recursive: true });
+			copyFileSync(join(inputDir, rel), dst);
+		} catch {
+			// best-effort
+		}
+	}
+}
 
 export interface GradeResult {
 	/** 1 when the command exited 0 and did not time out, else 0. */
@@ -23,9 +63,13 @@ export interface GradeResult {
  */
 export function gradeRunDir(
 	runDir: string,
-	metadata: Pick<FixtureMetadata, "testCommand" | "timeoutMs">,
+	metadata: Pick<FixtureMetadata, "testCommand" | "timeoutMs" | "oracleFiles">,
+	/** Pristine fixture input dir; when given, oracle files are restored before grading. */
+	inputDir?: string,
 ): Promise<GradeResult> {
 	const timeoutMs = metadata.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+
+	if (inputDir) restoreOracleFiles(runDir, inputDir, metadata);
 
 	return new Promise<GradeResult>((resolve) => {
 		const child = spawn(metadata.testCommand, {

@@ -73,7 +73,7 @@ async function runConfig(
 				keepRunDir: true,
 			});
 			try {
-				const grade = run.errored ? { score: 0 } : await gradeRunDir(run.runDir, fixture.metadata);
+				const grade = run.errored ? { score: 0 } : await gradeRunDir(run.runDir, fixture.metadata, fixture.inputDir);
 				scored.push(scoreRun(run, grade.score));
 			} finally {
 				// Clean every run dir, including errored runs.

@@ -19,6 +19,14 @@ export interface FixtureMetadata {
 	tags?: string[];
 	/** Tool allowlist for the agent; falls back to runner default when omitted. */
 	tools?: string[];
+	/**
+	 * Oracle files restored from the pristine `input/` into the run dir before
+	 * grading, so an agent cannot pass by editing the test itself (anti-gaming).
+	 * Relative paths under the fixture root. When omitted, the grader auto-detects
+	 * `*.test.*` / `*.spec.*` files. Set to `[]` to disable restoration (e.g. when
+	 * the oracle is a type-check with no editable test file).
+	 */
+	oracleFiles?: string[];
 }
 
 /** A loaded Tier-1 fixture. */
