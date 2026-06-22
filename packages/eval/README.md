@@ -27,6 +27,31 @@ The CI is built on quality-per-dollar (`mean(score)/mean(cost)` per fixture),
 not on pass-rate, so a variant that improves pass-rate while ballooning cost is
 *not* flagged as a significant win.
 
+## Scaffolding A/B (prompt) and the efficiency signal
+
+Beyond `--variant-tools`, the meter can A/B the **scaffolding** itself — the system
+prompt — via two programmatic levers on `runFixture` / `runEvalCli`:
+
+- `appendSystemPrompt` (additive): appended after the full default prompt (constitution
+  + tools + guidelines). The fair lever for testing *added* guidance (plan / read-before-edit
+  / verify-before-finish), since it keeps the rest of the prompt intact.
+- `systemPromptOverride` (replace): replaces the whole prompt (drops the auto-generated
+  tools + guidelines sections). Tests a wholesale prompt rewrite.
+
+When the model is **free** (cost 0) and pass rate is at **ceiling** (a capable model aces
+small self-contained fixtures), neither cost nor pass carries signal. The meaningful
+scaffolding signal is then **output-token efficiency**: a better scaffolding reaches the
+same correct result with fewer output tokens. `run`/`compare` surface `meanOutputTokens`,
+and `compare` adds `deltaMeanOutputTokens` with a bootstrap 95% CI over per-fixture
+output-token deltas (CI excludes 0 = the efficiency difference is beyond sampling noise).
+
+## Oracle integrity (anti-gaming)
+
+Before grading, the grader restores each fixture's **oracle files** from the pristine
+`input/` over the agent's run dir, so an agent cannot pass by editing the test itself.
+Oracle files default to auto-detected `*.test.*` / `*.spec.*`; override per fixture with
+`metadata.oracleFiles` (or set it to `[]` for type-check oracles that have no editable test).
+
 ## Trial semantics ("seed")
 
 The `seed` field is a **trial index, not an RNG seed**. pi-ai exposes no RNG
