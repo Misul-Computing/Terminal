@@ -33,6 +33,10 @@ export interface RunEvalCliOptions {
 	variantModel?: Model<string>;
 	tools?: string[];
 	variantTools?: string[];
+	/** Baseline system-prompt override (scaffolding A/B). Omit for the production prompt. */
+	systemPromptOverride?: () => string;
+	/** Variant system-prompt override for `compare`; falls back to the baseline when omitted. */
+	variantSystemPromptOverride?: () => string;
 	agentDir?: string;
 	/** Injected auth/model registry for offline faux runs. */
 	authStorage?: AuthStorage;
@@ -44,6 +48,7 @@ export type EvalCliResult = { kind: "run"; report: QpdReport } | { kind: "compar
 interface RunConfig {
 	model?: Model<string>;
 	tools?: string[];
+	systemPromptOverride?: () => string;
 }
 
 /** Run one config over all (fixture, seed) pairs and score each run. */
@@ -61,6 +66,7 @@ async function runConfig(
 				seed,
 				model: config.model,
 				tools: config.tools,
+				systemPromptOverride: config.systemPromptOverride,
 				agentDir: shared.agentDir,
 				authStorage: shared.authStorage,
 				modelRegistry: shared.modelRegistry,
@@ -88,11 +94,20 @@ export async function runEvalCli(options: RunEvalCliOptions): Promise<EvalCliRes
 	};
 
 	if (options.command === "compare") {
-		const baselineRuns = await runConfig(fixtures, seeds, { model: options.model, tools: options.tools }, shared);
+		const baselineRuns = await runConfig(
+			fixtures,
+			seeds,
+			{ model: options.model, tools: options.tools, systemPromptOverride: options.systemPromptOverride },
+			shared,
+		);
 		const variantRuns = await runConfig(
 			fixtures,
 			seeds,
-			{ model: options.variantModel ?? options.model, tools: options.variantTools ?? options.tools },
+			{
+				model: options.variantModel ?? options.model,
+				tools: options.variantTools ?? options.tools,
+				systemPromptOverride: options.variantSystemPromptOverride ?? options.systemPromptOverride,
+			},
 			shared,
 		);
 		const baseline = buildQpdReport(options.label ?? "baseline", baselineRuns);
@@ -100,7 +115,12 @@ export async function runEvalCli(options: RunEvalCliOptions): Promise<EvalCliRes
 		return { kind: "compare", report: compareAb(baseline, variant) };
 	}
 
-	const runs = await runConfig(fixtures, seeds, { model: options.model, tools: options.tools }, shared);
+	const runs = await runConfig(
+		fixtures,
+		seeds,
+		{ model: options.model, tools: options.tools, systemPromptOverride: options.systemPromptOverride },
+		shared,
+	);
 	return { kind: "run", report: buildQpdReport(options.label ?? "run", runs) };
 }
 

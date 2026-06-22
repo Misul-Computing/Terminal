@@ -15,7 +15,7 @@
 
 import type { AssistantMessage, Model } from "@misul/ai";
 import type { AuthStorage, CreateAgentSessionResult, ModelRegistry } from "@misul/terminal";
-import { createAgentSession, SessionManager } from "@misul/terminal";
+import { createAgentSession, DefaultResourceLoader, getAgentDir, SessionManager } from "@misul/terminal";
 import { trace } from "@opentelemetry/api";
 import { recordChat } from "./cost-adapter.ts";
 import { cleanupRunDir, cloneToRunDir } from "./isolation.ts";
@@ -63,6 +63,13 @@ export interface RunFixtureOptions {
 	modelRegistry?: ModelRegistry;
 	/** Injected session factory (tests). Defaults to the real `createAgentSession`. */
 	createSession?: typeof createAgentSession;
+	/**
+	 * Scaffolding A/B lever: when set, the run uses a resource loader whose system
+	 * prompt is replaced by this override (everything else default), so a baseline
+	 * vs variant prompt can be compared on the same fixtures. Omit for the default
+	 * (production) system prompt.
+	 */
+	systemPromptOverride?: () => string;
 }
 
 export interface CostCrossCheckInput {
@@ -113,6 +120,19 @@ export async function runFixture(fixture: EvalFixture, options: RunFixtureOption
 	return result;
 
 	async function driveSession(): Promise<RunResult> {
+		// Scaffolding A/B: build a resource loader with the variant system prompt,
+		// mirroring createAgentSession's own default construction (it skips its internal
+		// loader when one is passed, so we reload it here ourselves).
+		let resourceLoader: DefaultResourceLoader | undefined;
+		if (options.systemPromptOverride) {
+			resourceLoader = new DefaultResourceLoader({
+				cwd: runDir,
+				agentDir: options.agentDir ?? getAgentDir(),
+				systemPromptOverride: options.systemPromptOverride,
+			});
+			await resourceLoader.reload();
+		}
+
 		let created: CreateAgentSessionResult;
 		try {
 			created = await createSession({
@@ -122,6 +142,7 @@ export async function runFixture(fixture: EvalFixture, options: RunFixtureOption
 				...(options.agentDir ? { agentDir: options.agentDir } : {}),
 				...(options.authStorage ? { authStorage: options.authStorage } : {}),
 				...(options.modelRegistry ? { modelRegistry: options.modelRegistry } : {}),
+				...(resourceLoader ? { resourceLoader } : {}),
 				tools,
 				sessionManager: SessionManager.inMemory(runDir),
 			});
