@@ -1723,13 +1723,21 @@ export class AgentSession {
 				throw new Error("Compaction cancelled");
 			}
 
-			this.sessionManager.appendCompaction(summary, firstKeptEntryId, tokensBefore, details, fromExtension);
+			const compactionId = this.sessionManager.appendCompaction(
+				summary,
+				firstKeptEntryId,
+				tokensBefore,
+				details,
+				fromExtension,
+			);
 			const newEntries = this.sessionManager.getEntries();
 			const sessionContext = this.sessionManager.buildSessionContext();
 			this.agent.state.messages = sessionContext.messages;
 
-			// Get the saved compaction entry for the extension event
-			const savedCompactionEntry = newEntries.find((e) => e.type === "compaction" && e.summary === summary) as
+			// Get the saved compaction entry for the extension event. Match by the unique id
+			// returned from appendCompaction, not summary text (two compactions can share a
+			// summary string and a text match would resolve to the wrong, older entry).
+			const savedCompactionEntry = newEntries.find((e) => e.type === "compaction" && e.id === compactionId) as
 				| CompactionEntry
 				| undefined;
 
@@ -2006,13 +2014,21 @@ export class AgentSession {
 				return false;
 			}
 
-			this.sessionManager.appendCompaction(summary, firstKeptEntryId, tokensBefore, details, fromExtension);
+			const compactionId = this.sessionManager.appendCompaction(
+				summary,
+				firstKeptEntryId,
+				tokensBefore,
+				details,
+				fromExtension,
+			);
 			const newEntries = this.sessionManager.getEntries();
 			const sessionContext = this.sessionManager.buildSessionContext();
 			this.agent.state.messages = sessionContext.messages;
 
-			// Get the saved compaction entry for the extension event
-			const savedCompactionEntry = newEntries.find((e) => e.type === "compaction" && e.summary === summary) as
+			// Get the saved compaction entry for the extension event. Match by the unique id
+			// returned from appendCompaction, not summary text (two compactions can share a
+			// summary string and a text match would resolve to the wrong, older entry).
+			const savedCompactionEntry = newEntries.find((e) => e.type === "compaction" && e.id === compactionId) as
 				| CompactionEntry
 				| undefined;
 
