@@ -318,6 +318,24 @@ export function getLatestCompactionEntry(entries: SessionEntry[]): CompactionEnt
 }
 
 /**
+ * Walk parentId links from a leaf entry up to the root, returning the path
+ * root-first. Guards against cycles / self-parents: a persisted session file is a
+ * trust boundary (partial write, hand edit, sync conflict), and a cyclic parentId
+ * would otherwise loop forever. A revisited id stops the walk.
+ */
+function collectPathFromLeaf(leaf: SessionEntry | undefined, byId: Map<string, SessionEntry>): SessionEntry[] {
+	const path: SessionEntry[] = [];
+	const visited = new Set<string>();
+	let current = leaf;
+	while (current && !visited.has(current.id)) {
+		visited.add(current.id);
+		path.unshift(current);
+		current = current.parentId ? byId.get(current.parentId) : undefined;
+	}
+	return path;
+}
+
+/**
  * Build the session context from entries using tree traversal.
  * If leafId is provided, walks from that entry to root.
  * Handles compaction and branch summaries along the path.
@@ -353,13 +371,8 @@ export function buildSessionContext(
 		return { messages: [], thinkingLevel: "off", model: null };
 	}
 
-	// Walk from leaf to root, collecting path
-	const path: SessionEntry[] = [];
-	let current: SessionEntry | undefined = leaf;
-	while (current) {
-		path.unshift(current);
-		current = current.parentId ? byId.get(current.parentId) : undefined;
-	}
+	// Walk from leaf to root, collecting path (cycle-guarded).
+	const path = collectPathFromLeaf(leaf, byId);
 
 	// Extract settings and find compaction
 	let thinkingLevel = "off";
@@ -1148,14 +1161,9 @@ export class SessionManager {
 	 * Use buildSessionContext() to get the resolved messages for the LLM.
 	 */
 	getBranch(fromId?: string): SessionEntry[] {
-		const path: SessionEntry[] = [];
 		const startId = fromId ?? this.leafId;
-		let current = startId ? this.byId.get(startId) : undefined;
-		while (current) {
-			path.unshift(current);
-			current = current.parentId ? this.byId.get(current.parentId) : undefined;
-		}
-		return path;
+		const leaf = startId ? this.byId.get(startId) : undefined;
+		return collectPathFromLeaf(leaf, this.byId);
 	}
 
 	/**
