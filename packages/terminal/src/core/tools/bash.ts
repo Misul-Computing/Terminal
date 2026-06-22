@@ -49,7 +49,7 @@ export interface BashOperations {
 		command: string,
 		cwd: string,
 		options: {
-			onData: (data: Buffer) => void;
+			onData: (data: Buffer, source?: "stdout" | "stderr") => void;
 			signal?: AbortSignal;
 			timeout?: number;
 			env?: NodeJS.ProcessEnv;
@@ -99,8 +99,8 @@ export function createLocalBashOperations(options?: { shellPath?: string }): Bas
 					}, timeout * 1000);
 				}
 				// Stream stdout and stderr.
-				child.stdout?.on("data", onData);
-				child.stderr?.on("data", onData);
+				child.stdout?.on("data", (data: Buffer) => onData(data, "stdout"));
+				child.stderr?.on("data", (data: Buffer) => onData(data, "stderr"));
 				// Handle abort signal by killing the entire process tree.
 				if (signal) {
 					if (signal.aborted) onAbort();
@@ -334,9 +334,9 @@ export function createBashToolDefinition(
 				onUpdate({ content: [], details: undefined });
 			}
 
-			const handleData = (data: Buffer) => {
+			const handleData = (data: Buffer, source?: "stdout" | "stderr") => {
 				if (!acceptingOutput) return;
-				output.append(data);
+				output.append(data, source);
 				scheduleOutputUpdate();
 			};
 

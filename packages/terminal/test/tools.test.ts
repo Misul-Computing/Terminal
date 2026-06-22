@@ -620,6 +620,25 @@ describe("Coding Agent Tools", () => {
 			expect(getTextOutput(result).trim()).toBe("€");
 		});
 
+		it("decodes UTF-8 split across stdout chunks when stderr interleaves", async () => {
+			const euro = Buffer.from("€\n", "utf-8");
+			const operations: BashOperations = {
+				exec: async (_command, _cwd, { onData }) => {
+					onData(euro.subarray(0, 2), "stdout");
+					onData(Buffer.from("err\n", "utf-8"), "stderr");
+					onData(euro.subarray(2), "stdout");
+					return { exitCode: 0 };
+				},
+			};
+			const bash = createBashTool(testDir, { operations });
+
+			const result = await bash.execute("test-call-interleave-utf8", { command: "interleave" });
+			const output = getTextOutput(result);
+
+			expect(output).toContain("€");
+			expect(output).not.toContain("�");
+		});
+
 		it("reports a signal-killed command (null exit) as an error, not success", async () => {
 			// null exit code = terminated by a signal that wasn't our timeout/abort (crash,
 			// OOM kill, external kill). It must surface as an error, never silent success.

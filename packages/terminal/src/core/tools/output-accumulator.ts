@@ -37,7 +37,11 @@ export class OutputAccumulator {
 	private readonly maxBytes: number;
 	private readonly maxRollingBytes: number;
 	private readonly tempFilePrefix: string;
-	private readonly decoder = new TextDecoder();
+	// Separate decoder per stream: the streaming decoder buffers partial multibyte
+	// bytes between calls, so a character split across a chunk boundary on one stream
+	// would be corrupted by an interleaved chunk from the other if they shared one.
+	private readonly stdoutDecoder = new TextDecoder();
+	private readonly stderrDecoder = new TextDecoder();
 
 	private rawChunks: Buffer[] = [];
 	private tailText = "";
@@ -61,13 +65,14 @@ export class OutputAccumulator {
 		this.tempFilePrefix = options.tempFilePrefix ?? "pi-output";
 	}
 
-	append(data: Buffer): void {
+	append(data: Buffer, source: "stdout" | "stderr" = "stdout"): void {
 		if (this.finished) {
 			throw new Error("Cannot append to a finished output accumulator");
 		}
 
 		this.totalRawBytes += data.length;
-		this.appendDecodedText(this.decoder.decode(data, { stream: true }));
+		const decoder = source === "stderr" ? this.stderrDecoder : this.stdoutDecoder;
+		this.appendDecodedText(decoder.decode(data, { stream: true }));
 
 		if (this.tempFileStream || this.shouldUseTempFile()) {
 			this.ensureTempFile();
@@ -82,7 +87,8 @@ export class OutputAccumulator {
 			return;
 		}
 		this.finished = true;
-		this.appendDecodedText(this.decoder.decode());
+		this.appendDecodedText(this.stdoutDecoder.decode());
+		this.appendDecodedText(this.stderrDecoder.decode());
 		if (this.shouldUseTempFile()) {
 			this.ensureTempFile();
 		}

@@ -73,12 +73,16 @@ export async function executeBashWithOperations(
 		}
 	};
 
-	const decoder = new TextDecoder();
+	// Per-stream decoder: a multibyte char split across a chunk boundary on one stream
+	// must not be corrupted by an interleaved chunk from the other.
+	const stdoutDecoder = new TextDecoder();
+	const stderrDecoder = new TextDecoder();
 
-	const onData = (data: Buffer) => {
+	const onData = (data: Buffer, source?: "stdout" | "stderr") => {
 		totalBytes += data.length;
 
 		// Sanitize: strip ANSI, replace binary garbage, normalize newlines
+		const decoder = source === "stderr" ? stderrDecoder : stdoutDecoder;
 		const text = sanitizeBinaryOutput(stripAnsi(decoder.decode(data, { stream: true }))).replace(/\r/g, "");
 
 		// Start writing to temp file if exceeds threshold
