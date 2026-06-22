@@ -119,4 +119,16 @@ export interface AbReport {
 	bootstrapQpdCi95: [number, number];
 	/** True when McNemar p<0.05 and the bootstrap CI excludes 0. */
 	significant: boolean;
+	/**
+	 * Efficiency signal: variant.meanOutputTokens - baseline.meanOutputTokens
+	 * (negative = variant is leaner). The clean scaffolding signal when pass rate
+	 * is at ceiling and cost is 0.
+	 */
+	deltaMeanOutputTokens: number;
+	/**
+	 * 95% bootstrap CI over the per-fixture output-token delta (variant - baseline).
+	 * When the interval excludes 0 the efficiency difference is beyond run-to-run
+	 * sampling noise.
+	 */
+	outputTokenDeltaCi95: [number, number];
 }

@@ -169,6 +169,7 @@ export function formatAbReport(report: AbReport): string {
 		`mcnemar: b2v=${report.mcnemar.b2v} v2b=${report.mcnemar.v2b} discordant=${report.mcnemar.discordant} p=${report.mcnemar.pValue.toFixed(4)}`,
 		`bootstrap95=[${report.bootstrapQpdCi95[0].toFixed(3)}, ${report.bootstrapQpdCi95[1].toFixed(3)}]`,
 		`significant=${report.significant}`,
+		`deltaOutTok=${report.deltaMeanOutputTokens.toFixed(0)} outTokCI95=[${report.outputTokenDeltaCi95[0].toFixed(0)}, ${report.outputTokenDeltaCi95[1].toFixed(0)}] (efficiency; CI excludes 0 = beyond noise)`,
 	].join("\n");
 }
 

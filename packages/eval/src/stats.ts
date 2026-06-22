@@ -184,6 +184,41 @@ export function fixtureQpdDeltas(baseline: ScoredRun[], variant: ScoredRun[]): n
 	return deltas;
 }
 
+/** Per-fixture mean output (completion) tokens. */
+function fixtureMeanOutputTokens(runs: ScoredRun[]): number {
+	if (runs.length === 0) return 0;
+	let sum = 0;
+	for (const r of runs) sum += r.tokens.output;
+	return sum / runs.length;
+}
+
+/**
+ * Per-fixture output-token deltas: for each fixture in both arms,
+ * `variant.meanOutputTokens_fixture - baseline.meanOutputTokens_fixture`. The
+ * efficiency analogue of {@link fixtureQpdDeltas}, used for the bootstrap CI when
+ * pass rate is at ceiling and cost is 0.
+ */
+export function fixtureOutputTokenDeltas(baseline: ScoredRun[], variant: ScoredRun[]): number[] {
+	const byFixture = (runs: ScoredRun[]): Map<string, ScoredRun[]> => {
+		const map = new Map<string, ScoredRun[]>();
+		for (const r of runs) {
+			const list = map.get(r.fixtureId);
+			if (list) list.push(r);
+			else map.set(r.fixtureId, [r]);
+		}
+		return map;
+	};
+	const baseByFixture = byFixture(baseline);
+	const varByFixture = byFixture(variant);
+	const deltas: number[] = [];
+	for (const [fixtureId, baseRuns] of baseByFixture) {
+		const varRuns = varByFixture.get(fixtureId);
+		if (!varRuns) continue;
+		deltas.push(fixtureMeanOutputTokens(varRuns) - fixtureMeanOutputTokens(baseRuns));
+	}
+	return deltas;
+}
+
 /** Build a matched-pairs A/B report with the significance gate applied. */
 export function compareAb(baseline: QpdReport, variant: QpdReport): AbReport {
 	const pairs = pairRuns(baseline.runs, variant.runs);
@@ -197,6 +232,10 @@ export function compareAb(baseline: QpdReport, variant: QpdReport): AbReport {
 	const ciExcludesZero = ci[0] > 0 || ci[1] < 0;
 	const significant = mc.pValue < 0.05 && ciExcludesZero;
 
+	// Efficiency: per-fixture output-token delta + its bootstrap CI (the signal
+	// when pass rate is at ceiling and cost is 0, e.g. a free model).
+	const outputTokenCi = bootstrapDeltaCi(fixtureOutputTokenDeltas(baseline.runs, variant.runs), 1000, 1);
+
 	return {
 		baseline,
 		variant,
@@ -206,5 +245,7 @@ export function compareAb(baseline: QpdReport, variant: QpdReport): AbReport {
 		mcnemar: mc,
 		bootstrapQpdCi95: ci,
 		significant,
+		deltaMeanOutputTokens: variant.meanOutputTokens - baseline.meanOutputTokens,
+		outputTokenDeltaCi95: outputTokenCi,
 	};
 }
