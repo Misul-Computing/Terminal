@@ -1,0 +1,5 @@
+{
+	"testCommand": "node rename.test.mjs",
+	"timeoutMs": 120000,
+	"tags": ["tier1", "multi-file", "rename", "explore-before-edit"]
+}
