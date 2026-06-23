@@ -2,10 +2,10 @@
  * Misul's persistent agent memory.
  *
  * Durable knowledge that survives across sessions, stored under the agent dir
- * and injected into the system prompt at session start. This module is the
- * read/store side; the `dream` consolidation pass (offline) is what rewrites it
- * from past session transcripts. Kept deliberately simple: a single Markdown
- * file, no database, no index — the model reads and maintains it directly.
+ * and injected into the system prompt at session start. Kept deliberately simple:
+ * a single Markdown file, no database, no index — the model reads and maintains it
+ * directly via its file tools. There is no automated offline consolidation pass
+ * yet; the model itself is responsible for keeping the file accurate and concise.
  */
 
 import { existsSync, readFileSync } from "node:fs";
