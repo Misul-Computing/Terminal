@@ -16,6 +16,7 @@ export class AssistantMessageComponent extends Container {
 	private hiddenThinkingLabel: string;
 	private lastMessage?: AssistantMessage;
 	private hasToolCalls = false;
+	private lastBuildSignature?: string;
 
 	constructor(
 		message?: AssistantMessage,
@@ -70,8 +71,33 @@ export class AssistantMessageComponent extends Container {
 		return lines;
 	}
 
+	// Cheap fingerprint of everything that affects the rendered output, so a layout
+	// invalidate (resize/redraw) with unchanged content can skip the full markdown
+	// rebuild. ponytail: uses text LENGTHS, not hashes — streaming only appends, so a
+	// length change detects growth; a same-length content swap (which streaming never
+	// produces) would be missed. Far cheaper than re-parsing markdown every invalidate.
+	private buildSignature(message: AssistantMessage): string {
+		const parts = message.content.map((c) =>
+			c.type === "text" ? `t${c.text.length}` : c.type === "thinking" ? `k${c.thinking.length}` : c.type,
+		);
+		return [
+			this.hideThinkingBlock,
+			this.hiddenThinkingLabel,
+			message.stopReason ?? "",
+			message.errorMessage ?? "",
+			parts.join(","),
+		].join("|");
+	}
+
 	updateContent(message: AssistantMessage): void {
 		this.lastMessage = message;
+
+		// Skip the full markdown rebuild when nothing display-affecting changed. The
+		// Markdown children re-wrap via their own (text,width) cache on render, so
+		// re-parsing here (every invalidate) would be pure waste.
+		const signature = this.buildSignature(message);
+		if (signature === this.lastBuildSignature) return;
+		this.lastBuildSignature = signature;
 
 		// Clear content container
 		this.contentContainer.clear();

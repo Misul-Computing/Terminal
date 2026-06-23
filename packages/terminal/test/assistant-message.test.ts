@@ -1,5 +1,5 @@
 import type { AssistantMessage } from "@misul/ai";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { AssistantMessageComponent } from "../src/modes/interactive/components/assistant-message.ts";
 import { initTheme } from "../src/modes/interactive/theme/theme.ts";
 
@@ -53,5 +53,39 @@ describe("AssistantMessageComponent", () => {
 		expect(rendered.includes(OSC133_ZONE_START)).toBe(false);
 		expect(rendered.includes(OSC133_ZONE_END)).toBe(false);
 		expect(rendered.includes(OSC133_ZONE_FINAL)).toBe(false);
+	});
+
+	// Spy on the private content container's clear(), which only runs on a real rebuild.
+	const clearSpy = (component: AssistantMessageComponent) =>
+		vi.spyOn((component as unknown as { contentContainer: { clear: () => void } }).contentContainer, "clear");
+
+	test("skips the markdown rebuild when content is unchanged (e.g. layout invalidate)", () => {
+		initTheme("dark");
+		const component = new AssistantMessageComponent(createAssistantMessage([{ type: "text", text: "hello" }]));
+		const spy = clearSpy(component);
+
+		// Same content as a fresh object — the resize/redraw case. Must not re-parse.
+		component.updateContent(createAssistantMessage([{ type: "text", text: "hello" }]));
+		expect(spy).not.toHaveBeenCalled();
+	});
+
+	test("rebuilds when streamed content grows", () => {
+		initTheme("dark");
+		const component = new AssistantMessageComponent(createAssistantMessage([{ type: "text", text: "hel" }]));
+		const spy = clearSpy(component);
+
+		component.updateContent(createAssistantMessage([{ type: "text", text: "hello world" }]));
+		expect(spy).toHaveBeenCalledOnce();
+	});
+
+	test("rebuilds when the thinking-block display toggles", () => {
+		initTheme("dark");
+		const component = new AssistantMessageComponent(
+			createAssistantMessage([{ type: "thinking", thinking: "pondering" }]),
+		);
+		const spy = clearSpy(component);
+
+		component.setHideThinkingBlock(true);
+		expect(spy).toHaveBeenCalledOnce();
 	});
 });
