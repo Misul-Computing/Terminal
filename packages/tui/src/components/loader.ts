@@ -24,6 +24,8 @@ export class Loader extends Text {
 	private spinnerColorFn: (str: string) => string;
 	private messageColorFn: (str: string) => string;
 	private message: string = "Loading...";
+	private showElapsed = false;
+	private startTime = Date.now();
 
 	constructor(
 		ui: TUI,
@@ -31,12 +33,14 @@ export class Loader extends Text {
 		messageColorFn: (str: string) => string,
 		message: string = "Loading...",
 		indicator?: LoaderIndicatorOptions,
+		showElapsed = false,
 	) {
 		super("", 1, 0);
 		this.ui = ui;
 		this.spinnerColorFn = spinnerColorFn;
 		this.messageColorFn = messageColorFn;
 		this.message = message;
+		this.showElapsed = showElapsed;
 		this.setIndicator(indicator);
 	}
 
@@ -84,7 +88,9 @@ export class Loader extends Text {
 		const frame = this.frames[this.currentFrame] ?? "";
 		const renderedFrame = this.renderIndicatorVerbatim ? frame : this.spinnerColorFn(frame);
 		const indicator = frame.length > 0 ? `${renderedFrame} ` : "";
-		this.setText(`${indicator}${this.messageColorFn(this.message)}`);
+		// Live elapsed seconds (opt-in): reuses the animation tick, so no extra timer.
+		const elapsed = this.showElapsed ? ` (${Math.floor((Date.now() - this.startTime) / 1000)}s)` : "";
+		this.setText(`${indicator}${this.messageColorFn(this.message + elapsed)}`);
 		if (this.ui) {
 			this.ui.requestRender();
 		}

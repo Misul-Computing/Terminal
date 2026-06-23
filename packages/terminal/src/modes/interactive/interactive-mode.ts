@@ -1692,6 +1692,7 @@ export class InteractiveMode {
 			(text) => theme.fg("muted", text),
 			this.getWorkingLoaderMessage(),
 			this.workingIndicatorOptions,
+			true, // show live elapsed time on the working spinner
 		);
 	}
 
