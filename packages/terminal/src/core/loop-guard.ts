@@ -20,7 +20,7 @@ export interface LoopGuard {
 }
 
 /**
- * Strip volatile temp-file ids (e.g. `pi-bash-<16 hex>.log`, regenerated every run) from a
+ * Strip volatile temp-file ids (e.g. `misul-bash-<16 hex>.log`, regenerated every run) from a
  * signature so a truncated-output runaway still hashes identically across turns. Without this
  * the guard would never fire for high-output loops — the exact runaway it exists to catch.
  */

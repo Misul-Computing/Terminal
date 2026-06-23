@@ -500,7 +500,7 @@ export class AgentSession {
 		try {
 			const calls = toolCalls.map((c) => `${c.name}:${JSON.stringify(c.arguments)}`).join("|");
 			const results = event.toolResults.map((r) => JSON.stringify(r.content)).join("|");
-			// stripVolatileIds: per-run temp-file ids (pi-bash-<hex>.log) would otherwise make a
+			// stripVolatileIds: per-run temp-file ids (misul-bash-<hex>.log) would otherwise make a
 			// truncated-output runaway hash differently every turn, defeating the guard.
 			signature = stripVolatileIds(`${calls}##${results}`).slice(0, 2000);
 		} catch {

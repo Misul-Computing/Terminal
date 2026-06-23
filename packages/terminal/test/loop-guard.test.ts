@@ -28,8 +28,8 @@ describe("createLoopGuard", () => {
 
 describe("stripVolatileIds", () => {
 	it("normalizes per-run temp-file ids so identical runs hash equal", () => {
-		const a = stripVolatileIds("npm install failed. Full output: /tmp/pi-bash-deadbeefcafe1234.log");
-		const b = stripVolatileIds("npm install failed. Full output: /tmp/pi-bash-0123456789abcdef.log");
+		const a = stripVolatileIds("npm install failed. Full output: /tmp/misul-bash-deadbeefcafe1234.log");
+		const b = stripVolatileIds("npm install failed. Full output: /tmp/misul-bash-0123456789abcdef.log");
 		expect(a).toBe(b); // different random ids -> same normalized signature
 		expect(a).toContain("-tmp.log");
 	});
