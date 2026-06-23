@@ -1,6 +1,7 @@
 import {
 	chmodSync,
 	lstatSync,
+	mkdirSync,
 	mkdtempSync,
 	readdirSync,
 	readFileSync,
@@ -12,7 +13,7 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { writeFileAtomic } from "../src/core/tools/edit.ts";
+import { writeFileAtomic } from "../src/core/tools/atomic-write.ts";
 
 const dirs: string[] = [];
 function tmp(): string {
@@ -49,6 +50,19 @@ describe("writeFileAtomic", () => {
 		chmodSync(f, 0o755);
 		await writeFileAtomic(f, "#!/bin/sh\necho hi\n");
 		expect(statSync(f).mode & 0o777).toBe(0o755);
+	});
+
+	it("leaves the original intact and cleans up the temp when the rename fails", async () => {
+		const dir = tmp();
+		// A non-empty directory at the target path makes the file->target rename fail.
+		const target = join(dir, "blocked");
+		mkdirSync(target);
+		writeFileSync(join(target, "keep.txt"), "keep");
+
+		await expect(writeFileAtomic(target, "should not land")).rejects.toThrow();
+
+		expect(readFileSync(join(target, "keep.txt"), "utf-8")).toBe("keep"); // original intact
+		expect(readdirSync(dir)).toEqual(["blocked"]); // temp cleaned up, nothing leaked
 	});
 
 	it("writes through a symlink instead of replacing it", async () => {
