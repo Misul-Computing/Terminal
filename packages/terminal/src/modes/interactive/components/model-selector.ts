@@ -278,9 +278,14 @@ export class ModelSelectorComponent extends Container implements Focusable {
 		} else if (this.filteredModels.length === 0) {
 			this.listContainer.addChild(new Text(theme.fg("muted", "  No matching models"), 0, 0));
 		} else {
-			const selected = this.filteredModels[this.selectedIndex];
+			const m = this.filteredModels[this.selectedIndex].model;
+			// Surface the metadata users pick models by (matches Claude Code / opencode pickers):
+			// name, context window, and whether it reasons. Data is already on the model.
+			const parts = [m.name];
+			if (m.contextWindow) parts.push(`${Math.round(m.contextWindow / 1000)}k ctx`);
+			if (m.reasoning) parts.push("reasoning");
 			this.listContainer.addChild(new Spacer(1));
-			this.listContainer.addChild(new Text(theme.fg("muted", `  Model Name: ${selected.model.name}`), 0, 0));
+			this.listContainer.addChild(new Text(theme.fg("muted", `  ${parts.join("  ·  ")}`), 0, 0));
 		}
 	}
 
