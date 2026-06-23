@@ -23,6 +23,18 @@ describe("Loader elapsed time", () => {
 		loader.stop();
 	});
 
+	it("still ticks elapsed with a static (single-frame) indicator", () => {
+		mock.timers.enable({ apis: ["setInterval", "Date"] });
+		const loader = new Loader(fakeTui, id, id, "Working", { frames: ["●"] }, true);
+		assert.ok(loader.render(40).join("").includes("(0s)"), "starts at (0s)");
+
+		mock.timers.tick(3000);
+		const out = loader.render(40).join("");
+		assert.ok(!out.includes("(0s)"), "counter advances even without frame animation");
+		assert.match(out, /\(\d+s\)/);
+		loader.stop();
+	});
+
 	it("omits elapsed when disabled (default)", () => {
 		mock.timers.enable({ apis: ["setInterval", "Date"] });
 		const loader = new Loader(fakeTui, id, id, "Working");

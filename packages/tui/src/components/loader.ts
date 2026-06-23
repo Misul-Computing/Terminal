@@ -76,6 +76,12 @@ export class Loader extends Text {
 	private restartAnimation(): void {
 		this.stop();
 		if (this.frames.length <= 1) {
+			// No frame animation, but elapsed time still needs a tick to refresh
+			// (1s is enough since only whole seconds change). Otherwise a static
+			// indicator would freeze the counter at (0s) and read like a hang.
+			if (this.showElapsed) {
+				this.intervalId = setInterval(() => this.updateDisplay(), 1000);
+			}
 			return;
 		}
 		this.intervalId = setInterval(() => {
