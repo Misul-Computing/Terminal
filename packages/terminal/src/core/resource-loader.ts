@@ -18,7 +18,7 @@ import { SettingsManager } from "./settings-manager.ts";
 import type { Skill } from "./skills.ts";
 import { getBundledSkillsDir, loadSkills } from "./skills.ts";
 import { type LoadedMemory, loadMemory } from "./memory.ts";
-import { getRecentlyEditedFiles } from "./recent-files.ts";
+import { getRepoOrientationFiles } from "./recent-files.ts";
 import { createSourceInfo, type SourceInfo } from "./source-info.ts";
 
 export interface ResourceExtensionPaths {
@@ -192,8 +192,8 @@ export class DefaultResourceLoader implements ResourceLoader {
 	};
 	private systemPromptOverride?: (base: string | undefined) => string | undefined;
 	private appendSystemPromptOverride?: (base: string[]) => string[];
-	/** Memoized recently-edited files (one git call per loader). See recent-files.ts. */
-	private _recentlyEditedFiles?: Promise<string[]>;
+	/** Memoized repo-orientation files (uncommitted + recent git history; one resolve per loader). */
+	private _repoOrientationFiles?: Promise<string[]>;
 
 	private extensionsResult: LoadExtensionsResult;
 	private skills: Skill[];
@@ -483,15 +483,15 @@ export class DefaultResourceLoader implements ResourceLoader {
 			.map((s) => resolvePromptInput(s, "append system prompt"))
 			.filter((s): s is string => s !== undefined);
 		const resolvedAppend = this.appendSystemPromptOverride ? this.appendSystemPromptOverride(baseAppend) : baseAppend;
-		// Session-start repo orientation: recently-edited files (git history) are a strong prior for
-		// where the relevant code lives (SWE-Explore). Memoized to one git call per loader; empty
-		// outside a git repo, so it adds nothing in tests/eval temp dirs.
-		const recentFiles = this.noContextFiles ? [] : await (this._recentlyEditedFiles ??= getRecentlyEditedFiles(this.cwd));
+		// Session-start repo orientation: uncommitted changes (the active task) + recent git history
+		// are a strong prior for where the relevant code lives (SWE-Explore). Memoized per loader;
+		// empty outside a git repo, so it adds nothing in tests/eval temp dirs.
+		const recentFiles = this.noContextFiles ? [] : await (this._repoOrientationFiles ??= getRepoOrientationFiles(this.cwd));
 		this.appendSystemPrompt =
 			recentFiles.length > 0
 				? [
 						...resolvedAppend,
-						`<recently_edited_files>\nRecently edited files (from git history), a useful starting point for navigation:\n${recentFiles.map((f) => `- ${f}`).join("\n")}\n</recently_edited_files>`,
+						`<recently_edited_files>\nRecently edited files (uncommitted changes first, then recent commits) — a useful starting point for navigation:\n${recentFiles.map((f) => `- ${f}`).join("\n")}\n</recently_edited_files>`,
 					]
 				: resolvedAppend;
 	}
