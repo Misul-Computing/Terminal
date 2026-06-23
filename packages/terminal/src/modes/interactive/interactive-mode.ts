@@ -5726,6 +5726,7 @@ export class InteractiveMode {
 			this.loadingAnimation.stop();
 			this.loadingAnimation = undefined;
 		}
+		this.streamingRebuild.cancel();
 		this.clearExtensionTerminalInputListeners();
 		this.footer.dispose();
 		this.footerDataProvider.dispose();
