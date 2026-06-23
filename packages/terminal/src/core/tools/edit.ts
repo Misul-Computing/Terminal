@@ -1,7 +1,16 @@
 import type { AgentTool } from "@misul/agent-core";
 import { Box, Container, Spacer, Text } from "@misul/tui";
 import { constants } from "fs";
-import { access as fsAccess, readFile as fsReadFile, writeFile as fsWriteFile } from "fs/promises";
+import {
+	access as fsAccess,
+	chmod as fsChmod,
+	lstat as fsLstat,
+	readFile as fsReadFile,
+	rename as fsRename,
+	rm as fsRm,
+	writeFile as fsWriteFile,
+} from "fs/promises";
+import { basename, dirname, join } from "node:path";
 import { type Static, Type } from "typebox";
 import { renderDiff } from "../../modes/interactive/components/diff.ts";
 import type { Theme } from "../../modes/interactive/theme/theme.ts";
@@ -80,9 +89,33 @@ export interface EditOperations {
 	access: (absolutePath: string) => Promise<void>;
 }
 
+/**
+ * Write a file atomically: write a fresh temp file in the same directory, then rename over the
+ * target. The original is never truncated, so a crash or a flaky network/cloud-synced drive can't
+ * leave a 0-byte/truncated file — on failure the original stays intact and the error surfaces.
+ * Symlinks are written through directly (rename would replace the link); the existing file's mode
+ * (e.g. an executable bit) is preserved across the rename.
+ */
+export async function writeFileAtomic(path: string, content: string): Promise<void> {
+	const existing = await fsLstat(path).catch(() => undefined);
+	if (existing?.isSymbolicLink()) {
+		await fsWriteFile(path, content, "utf-8");
+		return;
+	}
+	const tmp = join(dirname(path), `.${basename(path)}.tmp-${process.pid}-${Date.now()}`);
+	try {
+		await fsWriteFile(tmp, content, "utf-8");
+		if (existing) await fsChmod(tmp, existing.mode).catch(() => {});
+		await fsRename(tmp, path);
+	} catch (err) {
+		await fsRm(tmp, { force: true }).catch(() => {});
+		throw err;
+	}
+}
+
 const defaultEditOperations: EditOperations = {
 	readFile: (path) => fsReadFile(path),
-	writeFile: (path, content) => fsWriteFile(path, content, "utf-8"),
+	writeFile: (path, content) => writeFileAtomic(path, content),
 	access: (path) => fsAccess(path, constants.R_OK | constants.W_OK),
 };
 
