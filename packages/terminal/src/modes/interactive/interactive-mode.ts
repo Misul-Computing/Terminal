@@ -98,6 +98,7 @@ import { killTrackedDetachedChildren } from "../../utils/shell.ts";
 import { ensureTool } from "../../utils/tools-manager.ts";
 import { checkForNewPiVersion, type LatestPiRelease } from "../../utils/version-check.ts";
 import { AssistantMessageComponent } from "./components/assistant-message.ts";
+import { createCoalescer } from "./coalesce.ts";
 import { BashExecutionComponent } from "./components/bash-execution.ts";
 import { BorderedLoader } from "./components/bordered-loader.ts";
 import { BranchSummaryMessageComponent } from "./components/branch-summary-message.ts";
@@ -305,6 +306,9 @@ export class InteractiveMode {
 	// Streaming message tracking
 	private streamingComponent: AssistantMessageComponent | undefined = undefined;
 	private streamingMessage: AssistantMessage | undefined = undefined;
+	// Coalesce per-token markdown rebuilds to ~30fps: re-parsing the whole growing
+	// message on every delta is O(n^2) on long responses. message_end flushes the final.
+	private readonly streamingRebuild = createCoalescer(33);
 
 	// Tool execution tracking: toolCallId -> component
 	private pendingTools = new Map<string, ToolExecutionComponent>();
@@ -2729,6 +2733,7 @@ export class InteractiveMode {
 					this.updatePendingMessagesDisplay();
 					this.ui.requestRender();
 				} else if (event.message.role === "assistant") {
+					this.streamingRebuild.cancel();
 					this.streamingComponent = new AssistantMessageComponent(
 						undefined,
 						false, // always show the thinking trace live while streaming; it collapses on message_end
@@ -2745,7 +2750,14 @@ export class InteractiveMode {
 			case "message_update":
 				if (this.streamingComponent && event.message.role === "assistant") {
 					this.streamingMessage = event.message;
-					this.streamingComponent.updateContent(this.streamingMessage);
+					// Throttle the markdown rebuild (O(n) per token); tool components below
+					// still update every delta. message_end cancels this and flushes the final.
+					this.streamingRebuild.schedule(() => {
+						if (this.streamingComponent && this.streamingMessage) {
+							this.streamingComponent.updateContent(this.streamingMessage);
+							this.ui.requestRender();
+						}
+					});
 
 					for (const content of this.streamingMessage.content) {
 						if (content.type === "toolCall") {
@@ -2780,6 +2792,8 @@ export class InteractiveMode {
 			case "message_end":
 				if (event.message.role === "user") break;
 				if (this.streamingComponent && event.message.role === "assistant") {
+					// Render the final state synchronously below; drop any pending throttled rebuild.
+					this.streamingRebuild.cancel();
 					this.streamingMessage = event.message;
 					let errorMessage: string | undefined;
 					if (this.streamingMessage.stopReason === "aborted") {
