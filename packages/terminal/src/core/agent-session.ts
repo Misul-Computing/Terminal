@@ -147,7 +147,8 @@ export type AgentSessionEvent =
 			errorMessage?: string;
 	  }
 	| { type: "auto_retry_start"; attempt: number; maxAttempts: number; delayMs: number; errorMessage: string }
-	| { type: "auto_retry_end"; success: boolean; attempt: number; finalError?: string };
+	| { type: "auto_retry_end"; success: boolean; attempt: number; finalError?: string }
+	| { type: "loop_aborted"; reason: string };
 
 /** Listener function for agent session events */
 export type AgentSessionEventListener = (event: AgentSessionEvent) => void;
@@ -508,6 +509,10 @@ export class AgentSession {
 		}
 		if (this._loopGuard.record(signature)) {
 			this._loopGuard.reset();
+			this._emit({
+				type: "loop_aborted",
+				reason: "Stopped: the same tool call repeated 10 times with no new result (runaway-loop guard).",
+			});
 			void this.abort();
 		}
 	}
