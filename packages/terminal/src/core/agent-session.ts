@@ -85,6 +85,7 @@ import { expandPromptTemplate, type PromptTemplate } from "./prompt-templates.ts
 import type { ResourceExtensionPaths, ResourceLoader } from "./resource-loader.ts";
 import type { BranchSummaryEntry, CompactionEntry, SessionManager } from "./session-manager.ts";
 import { CURRENT_SESSION_VERSION, getLatestCompactionEntry, type SessionHeader } from "./session-manager.ts";
+import { createLoopGuard, type LoopGuard } from "./loop-guard.ts";
 import type { SettingsManager } from "./settings-manager.ts";
 import type { SlashCommandInfo } from "./slash-commands.ts";
 import { createSyntheticSourceInfo, type SourceInfo } from "./source-info.ts";
@@ -263,6 +264,9 @@ export class AgentSession {
 	// Event subscription state
 	private _unsubscribeAgent?: () => void;
 	private _eventListeners: AgentSessionEventListener[] = [];
+	// Circuit breaker: abort when the same tool call(s)+result(s) repeat 10 turns in a row
+	// with no progress (prevents runaway cost on an unattended loop). See loop-guard.ts.
+	private readonly _loopGuard: LoopGuard = createLoopGuard(10);
 
 	/** Tracks pending steering messages for UI display. Removed when delivered. */
 	private _steeringMessages: string[] = [];
@@ -474,12 +478,46 @@ export class AgentSession {
 	// Track last assistant message for auto-compaction check
 	private _lastAssistantMessage: AssistantMessage | undefined = undefined;
 
+	/**
+	 * Abort the run when a turn's tool calls + their results repeat with no progress
+	 * (runaway-loop guard). The signature deliberately excludes per-call ids (unique each
+	 * turn) and includes result CONTENT, so legitimate iteration (changing results) never
+	 * trips — only genuine identical-call-identical-result repetition does.
+	 */
+	private _checkToolLoop(event: Extract<AgentEvent, { type: "turn_end" }>): void {
+		const message = event.message;
+		if (message.role !== "assistant") {
+			this._loopGuard.reset();
+			return;
+		}
+		const toolCalls = message.content.filter((c) => c.type === "toolCall");
+		if (toolCalls.length === 0) {
+			this._loopGuard.reset();
+			return;
+		}
+		let signature: string;
+		try {
+			const calls = toolCalls
+				.map((c) => `${(c as { name: string }).name}:${JSON.stringify((c as { arguments: unknown }).arguments)}`)
+				.join("|");
+			const results = event.toolResults.map((r) => JSON.stringify((r as { content?: unknown }).content)).join("|");
+			signature = `${calls}##${results.slice(0, 1000)}`;
+		} catch {
+			signature = toolCalls.map((c) => (c as { name?: string }).name ?? "?").join("|");
+		}
+		if (this._loopGuard.record(signature)) {
+			this._loopGuard.reset();
+			void this.abort();
+		}
+	}
+
 	/** Internal handler for agent events - shared by subscribe and reconnect */
 	private _handleAgentEvent = async (event: AgentEvent): Promise<void> => {
 		// When a user message starts, check if it's from either queue and remove it BEFORE emitting
 		// This ensures the UI sees the updated queue state
 		if (event.type === "message_start" && event.message.role === "user") {
 			this._overflowRecoveryAttempted = false;
+			this._loopGuard.reset();
 			const messageText = this._getUserMessageText(event.message);
 			if (messageText) {
 				// Check steering queue first
@@ -503,6 +541,11 @@ export class AgentSession {
 
 		// Notify all listeners
 		this._emit(event.type === "agent_end" ? { ...event, willRetry: this._willRetryAfterAgentEnd(event) } : event);
+
+		// Runaway-loop guard: abort when a turn's tool calls + results repeat with no progress.
+		if (event.type === "turn_end") {
+			this._checkToolLoop(event);
+		}
 
 		// Handle session persistence
 		if (event.type === "message_end") {
