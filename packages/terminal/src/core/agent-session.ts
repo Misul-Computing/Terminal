@@ -21,6 +21,7 @@ import type {
 	AgentMessage,
 	AgentState,
 	AgentTool,
+	AgentToolCall,
 	ThinkingLevel,
 } from "@misul/agent-core";
 import type { AssistantMessage, ImageContent, Message, Model, TextContent } from "@misul/ai";
@@ -85,7 +86,7 @@ import { expandPromptTemplate, type PromptTemplate } from "./prompt-templates.ts
 import type { ResourceExtensionPaths, ResourceLoader } from "./resource-loader.ts";
 import type { BranchSummaryEntry, CompactionEntry, SessionManager } from "./session-manager.ts";
 import { CURRENT_SESSION_VERSION, getLatestCompactionEntry, type SessionHeader } from "./session-manager.ts";
-import { createLoopGuard, type LoopGuard } from "./loop-guard.ts";
+import { createLoopGuard, type LoopGuard, stripVolatileIds } from "./loop-guard.ts";
 import type { SettingsManager } from "./settings-manager.ts";
 import type { SlashCommandInfo } from "./slash-commands.ts";
 import { createSyntheticSourceInfo, type SourceInfo } from "./source-info.ts";
@@ -490,20 +491,20 @@ export class AgentSession {
 			this._loopGuard.reset();
 			return;
 		}
-		const toolCalls = message.content.filter((c) => c.type === "toolCall");
+		const toolCalls = message.content.filter((c): c is AgentToolCall => c.type === "toolCall");
 		if (toolCalls.length === 0) {
 			this._loopGuard.reset();
 			return;
 		}
 		let signature: string;
 		try {
-			const calls = toolCalls
-				.map((c) => `${(c as { name: string }).name}:${JSON.stringify((c as { arguments: unknown }).arguments)}`)
-				.join("|");
-			const results = event.toolResults.map((r) => JSON.stringify((r as { content?: unknown }).content)).join("|");
-			signature = `${calls}##${results.slice(0, 1000)}`;
+			const calls = toolCalls.map((c) => `${c.name}:${JSON.stringify(c.arguments)}`).join("|");
+			const results = event.toolResults.map((r) => JSON.stringify(r.content)).join("|");
+			// stripVolatileIds: per-run temp-file ids (pi-bash-<hex>.log) would otherwise make a
+			// truncated-output runaway hash differently every turn, defeating the guard.
+			signature = stripVolatileIds(`${calls}##${results}`).slice(0, 2000);
 		} catch {
-			signature = toolCalls.map((c) => (c as { name?: string }).name ?? "?").join("|");
+			signature = toolCalls.map((c) => c.name).join("|");
 		}
 		if (this._loopGuard.record(signature)) {
 			this._loopGuard.reset();

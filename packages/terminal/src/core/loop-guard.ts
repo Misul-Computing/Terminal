@@ -19,6 +19,15 @@ export interface LoopGuard {
 	reset(): void;
 }
 
+/**
+ * Strip volatile temp-file ids (e.g. `pi-bash-<16 hex>.log`, regenerated every run) from a
+ * signature so a truncated-output runaway still hashes identically across turns. Without this
+ * the guard would never fire for high-output loops — the exact runaway it exists to catch.
+ */
+export function stripVolatileIds(signature: string): string {
+	return signature.replace(/-[0-9a-f]{16}\.log/g, "-tmp.log");
+}
+
 export function createLoopGuard(threshold: number): LoopGuard {
 	let lastSignature: string | undefined;
 	let count = 0;
