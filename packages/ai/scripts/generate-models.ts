@@ -10,7 +10,7 @@ import {
 	CLOUDFLARE_WORKERS_AI_BASE_URL,
 } from "../src/providers/cloudflare.ts";
 import type { AnthropicMessagesCompat, Api, KnownProvider, Model, OpenAICompletionsCompat } from "../src/types.ts";
-import { thinkingLevelMapFor } from "./thinking-efforts.ts";
+import { openCodeEfforts, thinkingLevelMapFor } from "./thinking-efforts.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -244,6 +244,19 @@ function applyThinkingLevelMetadata(model: Model<any>): void {
 		if (map) mergeThinkingLevelMap(model, map);
 	}
 
+	// OpenCode returns {} (no effort tier) for native-reasoning families (minimax, glm<5.2, kimi,
+	// qwen, deepseek, ...): they reason by default and 400 on a reasoning_effort param. Never
+	// advertise effort support for them, so the request layer omits the param (generalizes the
+	// one-off DeepSeek/Kimi supportsReasoningEffort:false fixes). thinkingLevelMapFor maps these to
+	// off+high (binary); openCodeEfforts is the source signal.
+	if (
+		model.reasoning &&
+		model.api === "openai-completions" &&
+		openCodeEfforts({ id: model.id, provider: model.provider, api: model.api, reasoning: true }) === "binary"
+	) {
+		model.compat = { ...(model.compat ?? {}), supportsReasoningEffort: false };
+	}
+
 	// Verified provider-specific corrections OpenCode lacks or gets wrong, applied
 	// over the port. Copilot overrides were checked against the live /models
 	// endpoint; groq qwen3-32b uses a "default" effort value; Mercury 2's instant
@@ -254,6 +267,9 @@ function applyThinkingLevelMetadata(model: Model<any>): void {
 	}
 	if (model.provider === "groq" && model.id === "qwen/qwen3-32b") {
 		mergeThinkingLevelMap(model, { high: "default" });
+		// groq qwen3 is a binary family but DOES take reasoning_effort:"default" — re-assert effort
+		// support over the native-reasoning default applied above.
+		model.compat = { ...(model.compat ?? {}), supportsReasoningEffort: true };
 	}
 	if (model.provider === "openrouter" && model.id.startsWith("inception/mercury-2")) {
 		mergeThinkingLevelMap(model, { off: null });

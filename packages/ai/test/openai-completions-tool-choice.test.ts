@@ -271,6 +271,28 @@ describe("openai-completions tool_choice", () => {
 		}
 	});
 
+	it("omits reasoning_effort for native-reasoning (binary) families that reject it", async () => {
+		// GLM-4.5-Air reasons natively (OpenCode exposes no effort tier); sending reasoning_effort 400s.
+		// The generator marks such openai-completions families supportsReasoningEffort:false.
+		const model = getModel("zai", "glm-4.5-air")!;
+		let payload: unknown;
+
+		await streamSimple(
+			model,
+			{ messages: [{ role: "user", content: "Hi", timestamp: Date.now() }] },
+			{
+				apiKey: "test",
+				reasoning: "high",
+				onPayload: (params: unknown) => {
+					payload = params;
+				},
+			},
+		).result();
+
+		const params = (payload ?? mockState.lastParams) as { reasoning_effort?: string };
+		expect(params.reasoning_effort).toBeUndefined();
+	});
+
 	it("maps z.ai GLM-5.2 thinking levels to reasoning_effort", async () => {
 		const model = getModel("zai", "glm-5.2")!;
 		const cases = [
