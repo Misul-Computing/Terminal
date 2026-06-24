@@ -189,6 +189,8 @@ export function openCodeEfforts(model: ThinkingModelInput): string[] | "binary" 
 	if (provider === "openrouter" || provider.includes("gateway") || provider.includes("vercel")) {
 		if (id.startsWith("openai/") || id.includes("gpt")) return openaiCompatibleEfforts(id);
 		if (id.includes("deepseek-v4")) return ["high", "max"];
+		// Z.ai GLM-5.2+ on gateways: high/max only (same as direct z.ai).
+		if (/glm-?5\.[2-9]/.test(id) || /glm-?[6-9]/.test(id)) return ["high", "max"];
 		return [...WIDELY];
 	}
 
@@ -196,6 +198,9 @@ export function openCodeEfforts(model: ThinkingModelInput): string[] | "binary" 
 	if (id.includes("north-mini-code")) return ["none", "high"];
 	// DeepSeek V4 reasoning_effort accepts exactly high|max (per DeepSeek API docs).
 	if (id.includes("deepseek-v4")) return ["high", "max"];
+	// Z.ai GLM-5.2+ adds high/max effort tiers (verified vs z.ai docs; OpenCode treats
+	// all GLM as binary and is stale here). low/medium are NOT distinct tiers for it.
+	if (/glm-?5\.[2-9]/.test(id) || /glm-?[6-9]/.test(id)) return ["high", "max"];
 	return [...WIDELY];
 }
 

@@ -261,12 +261,16 @@ describe("openai-completions tool_choice", () => {
 		for (const provider of ["zai", "zai-coding-cn"] as const) {
 			const model = getModel(provider, "glm-5.2")!;
 			expect(model.compat?.supportsReasoningEffort).toBe(true);
+			// GLM-5.2 exposes only high/max effort tiers; low/medium are not distinct
+			// tiers and are mapped to null so the selector never offers them.
 			expect(model.thinkingLevelMap).toEqual({
+				off: "off",
 				minimal: null,
-				low: "high",
-				medium: "high",
+				low: null,
+				medium: null,
 				high: "high",
-				xhigh: "max",
+				xhigh: null,
+				max: "max",
 			});
 		}
 	});
@@ -295,11 +299,10 @@ describe("openai-completions tool_choice", () => {
 
 	it("maps z.ai GLM-5.2 thinking levels to reasoning_effort", async () => {
 		const model = getModel("zai", "glm-5.2")!;
+		// GLM-5.2 exposes only high/max; low/medium are not selectable tiers.
 		const cases = [
-			{ reasoning: "low", effort: "high" },
-			{ reasoning: "medium", effort: "high" },
 			{ reasoning: "high", effort: "high" },
-			{ reasoning: "xhigh", effort: "max" },
+			{ reasoning: "max", effort: "max" },
 		] as const;
 
 		for (const testCase of cases) {

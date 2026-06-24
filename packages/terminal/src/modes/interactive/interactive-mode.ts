@@ -10,6 +10,7 @@ import * as path from "node:path";
 import type { AgentMessage } from "@misul/agent-core";
 import {
 	type AssistantMessage,
+	completeSimple,
 	getProviders,
 	type ImageContent,
 	type Message,
@@ -17,6 +18,7 @@ import {
 	type OAuthProviderId,
 	type OAuthSelectPrompt,
 	thinkingLevelLabel,
+	type ThinkingLevel,
 } from "@misul/ai";
 import type {
 	AutocompleteItem,
@@ -82,6 +84,7 @@ import type { ResourceDiagnostic } from "../../core/resource-loader.ts";
 import { formatMissingSessionCwdPrompt, MissingSessionCwdError } from "../../core/session-cwd.ts";
 import { type SessionContext, SessionManager } from "../../core/session-manager.ts";
 import { BUILTIN_SLASH_COMMANDS } from "../../core/slash-commands.ts";
+import { PROBE_TIERS, recordProbedThinkingLevels } from "../../core/thinking-capabilities.ts";
 import type { SourceInfo } from "../../core/source-info.ts";
 import { isInstallTelemetryEnabled } from "../../core/telemetry.ts";
 import type { TruncationResult } from "../../core/tools/truncate.ts";
@@ -97,11 +100,12 @@ import { getPiUserAgent } from "../../utils/pi-user-agent.ts";
 import { killTrackedDetachedChildren } from "../../utils/shell.ts";
 import { ensureTool } from "../../utils/tools-manager.ts";
 import { checkForNewPiVersion, type LatestPiRelease } from "../../utils/version-check.ts";
-import { AssistantMessageComponent } from "./components/assistant-message.ts";
+import { AssistantMessageComponent, collectCollapsibleItems, type CollapsibleItem } from "./components/assistant-message.ts";
 import { createCoalescer } from "./coalesce.ts";
 import { BashExecutionComponent } from "./components/bash-execution.ts";
 import { BorderedLoader } from "./components/bordered-loader.ts";
 import { BranchSummaryMessageComponent } from "./components/branch-summary-message.ts";
+import { CenteredContainer } from "./components/centered-container.ts";
 import { CompactionSummaryMessageComponent } from "./components/compaction-summary-message.ts";
 import { CountdownTimer } from "./components/countdown-timer.ts";
 import { CustomEditor } from "./components/custom-editor.ts";
@@ -267,7 +271,7 @@ export interface InteractiveModeOptions {
 export class InteractiveMode {
 	private runtimeHost: AgentSessionRuntime;
 	private ui: TUI;
-	private chatContainer: Container;
+	private chatContainer: CenteredContainer;
 	private pendingMessagesContainer: Container;
 	private statusContainer: Container;
 	private defaultEditor: CustomEditor;
@@ -290,7 +294,7 @@ export class InteractiveMode {
 	private workingVisible = true;
 	private workingIndicatorOptions: LoaderIndicatorOptions | undefined = undefined;
 	private readonly defaultWorkingMessage = "Working...";
-	private readonly defaultHiddenThinkingLabel = "Thinking...";
+	private readonly defaultHiddenThinkingLabel = "Thinking";
 	private hiddenThinkingLabel = this.defaultHiddenThinkingLabel;
 
 	private lastSigintTime = 0;
@@ -318,6 +322,9 @@ export class InteractiveMode {
 
 	// Thinking block visibility state
 	private hideThinkingBlock = false;
+
+	// Chat cursor navigation: -1 = not active (editor has focus), >=0 = index into collapsible items
+	private chatCursorIndex = -1;
 
 	// Agent subscription unsubscribe function
 	private unsubscribe?: () => void;
@@ -361,6 +368,7 @@ export class InteractiveMode {
 
 	// Custom footer from extension (undefined = use built-in footer)
 	private customFooter: (Component & { dispose?(): void }) | undefined = undefined;
+	private footerWrapper: CenteredContainer | undefined = undefined;
 
 	// Header container that holds the built-in or custom header
 	private headerContainer: Container;
@@ -402,7 +410,7 @@ export class InteractiveMode {
 		this.ui = new TUI(new ProcessTerminal(), this.settingsManager.getShowHardwareCursor());
 		this.ui.setClearOnShrink(this.settingsManager.getClearOnShrink());
 		this.headerContainer = new Container();
-		this.chatContainer = new Container();
+		this.chatContainer = new CenteredContainer(120);
 		this.pendingMessagesContainer = new Container();
 		this.statusContainer = new Container();
 		this.widgetContainerAbove = new Container();
@@ -640,16 +648,40 @@ export class InteractiveMode {
 		}
 
 		// Add header container as first child. Populate it after detectThemeIfUnset.
-		this.ui.addChild(this.headerContainer);
+		// All sections are wrapped in CenteredContainer for consistent centering.
+		const centeredHeader = new CenteredContainer(120);
+		centeredHeader.addChild(this.headerContainer);
+		this.ui.addChild(centeredHeader);
 
 		this.ui.addChild(this.chatContainer);
-		this.ui.addChild(this.pendingMessagesContainer);
-		this.ui.addChild(this.statusContainer);
+
+		const centeredPending = new CenteredContainer(120);
+		centeredPending.addChild(this.pendingMessagesContainer);
+		this.ui.addChild(centeredPending);
+
+		const centeredStatus = new CenteredContainer(120);
+		centeredStatus.addChild(this.statusContainer);
+		this.ui.addChild(centeredStatus);
+
 		this.renderWidgets(); // Initialize with default spacer
-		this.ui.addChild(this.widgetContainerAbove);
-		this.ui.addChild(this.editorContainer);
-		this.ui.addChild(this.widgetContainerBelow);
-		this.ui.addChild(this.footer);
+
+		const centeredWidgetAbove = new CenteredContainer(120);
+		centeredWidgetAbove.addChild(this.widgetContainerAbove);
+		this.ui.addChild(centeredWidgetAbove);
+
+		const centeredEditor = new CenteredContainer(120);
+		centeredEditor.addChild(this.editorContainer);
+		this.ui.addChild(centeredEditor);
+
+		const centeredWidgetBelow = new CenteredContainer(120);
+		centeredWidgetBelow.addChild(this.widgetContainerBelow);
+		this.ui.addChild(centeredWidgetBelow);
+
+		const centeredFooter = new CenteredContainer(120);
+		centeredFooter.addChild(this.footer);
+		this.footerWrapper = centeredFooter;
+		this.ui.addChild(centeredFooter);
+
 		this.ui.setFocus(this.editor);
 
 		this.setupKeyHandlers();
@@ -1729,17 +1761,9 @@ export class InteractiveMode {
 		this.ui.requestRender();
 	}
 
-	private setHiddenThinkingLabel(label?: string): void {
-		this.hiddenThinkingLabel = label ?? this.defaultHiddenThinkingLabel;
-		for (const child of this.chatContainer.children) {
-			if (child instanceof AssistantMessageComponent) {
-				child.setHiddenThinkingLabel(this.hiddenThinkingLabel);
-			}
-		}
-		if (this.streamingComponent) {
-			this.streamingComponent.setHiddenThinkingLabel(this.hiddenThinkingLabel);
-		}
-		this.ui.requestRender();
+	private setHiddenThinkingLabel(_label?: string): void {
+		// No-op: thinking blocks now use "− Thinking" / "+ Thinking" headers via CollapsibleHeader.
+		// Kept for extension API compatibility.
 	}
 
 	/**
@@ -1879,21 +1903,31 @@ export class InteractiveMode {
 			this.customFooter.dispose();
 		}
 
-		// Remove current footer from UI
-		if (this.customFooter) {
-			this.ui.removeChild(this.customFooter);
-		} else {
-			this.ui.removeChild(this.footer);
+		// Remove current footer from the centered wrapper
+		if (this.footerWrapper) {
+			if (this.customFooter) {
+				this.footerWrapper.removeChild(this.customFooter);
+			} else {
+				this.footerWrapper.removeChild(this.footer);
+			}
 		}
 
 		if (factory) {
 			// Create and add custom footer, passing the data provider
 			this.customFooter = factory(this.ui, theme, this.footerDataProvider);
-			this.ui.addChild(this.customFooter);
+			if (this.footerWrapper) {
+				this.footerWrapper.addChild(this.customFooter);
+			} else {
+				this.ui.addChild(this.customFooter);
+			}
 		} else {
 			// Restore built-in footer
 			this.customFooter = undefined;
-			this.ui.addChild(this.footer);
+			if (this.footerWrapper) {
+				this.footerWrapper.addChild(this.footer);
+			} else {
+				this.ui.addChild(this.footer);
+			}
 		}
 
 		this.ui.requestRender();
@@ -2434,7 +2468,6 @@ export class InteractiveMode {
 		this.ui.onDebug = () => this.handleDebugCommand();
 		this.defaultEditor.onAction("app.model.select", () => this.showModelSelector());
 		this.defaultEditor.onAction("app.tools.expand", () => this.toggleToolOutputExpansion());
-		this.defaultEditor.onAction("app.thinking.toggle", () => this.toggleThinkingBlockVisibility());
 		this.defaultEditor.onAction("app.editor.external", () => this.openExternalEditor());
 		this.defaultEditor.onAction("app.message.followUp", () => this.handleFollowUp());
 		this.defaultEditor.onAction("app.message.dequeue", () => this.handleDequeue());
@@ -2455,6 +2488,91 @@ export class InteractiveMode {
 		this.defaultEditor.onPasteImage = () => {
 			this.handleClipboardImagePaste();
 		};
+
+		// Chat cursor navigation: up arrow at the top of an empty editor enters chat-cursor mode
+		this.defaultEditor.onNavigateUpFromTop = () => this.enterChatCursorMode();
+		this.defaultEditor.onChatCursorKey = (data: string) => this.handleChatCursorKey(data);
+	}
+
+	/**
+	 * Collect all collapsible blocks from the chat container. Returns a flat list
+	 * of CollapsibleItems (thinking blocks + tool calls) in document order.
+	 */
+	private getChatCollapsibleItems(): CollapsibleItem[] {
+		return collectCollapsibleItems(this.chatContainer.children);
+	}
+
+	/** Enter chat-cursor mode: select the last collapsible block (closest to the editor). */
+	private enterChatCursorMode(): void {
+		const items = this.getChatCollapsibleItems();
+		if (items.length === 0) return;
+		this.chatCursorIndex = items.length - 1;
+		this.updateChatCursorSelection(items);
+		this.defaultEditor.chatCursorMode = true;
+		this.ui.requestRender();
+	}
+
+	/** Exit chat-cursor mode: clear selection and return focus to the editor. */
+	private exitChatCursorMode(): void {
+		const items = this.getChatCollapsibleItems();
+		for (const item of items) item.setSelected(false);
+		this.chatCursorIndex = -1;
+		this.defaultEditor.chatCursorMode = false;
+		this.ui.requestRender();
+	}
+
+	/** Update the selected state on all collapsible items based on chatCursorIndex. */
+	private updateChatCursorSelection(items: CollapsibleItem[]): void {
+		for (let i = 0; i < items.length; i++) {
+			items[i].setSelected(i === this.chatCursorIndex);
+		}
+	}
+
+	/** Handle key input while in chat-cursor mode. Returns true if handled. */
+	private handleChatCursorKey(data: string): boolean {
+		const kb = this.keybindings;
+
+		if (kb.matches(data, "tui.editor.cursorUp")) {
+			const items = this.getChatCollapsibleItems();
+			if (this.chatCursorIndex > 0) {
+				this.chatCursorIndex--;
+				this.updateChatCursorSelection(items);
+				this.ui.requestRender();
+			}
+			return true;
+		}
+
+		if (kb.matches(data, "tui.editor.cursorDown")) {
+			const items = this.getChatCollapsibleItems();
+			if (this.chatCursorIndex < items.length - 1) {
+				this.chatCursorIndex++;
+				this.updateChatCursorSelection(items);
+				this.ui.requestRender();
+			} else {
+				// At the last block: return to editor
+				this.exitChatCursorMode();
+			}
+			return true;
+		}
+
+		if (kb.matches(data, "tui.select.confirm") || kb.matches(data, "tui.input.submit") || data === "\r" || data === "\n") {
+			const items = this.getChatCollapsibleItems();
+			if (this.chatCursorIndex >= 0 && this.chatCursorIndex < items.length) {
+				const item = items[this.chatCursorIndex];
+				item.setExpanded(!item.expanded);
+				this.ui.requestRender();
+			}
+			return true;
+		}
+
+		if (kb.matches(data, "app.interrupt") || kb.matches(data, "tui.select.cancel")) {
+			this.exitChatCursorMode();
+			return true;
+		}
+
+		// Any other key: exit chat-cursor mode and let the editor handle it
+		this.exitChatCursorMode();
+		return false;
 	}
 
 	private async handleClipboardImagePaste(): Promise<void> {
@@ -2504,6 +2622,11 @@ export class InteractiveMode {
 			if (text === "/thinking") {
 				this.editor.setText("");
 				this.showThinkingSelector();
+				return;
+			}
+			if (text === "/probe-thinking") {
+				this.editor.setText("");
+				await this.handleProbeThinkingCommand();
 				return;
 			}
 			if (text === "/skills") {
@@ -2738,7 +2861,6 @@ export class InteractiveMode {
 						undefined,
 						false, // always show the thinking trace live while streaming; it collapses on message_end
 						this.getMarkdownThemeWithSettings(),
-						this.hiddenThinkingLabel,
 					);
 					this.streamingMessage = event.message;
 					this.chatContainer.addChild(this.streamingComponent);
@@ -2774,7 +2896,8 @@ export class InteractiveMode {
 									this.ui,
 									this.sessionManager.getCwd(),
 								);
-								component.setExpanded(this.toolOutputExpanded);
+								// Expand during streaming so users see live execution; auto-collapse on turn end
+								component.setExpanded(true);
 								this.chatContainer.addChild(component);
 								this.pendingTools.set(content.id, component);
 							} else {
@@ -2805,9 +2928,9 @@ export class InteractiveMode {
 						this.streamingMessage.errorMessage = errorMessage;
 					}
 					this.streamingComponent.updateContent(this.streamingMessage);
-					// Message complete: collapse the live thinking trace to the toggle
-					// state (hidden by default; app.thinking.toggle reveals/hides it).
-					this.streamingComponent.setHideThinkingBlock(this.hideThinkingBlock);
+					// Turn complete: auto-collapse thinking blocks and tool calls.
+					// They can be reopened by navigating the cursor to them and pressing enter.
+					this.streamingComponent.setHideThinkingBlock(true);
 
 					if (this.streamingMessage.stopReason === "aborted" || this.streamingMessage.stopReason === "error") {
 						if (!errorMessage) {
@@ -2824,6 +2947,8 @@ export class InteractiveMode {
 						// Args are now complete - trigger diff computation for edit tools
 						for (const [, component] of this.pendingTools.entries()) {
 							component.setArgsComplete();
+							// Auto-collapse tool calls on turn end
+							component.setExpanded(false);
 						}
 					}
 					this.streamingComponent = undefined;
@@ -3142,7 +3267,6 @@ export class InteractiveMode {
 					message,
 					this.hideThinkingBlock,
 					this.getMarkdownThemeWithSettings(),
-					this.hiddenThinkingLabel,
 				);
 				this.chatContainer.addChild(assistantComponent);
 				break;
@@ -3580,30 +3704,12 @@ export class InteractiveMode {
 		if (isExpandable(activeHeader)) {
 			activeHeader.setExpanded(expanded);
 		}
-		for (const child of this.chatContainer.children) {
-			if (isExpandable(child)) {
-				child.setExpanded(expanded);
-			}
+		// Toggle all collapsible blocks (thinking blocks + tool calls) via the unified interface
+		const items = this.getChatCollapsibleItems();
+		for (const item of items) {
+			item.setExpanded(expanded);
 		}
 		this.ui.requestRender();
-	}
-
-	private toggleThinkingBlockVisibility(): void {
-		this.hideThinkingBlock = !this.hideThinkingBlock;
-		this.settingsManager.setHideThinkingBlock(this.hideThinkingBlock);
-
-		// Rebuild chat from session messages
-		this.chatContainer.clear();
-		this.rebuildChatFromMessages();
-
-		// If streaming, re-add the streaming component with updated visibility and re-render
-		if (this.streamingComponent && this.streamingMessage) {
-			this.streamingComponent.setHideThinkingBlock(this.hideThinkingBlock);
-			this.streamingComponent.updateContent(this.streamingMessage);
-			this.chatContainer.addChild(this.streamingComponent);
-		}
-
-		this.showStatus(`Thinking blocks: ${this.hideThinkingBlock ? "hidden" : "visible"}`);
 	}
 
 	private async openExternalEditor(): Promise<void> {
@@ -4272,6 +4378,61 @@ export class InteractiveMode {
 			// receives keyboard input (matches the settings/session selector pattern).
 			return { component: selector, focus: selector.getSelectList() };
 		});
+	}
+
+	/**
+	 * Probe the current model to discover which reasoning-effort tiers it
+	 * actually accepts. Sends a minimal 1-token request per tier and records
+	 * the results, so the selector reflects runtime-discovered capabilities
+	 * instead of relying solely on build-time heuristics.
+	 */
+	private async handleProbeThinkingCommand(): Promise<void> {
+		const model = this.session.model;
+		if (!model) {
+			this.showWarning("No model selected.");
+			return;
+		}
+		if (!model.reasoning) {
+			this.showWarning(`${model.name} is not a reasoning model; nothing to probe.`);
+			return;
+		}
+
+		const apiKey = await this.session.modelRegistry.getApiKeyForProvider(model.provider);
+		if (!apiKey) {
+			this.showWarning(`No API key configured for ${model.provider}. Run /login first.`);
+			return;
+		}
+
+		this.showStatus(`Probing ${model.name} reasoning efforts…`);
+
+		const context = {
+			systemPrompt: "Reply with: ok",
+			messages: [{ role: "user" as const, content: "Hi", timestamp: Date.now() }],
+			tools: [],
+		};
+
+		const supported: ThinkingLevel[] = [];
+		for (const tier of PROBE_TIERS) {
+			try {
+				await completeSimple(model, context, {
+					apiKey,
+					reasoning: tier,
+					maxTokens: 5,
+				});
+				supported.push(tier);
+			} catch {
+				// 400 or other error → this tier is not accepted by the provider.
+			}
+		}
+
+		if (supported.length === 0) {
+			this.showWarning(`${model.name} accepts no reasoning-effort tiers (reasons by default or not at all).`);
+			return;
+		}
+
+		recordProbedThinkingLevels(model, supported);
+		const labels = supported.map((t) => thinkingLevelLabel(model, t)).join(", ");
+		this.showStatus(`Probed ${model.name}: ${labels}. Use /thinking to select.`);
 	}
 
 	private showModelSelector(initialSearchInput?: string): void {
@@ -5481,7 +5642,6 @@ export class InteractiveMode {
 		const cycleModelForward = this.getAppKeyDisplay("app.model.cycleForward");
 		const selectModel = this.getAppKeyDisplay("app.model.select");
 		const expandTools = this.getAppKeyDisplay("app.tools.expand");
-		const toggleThinking = this.getAppKeyDisplay("app.thinking.toggle");
 		const externalEditor = this.getAppKeyDisplay("app.editor.external");
 		const cycleModelBackward = this.getAppKeyDisplay("app.model.cycleBackward");
 		const followUp = this.getAppKeyDisplay("app.message.followUp");
@@ -5525,7 +5685,6 @@ export class InteractiveMode {
 | \`${cycleModelForward}\` / \`${cycleModelBackward}\` | Cycle models |
 | \`${selectModel}\` | Open model selector |
 | \`${expandTools}\` | Toggle tool output expansion |
-| \`${toggleThinking}\` | Toggle thinking block visibility |
 | \`${externalEditor}\` | Edit message in external editor |
 | \`${followUp}\` | Queue follow-up message |
 | \`${dequeue}\` | Restore queued messages |

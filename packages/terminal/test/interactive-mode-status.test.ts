@@ -119,20 +119,30 @@ describe("InteractiveMode.showStatus", () => {
 describe("InteractiveMode.setToolsExpanded", () => {
 	test("applies expansion state to the active header and chat entries", () => {
 		const header = { setExpanded: vi.fn() };
-		const chatChild = { setExpanded: vi.fn() };
+		const collapsibleItem = { setExpanded: vi.fn() };
+		const chatChild = { getCollapsibleItems: () => [collapsibleItem] };
 		const fakeThis: any = {
 			toolOutputExpanded: false,
 			customHeader: undefined,
 			builtInHeader: header,
 			chatContainer: { children: [chatChild] },
 			ui: { requestRender: vi.fn() },
+			getChatCollapsibleItems: () => {
+				const items: any[] = [];
+				for (const child of fakeThis.chatContainer.children) {
+					if (child && typeof child.getCollapsibleItems === "function") {
+						items.push(...child.getCollapsibleItems());
+					}
+				}
+				return items;
+			},
 		};
 
 		(InteractiveMode as any).prototype.setToolsExpanded.call(fakeThis, true);
 
 		expect(fakeThis.toolOutputExpanded).toBe(true);
 		expect(header.setExpanded).toHaveBeenCalledWith(true);
-		expect(chatChild.setExpanded).toHaveBeenCalledWith(true);
+		expect(collapsibleItem.setExpanded).toHaveBeenCalledWith(true);
 		expect(fakeThis.ui.requestRender).toHaveBeenCalledTimes(1);
 	});
 });

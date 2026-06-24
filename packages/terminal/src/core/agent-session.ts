@@ -34,6 +34,7 @@ import {
 	resetApiProviders,
 	streamSimple,
 } from "@misul/ai";
+import { getProbedThinkingLevels } from "./thinking-capabilities.ts";
 import { getThemeByName, theme } from "../modes/interactive/theme/theme.ts";
 import { stripFrontmatter } from "../utils/frontmatter.ts";
 import { resolvePath } from "../utils/paths.ts";
@@ -1630,6 +1631,9 @@ export class AgentSession {
 	 */
 	getAvailableThinkingLevels(): ThinkingLevel[] {
 		if (!this.model) return THINKING_LEVELS;
+		// Runtime probe results override the build-time heuristic map.
+		const probed = getProbedThinkingLevels(this.model);
+		if (probed) return probed;
 		return getSupportedThinkingLevels(this.model) as ThinkingLevel[];
 	}
 

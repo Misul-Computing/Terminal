@@ -3,6 +3,8 @@ import type { ToolDefinition, ToolRenderContext } from "../../../core/extensions
 import { createAllToolDefinitions, type ToolName } from "../../../core/tools/index.ts";
 import { getTextOutput as getRenderedTextOutput } from "../../../core/tools/render-utils.ts";
 import { convertToPng } from "../../../utils/image-convert.ts";
+import { CollapsibleHeader } from "./collapsible-header.ts";
+import type { CollapsibleContainer, CollapsibleItem } from "./assistant-message.ts";
 import { theme } from "../theme/theme.ts";
 
 export interface ToolExecutionOptions {
@@ -10,7 +12,7 @@ export interface ToolExecutionOptions {
 	imageWidthCells?: number;
 }
 
-export class ToolExecutionComponent extends Container {
+export class ToolExecutionComponent extends Container implements CollapsibleContainer {
 	private contentBox: Box;
 	private contentText: Text;
 	private selfRenderContainer: Container;
@@ -39,6 +41,8 @@ export class ToolExecutionComponent extends Container {
 	};
 	private convertedImages: Map<number, { data: string; mimeType: string }> = new Map();
 	private hideComponent = false;
+	private header: CollapsibleHeader;
+	private selected = false;
 
 	constructor(
 		toolName: string,
@@ -61,6 +65,9 @@ export class ToolExecutionComponent extends Container {
 		this.cwd = cwd;
 
 		this.addChild(new Spacer(1));
+
+		this.header = new CollapsibleHeader(this.toolName, false, false);
+		this.addChild(this.header);
 
 		// Always create all shell variants. contentBox is used for default renderer-based composition.
 		// selfRenderContainer is used when the tool renders its own framing.
@@ -200,7 +207,26 @@ export class ToolExecutionComponent extends Container {
 
 	setExpanded(expanded: boolean): void {
 		this.expanded = expanded;
+		this.header.setExpanded(expanded);
 		this.updateDisplay();
+	}
+
+	setSelected(selected: boolean): void {
+		this.selected = selected;
+		this.header.setSelected(selected);
+		// Trigger re-render via parent's requestRender
+		this.ui.requestRender();
+	}
+
+	getCollapsibleItems(): CollapsibleItem[] {
+		return [
+			{
+				id: `tool-${this.toolCallId}`,
+				expanded: this.expanded,
+				setExpanded: (expanded: boolean) => this.setExpanded(expanded),
+				setSelected: (selected: boolean) => this.setSelected(selected),
+			},
+		];
 	}
 
 	setShowImages(show: boolean): void {

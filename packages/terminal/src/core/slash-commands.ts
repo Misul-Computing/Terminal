@@ -19,6 +19,7 @@ export const BUILTIN_SLASH_COMMANDS: ReadonlyArray<BuiltinSlashCommand> = [
 	{ name: "settings", description: "Open settings menu" },
 	{ name: "model", description: "Select model (opens selector UI)" },
 	{ name: "thinking", description: "Select reasoning level for the current model" },
+	{ name: "probe-thinking", description: "Probe the current model to discover which reasoning efforts it accepts" },
 	{ name: "skills", description: "Browse and run available skills" },
 	{ name: "scoped-models", description: "Enable/disable models for Ctrl+P cycling" },
 	{ name: "export", description: "Export session (HTML default, or specify path: .html/.jsonl)" },

@@ -6,6 +6,7 @@ import {
 	type UserMessage,
 } from "@misul/ai";
 import { runAgentLoop } from "../agent-loop.ts";
+import { createResilientStreamFn } from "../resilient-stream.ts";
 import type {
 	AgentContext,
 	AgentEvent,
@@ -374,7 +375,7 @@ export class AgentHarness<
 	}
 
 	private createStreamFn(getTurnState: () => AgentHarnessTurnState<TSkill, TPromptTemplate, TTool>): StreamFn {
-		return async (model, context, streamOptions) => {
+		const base: StreamFn = async (model, context, streamOptions) => {
 			const turnState = getTurnState();
 			const auth = await this.getApiKeyAndHeaders?.(model);
 			const snapshotOptions: AgentHarnessStreamOptions = {
@@ -404,6 +405,7 @@ export class AgentHarness<
 				apiKey: auth?.apiKey,
 			});
 		};
+		return createResilientStreamFn(base);
 	}
 
 	private async drainQueuedMessages(queue: AgentMessage[], mode: QueueMode): Promise<AgentMessage[]> {

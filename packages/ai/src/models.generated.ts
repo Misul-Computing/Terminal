@@ -3915,7 +3915,7 @@ export const MODELS = {
 			baseUrl: "https://api.cloudflare.com/client/v4/accounts/{CLOUDFLARE_ACCOUNT_ID}/ai/v1",
 			compat: {"sendSessionAffinityHeaders":true},
 			reasoning: true,
-			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text"],
 			cost: {
 				input: 1.4,
@@ -6100,7 +6100,7 @@ export const MODELS = {
 			baseUrl: "https://router.huggingface.co/v1",
 			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
-			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text"],
 			cost: {
 				input: 1.4,
@@ -9215,7 +9215,7 @@ export const MODELS = {
 			baseUrl: "https://opencode.ai/zen/go/v1",
 			compat: {"maxTokensField":"max_tokens"},
 			reasoning: true,
-			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text"],
 			cost: {
 				input: 1.4,
@@ -13821,7 +13821,7 @@ export const MODELS = {
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: true,
-			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text"],
 			cost: {
 				input: 0.98,
@@ -17349,7 +17349,7 @@ export const MODELS = {
 			provider: "vercel-ai-gateway",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
-			thinkingLevelMap: {"off":"off","minimal":null,"low":"low","medium":"medium","high":"high","xhigh":null,"max":null},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text"],
 			cost: {
 				input: 1.5,
@@ -17998,7 +17998,7 @@ export const MODELS = {
 			baseUrl: "https://api.z.ai/api/coding/paas/v4",
 			compat: {"supportsDeveloperRole":false,"thinkingFormat":"zai","supportsReasoningEffort":true,"zaiToolStream":true},
 			reasoning: true,
-			thinkingLevelMap: {"minimal":null,"low":"high","medium":"high","high":"high","xhigh":"max"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text"],
 			cost: {
 				input: 0,
@@ -18114,7 +18114,7 @@ export const MODELS = {
 			baseUrl: "https://open.bigmodel.cn/api/coding/paas/v4",
 			compat: {"supportsDeveloperRole":false,"thinkingFormat":"zai","supportsReasoningEffort":true,"zaiToolStream":true},
 			reasoning: true,
-			thinkingLevelMap: {"minimal":null,"low":"high","medium":"high","high":"high","xhigh":"max"},
+			thinkingLevelMap: {"off":"off","minimal":null,"low":null,"medium":null,"high":"high","xhigh":null,"max":"max"},
 			input: ["text"],
 			cost: {
 				input: 0,

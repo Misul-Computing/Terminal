@@ -159,11 +159,13 @@ const NVIDIA_NIM_UNSUPPORTED_MODELS = new Set([
 ]);
 const ZAI_TOOL_STREAM_UNSUPPORTED_MODELS = new Set(["glm-4.5", "glm-4.5-air", "glm-4.5-flash", "glm-4.5v"]);
 const ZAI_GLM52_THINKING_LEVEL_MAP = {
+	off: "off",
 	minimal: null,
-	low: "high",
-	medium: "high",
+	low: null,
+	medium: null,
 	high: "high",
-	xhigh: "max",
+	xhigh: null,
+	max: "max",
 } as const;
 const EAGER_TOOL_INPUT_STREAMING_UNSUPPORTED_ANTHROPIC_MODELS = new Set([
 	"github-copilot:claude-haiku-4.5",

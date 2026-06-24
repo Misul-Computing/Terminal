@@ -7,7 +7,7 @@ Quality-per-dollar (QpD) eval meter for the Misul agent.
 The meter measures how much task quality you get per dollar of model spend for a
 given **harness configuration** (model + tool allowlist + prompt), and does a
 statistically honest A/B between two configurations. Its purpose is comparing
-harness configs — most often the *same* model with *different* tools or prompt —
+harness configs, most often the *same* model with *different* tools or prompt,
 so the primary A/B lever is `--variant-tools` differing from the baseline
 `--tools`.
 
@@ -29,8 +29,8 @@ not on pass-rate, so a variant that improves pass-rate while ballooning cost is
 
 ## Scaffolding A/B (prompt) and the efficiency signal
 
-Beyond `--variant-tools`, the meter can A/B the **scaffolding** itself — the system
-prompt — via two programmatic levers on `runFixture` / `runEvalCli`:
+Beyond `--variant-tools`, the meter can A/B the **scaffolding** itself, the system
+prompt, via two programmatic levers on `runFixture` / `runEvalCli`:
 
 - `appendSystemPrompt` (additive): appended after the full default prompt (constitution
   + tools + guidelines). The fair lever for testing *added* guidance (plan / read-before-edit

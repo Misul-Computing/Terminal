@@ -14,6 +14,12 @@ export class CustomEditor extends Editor {
 	public onPasteImage?: () => void;
 	/** Handler for extension-registered shortcuts. Returns true if handled. */
 	public onExtensionShortcut?: (data: string) => boolean;
+	/** Called when up arrow is pressed at the top of an empty editor (no history). */
+	public onNavigateUpFromTop?: () => void;
+	/** When true, key input is routed to onChatCursorKey instead of the editor. */
+	public chatCursorMode = false;
+	/** Handler for keys when in chat-cursor mode. Returns true if handled. */
+	public onChatCursorKey?: (data: string) => boolean;
 
 	constructor(tui: TUI, theme: EditorTheme, keybindings: KeybindingsManager, options?: EditorOptions) {
 		super(tui, theme, options);
@@ -28,6 +34,14 @@ export class CustomEditor extends Editor {
 	}
 
 	handleInput(data: string): void {
+		// In chat-cursor mode, route all keys to the chat cursor handler
+		if (this.chatCursorMode) {
+			if (this.onChatCursorKey?.(data)) {
+				return;
+			}
+			// If not handled, fall through to editor (e.g. for escape)
+		}
+
 		// Check extension-registered shortcuts first
 		if (this.onExtensionShortcut?.(data)) {
 			return;
@@ -72,6 +86,12 @@ export class CustomEditor extends Editor {
 				handler();
 				return;
 			}
+		}
+
+		// Intercept up arrow at the top of an empty editor to enter chat-cursor mode
+		if (this.keybindings.matches(data, "tui.editor.cursorUp") && this.isAtTopOfEmptyEditor()) {
+			this.onNavigateUpFromTop?.();
+			return;
 		}
 
 		// Pass to parent for editor handling

@@ -203,7 +203,8 @@ describe("ToolExecutionComponent parity", () => {
 		);
 		component.updateResult({ content: [{ type: "text", text: "hello" }], details: undefined, isError: false }, false);
 		const rendered = stripAnsi(component.render(120).join("\n"));
-		expect(rendered.match(/\bread\b/g)?.length ?? 0).toBe(1);
+		// "read" appears once in the CollapsibleHeader ("+ read") and once in the tool's own rendered content
+		expect(rendered.match(/\bread\b/g)?.length ?? 0).toBe(2);
 	});
 
 	test("inherits missing built-in result renderer slot from the built-in tool", () => {

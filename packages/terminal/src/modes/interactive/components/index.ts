@@ -3,6 +3,7 @@ export { AssistantMessageComponent } from "./assistant-message.ts";
 export { BashExecutionComponent } from "./bash-execution.ts";
 export { BorderedLoader } from "./bordered-loader.ts";
 export { BranchSummaryMessageComponent } from "./branch-summary-message.ts";
+export { CenteredContainer } from "./centered-container.ts";
 export { CompactionSummaryMessageComponent } from "./compaction-summary-message.ts";
 export { CustomEditor } from "./custom-editor.ts";
 export { CustomMessageComponent } from "./custom-message.ts";
@@ -27,6 +28,7 @@ export { type SettingsCallbacks, type SettingsConfig, SettingsSelectorComponent 
 export { ShowImagesSelectorComponent } from "./show-images-selector.ts";
 export { SkillInvocationMessageComponent } from "./skill-invocation-message.ts";
 export { ThemeSelectorComponent } from "./theme-selector.ts";
+export { ThinkingBrowserComponent, type ThinkingBrowserEntry } from "./thinking-browser.ts";
 export { ThinkingSelectorComponent } from "./thinking-selector.ts";
 export { ToolExecutionComponent, type ToolExecutionOptions } from "./tool-execution.ts";
 export { TreeSelectorComponent } from "./tree-selector.ts";

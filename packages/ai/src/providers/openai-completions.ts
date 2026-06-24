@@ -10,7 +10,7 @@ import type {
 	ChatCompletionSystemMessageParam,
 	ChatCompletionToolMessageParam,
 } from "openai/resources/chat/completions.js";
-import { calculateCost, clampThinkingLevel } from "../models.ts";
+import { calculateCost, clampThinkingLevel, getSupportedThinkingLevels } from "../models.ts";
 import type {
 	AssistantMessage,
 	CacheRetention,
@@ -78,7 +78,7 @@ function isImageContentBlock(block: { type: string }): block is ImageContent {
 
 export interface OpenAICompletionsOptions extends StreamOptions {
 	toolChoice?: "auto" | "none" | "required" | { type: "function"; function: { name: string } };
-	reasoningEffort?: "minimal" | "low" | "medium" | "high" | "xhigh";
+	reasoningEffort?: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
 }
 
 interface OpenAICompatCacheControl {
@@ -440,9 +440,16 @@ export const streamSimpleOpenAICompletions: StreamFunction<"openai-completions",
 	const base = buildBaseOptions(model, options, apiKey);
 	const clampedReasoning = options?.reasoning ? clampThinkingLevel(model, options.reasoning) : undefined;
 	// `max` is an Anthropic/budget tier OpenAI never accepts; supported-level gating
-	// means it won't occur for OpenAI models, but fold it to the top OpenAI tier for safety.
+	// means it won't occur for OpenAI models. Some openai-completions families (e.g.
+	// z.ai GLM-5.2) DO accept `max` as a distinct effort, so only fold when the model
+	// doesn't expose `max` in its supported levels.
+	const supportsMax = getSupportedThinkingLevels(model).includes("max");
 	const reasoningEffort =
-		clampedReasoning === "off" ? undefined : clampedReasoning === "max" ? "xhigh" : clampedReasoning;
+		clampedReasoning === "off"
+			? undefined
+			: clampedReasoning === "max" && !supportsMax
+				? "xhigh"
+				: clampedReasoning;
 	const toolChoice = (options as OpenAICompletionsOptions | undefined)?.toolChoice;
 
 	return streamOpenAICompletions(model, context, {
