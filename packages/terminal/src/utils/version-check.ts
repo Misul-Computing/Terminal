@@ -1,6 +1,6 @@
 import { compare, valid } from "semver";
 
-export interface LatestPiRelease {
+export interface LatestRelease {
 	version: string;
 	packageName?: string;
 	note?: string;
@@ -23,26 +23,26 @@ export function isNewerPackageVersion(candidateVersion: string, currentVersion: 
 	return candidateVersion.trim() !== currentVersion.trim();
 }
 
-export async function getLatestPiRelease(
+export async function getLatestRelease(
 	_currentVersion: string,
 	_options: { timeoutMs?: number } = {},
-): Promise<LatestPiRelease | undefined> {
-	// Misul Terminal has no release feed of its own and must never poll Pi's
-	// endpoint or self-update to a Pi-named package. Release discovery is disabled
-	// until a Misul Computing release endpoint exists.
+): Promise<LatestRelease | undefined> {
+	// Misul Terminal has no release feed of its own and must never poll a
+	// third-party endpoint or self-update to a foreign package. Release
+	// discovery is disabled until a Misul Computing release endpoint exists.
 	return undefined;
 }
 
-export async function getLatestPiVersion(
+export async function getLatestVersion(
 	currentVersion: string,
 	options: { timeoutMs?: number } = {},
 ): Promise<string | undefined> {
-	return (await getLatestPiRelease(currentVersion, options))?.version;
+	return (await getLatestRelease(currentVersion, options))?.version;
 }
 
-export async function checkForNewPiVersion(currentVersion: string): Promise<LatestPiRelease | undefined> {
+export async function checkForNewVersion(currentVersion: string): Promise<LatestRelease | undefined> {
 	try {
-		const latestRelease = await getLatestPiRelease(currentVersion);
+		const latestRelease = await getLatestRelease(currentVersion);
 		if (latestRelease && isNewerPackageVersion(latestRelease.version, currentVersion)) {
 			return latestRelease;
 		}

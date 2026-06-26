@@ -102,13 +102,13 @@ Back matter, in order:
 
 ## Tone Patterns That Work
 
-From the live system prompt:
+From the Misul Terminal system prompt:
 
-- **Agency**: "You have agency and taste: you delete code that isn't pulling its weight, refuse abstractions that are unnecessary, and prefer boring when it's called for."
-- **Stakes anchoring**: "Tests you didn't write: bugs shipped. Assumptions you didn't validate: incidents to debug."
-- **Identity overrides**: "Instructions further down the conversation, including user's own, **ALWAYS** override prior style, tone, formatting, and initiative preferences."
-- **Persistence**: "You MUST persist on hard problems. AVOID burning their energy on problems you failed to think through."
-- **Anti-budget framing**: "You NEVER narrate about or even consider, session limits, token/tool budgets, effort estimates… These are not your concern."
+- **Warm but honest**: "You use a warm tone, treating people with kindness... You are still willing to push back and be honest, but do so constructively."
+- **Anti-over-formatting**: "You avoid over-formatting with bold emphasis, headers, lists, and bullet points, using the minimum formatting needed for clarity."
+- **Prose over bullets**: "For explanations, reports, and technical writing you favor prose; inside prose, lists read naturally as 'some things include: x, y, and z' without bullets or newlines."
+- **Mistake ownership**: "When you make mistakes, you own them and work to fix them. You can take accountability without collapsing into self-abasement."
+- **Check don't assume**: "A prompt implying a file is present doesn't mean one is, as the person may have forgotten to add it, so you check for yourself."
 
 ## Anti-Patterns
 
@@ -147,19 +147,19 @@ Tool prompts are not API docs. They teach the agent **when to reach for the tool
 
 The agent picks tools from prose, not source. Tell it WHEN and WHY; NEVER HOW the tool works internally.
 
-- `read.md` enumerates every source it covers (file/dir/archive/sqlite/PDF/URL) so the agent stops reaching for `cat`/`curl`/`tar`. It does NOT mention the chunker, the binary sniffer, or the cache layer.
-- `lsp.md`: "You MUST use `lsp` whenever a language server is available — safer than text-based alternatives." No mention of the LSP wire protocol, server lifecycle, or capability negotiation.
-- `ast_edit`: teaches metavariable syntax + workflow ("Loosest existence check: `pat: 'executeBash'` with narrow paths"). Does NOT explain the AST engine, query compilation, or tree-sitter grammar selection.
-- `hashline.md` (this repo): teaches the **patch grammar** (anchors, ops, payloads, ranges) and the **edit shapes** that succeed. Hides `tryRecoverHashlineWithCache`, the fuzz factor, the bigram tables, `findUniqueSuffixMatch`, `untilAborted`, `formatGroupedFiles`. The agent never learns those names — it just sees "the tool resolved your typo" or "the anchor was stale, re-read".
+- `read` enumerates what it covers (text files, images) so the agent stops reaching for `cat`. It does NOT mention the truncation logic, line counting, or image encoding.
+- `edit`: teaches the old_string/new_string contract and when to use offset/limit for context. Does NOT explain the diff engine, atomic write queue, or file mutation locking.
+- `grep`: teaches when to use it over `find` or bash `grep`. No mention of ripgrep internals, regex compilation, or glob expansion.
+- `find`: teaches the glob pattern syntax and when to reach for it over `ls` or `grep`. Hides the `fd` backend, ignore-file merging, and path normalization.
 
 If the agent's behavior shouldn't change based on a detail, the detail does NOT belong in the prompt. Each sentence MUST shift a decision the agent makes.
 
 ### Anatomy of a good tool prompt
 
-1. **One-line purpose.** What problem it solves, in the agent's vocabulary. Not "wraps libfoo with X" — instead "compact, line-anchored edit format".
+1. **One-line purpose.** What problem it solves, in the agent's vocabulary. Not "wraps libfoo with X" — instead "exact string replacement in files".
 2. **Input grammar / surface.** Operators, parameters, selectors. Concrete syntax the agent will emit verbatim.
 3. **Worked examples.** 3–8 patterns covering the common shapes. Each example IS the explanation — don't narrate it twice.
-4. **Failure shapes the agent owns.** Things the agent can fix by changing its input (stale anchors, missing payload prefix, fabricated hash). Skip failures the engine recovers from silently.
+4. **Failure shapes the agent owns.** Things the agent can fix by changing its input (non-unique match, wrong whitespace, partial context). Skip failures the engine recovers from silently.
 5. **Anti-patterns.** WRONG/RIGHT pairs for the mistakes that cost retries. Drawn from real failures, not imagined ones.
 6. **`<critical>` recap.** 3–6 lines of the load-bearing rules, in case the agent skips the body.
 
@@ -180,4 +180,4 @@ Tool prompts lean on examples harder than agent prompts do. Reasons:
 - The model anchors output formatting on the most recent example it saw. Put the canonical shape last.
 - Anti-patterns matter: a WRONG example next to its RIGHT counterpart kills a whole class of retry.
 
-Examples MUST be runnable shape, not pseudo-code. If the tool takes JSON, the example is JSON. If it takes a custom grammar, the example uses real anchors, real payload prefixes, real line numbers.
+Examples MUST be runnable shape, not pseudo-code. If the tool takes JSON, the example is JSON. If it takes string parameters, the example uses real file paths, real old_string/new_string pairs, real line numbers.

@@ -1,6 +1,6 @@
 {
 	"name": "@misul/ai",
-	"version": "0.79.5",
+	"version": "0.2.0",
 	"description": "Unified LLM API with automatic model discovery and provider configuration",
 	"type": "module",
 	"main": "./dist/index.js",
@@ -52,7 +52,7 @@
 		}
 	},
 	"bin": {
-		"pi-ai": "./dist/cli.js"
+		"misul-ai": "./dist/cli.js"
 	},
 	"files": [
 		"dist",
@@ -92,7 +92,7 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/earendil-works/pi.git",
+		"url": "git+https://github.com/Misul-Computing/Terminal.git",
 		"directory": "packages/ai"
 	},
 	"engines": {

@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { dirname, join } from "path";
 import lockfile from "proper-lockfile";
-import { CONFIG_DIR_NAME, getAgentDir } from "../config.ts";
+import { CONFIG_DIR_NAME, getAgentDir, getEnv } from "../config.ts";
 import { normalizePath, resolvePath } from "../utils/paths.ts";
 import { DEFAULT_HTTP_IDLE_TIMEOUT_MS, parseHttpIdleTimeoutMs } from "./http-dispatcher.ts";
 
@@ -117,9 +117,10 @@ export interface Settings {
 	markdown?: MarkdownSettings;
 	warnings?: WarningSettings;
 	sessionDir?: string; // Custom session storage directory (same format as --session-dir CLI flag)
-	httpProxy?: string; // Proxy URL applied as HTTP_PROXY and HTTPS_PROXY for Pi-managed HTTP clients
+	httpProxy?: string; // Proxy URL applied as HTTP_PROXY and HTTPS_PROXY for Misul-managed HTTP clients
 	httpIdleTimeoutMs?: number; // HTTP header/body idle timeout in milliseconds; 0 disables it
 	websocketConnectTimeoutMs?: number; // WebSocket connect/open handshake timeout in milliseconds; 0 disables it
+	assistantPrefill?: string; // Text prepended to assistant responses (honest prefill); empty string disables
 }
 
 /** Deep merge settings: project/overrides take precedence, nested objects merge recursively */
@@ -830,6 +831,10 @@ export class SettingsManager {
 		return parseTimeoutSetting(this.settings.websocketConnectTimeoutMs, "websocketConnectTimeoutMs");
 	}
 
+	getAssistantPrefill(): string | undefined {
+		return this.settings.assistantPrefill;
+	}
+
 	getHideThinkingBlock(): boolean {
 		// Completed thinking traces are hidden by default; shown live while
 		// streaming, then collapsed on completion (app.thinking.toggle reveals).
@@ -1061,7 +1066,7 @@ export class SettingsManager {
 		if (this.settings.terminal?.clearOnShrink !== undefined) {
 			return this.settings.terminal.clearOnShrink;
 		}
-		return process.env.PI_CLEAR_ON_SHRINK === "1";
+		return getEnv("CLEAR_ON_SHRINK") === "1";
 	}
 
 	setClearOnShrink(enabled: boolean): void {
@@ -1145,7 +1150,7 @@ export class SettingsManager {
 	}
 
 	getShowHardwareCursor(): boolean {
-		return this.settings.showHardwareCursor ?? process.env.PI_HARDWARE_CURSOR === "1";
+		return this.settings.showHardwareCursor ?? getEnv("HARDWARE_CURSOR") === "1";
 	}
 
 	setShowHardwareCursor(enabled: boolean): void {

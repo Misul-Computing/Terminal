@@ -1,7 +1,7 @@
 /**
  * Overlay Test - validates overlay compositing with inline text inputs
  *
- * Usage: pi --extension ./examples/extensions/overlay-test.ts
+ * Usage: misul --extension ./examples/extensions/overlay-test.ts
  *
  * Run /overlay-test to show a floating overlay with:
  * - Inline text inputs within menu items
@@ -11,8 +11,8 @@
 import type { ExtensionAPI, ExtensionCommandContext, Theme } from "@misul/terminal";
 import { CURSOR_MARKER, type Focusable, matchesKey, visibleWidth } from "@misul/tui";
 
-export default function (pi: ExtensionAPI) {
-	pi.registerCommand("overlay-test", {
+export default function (api: ExtensionAPI) {
+	api.registerCommand("overlay-test", {
 		description: "Test overlay rendering with edge cases",
 		handler: async (_args: string, ctx: ExtensionCommandContext) => {
 			const result = await ctx.ui.custom<{ action: string; query?: string } | undefined>(

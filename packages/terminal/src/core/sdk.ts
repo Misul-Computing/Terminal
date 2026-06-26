@@ -17,6 +17,8 @@ import { DefaultResourceLoader } from "./resource-loader.ts";
 import { getDefaultSessionDir, SessionManager } from "./session-manager.ts";
 import { SettingsManager } from "./settings-manager.ts";
 import { createSpawnAgentTool } from "./subagent/spawn-tool.ts";
+import { createSkillManageTool } from "./tools/skill-manage.ts";
+import { McpManager } from "./mcp-client.ts";
 import { time } from "./timings.ts";
 import {
 	createBashTool,
@@ -61,7 +63,7 @@ export interface CreateAgentSessionOptions {
 	/**
 	 * Optional allowlist of tool names.
 	 *
-	 * When omitted, pi enables the default built-in tools (read, bash, edit, write)
+	 * When omitted, misul enables the default built-in tools (read, bash, edit, write)
 	 * and leaves extension/custom tools enabled unless `noTools` changes that default.
 	 * When provided, only the listed tool names are enabled.
 	 */
@@ -90,6 +92,8 @@ export interface CreateAgentSessionOptions {
 	settingsManager?: SettingsManager;
 	/** Session start event metadata for extension runtime startup. */
 	sessionStartEvent?: SessionStartEvent;
+	/** Override the assistant prefill text. Empty string disables prefill. */
+	assistantPrefill?: string;
 }
 
 /** Result from createAgentSession */
@@ -100,6 +104,8 @@ export interface CreateAgentSessionResult {
 	extensionsResult: LoadExtensionsResult;
 	/** Warning if session was restored with a different model than saved */
 	modelFallbackMessage?: string;
+	/** MCP manager for cleanup (stop servers on session dispose) */
+	mcpManager?: McpManager;
 }
 
 // Re-exports
@@ -368,6 +374,9 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 		transport: settingsManager.getTransport(),
 		thinkingBudgets: settingsManager.getThinkingBudgets(),
 		maxRetryDelayMs: settingsManager.getProviderRetrySettings().maxRetryDelayMs,
+		assistantPrefill: options.assistantPrefill !== undefined
+			? (options.assistantPrefill || undefined)
+			: (settingsManager.getAssistantPrefill() ?? "I will be honest and accurate. If I'm not sure, I'll say so. If I haven't verified something, I won't claim it as fact."),
 	});
 
 	// Restore messages if session has existing data
@@ -384,13 +393,22 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 		sessionManager.appendThinkingLevelChange(thinkingLevel);
 	}
 
-	// Inject the built-in spawn_agent tool unless disabled (e.g. child subagent
-	// sessions never enable it, preventing recursive delegation).
-	// getParentModel falls back to the live agent model if ctx.model is stale.
+	// Inject built-in tools: spawn_agent (opt-in via enableSubagents) and
+	// skill_manage (always available so the agent can manage its own skills).
+	const skillManageTool = createSkillManageTool();
+
+	// Start MCP servers from addons and collect their tools.
+	const addonMcpServers = resourceLoader.getAddonMcpServers();
+	const mcpManager = new McpManager(cwd);
+	if (Object.keys(addonMcpServers).length > 0) {
+		await mcpManager.startServers(addonMcpServers);
+	}
+	const mcpTools = mcpManager.getToolDefinitions();
+
 	const customTools =
 		options.enableSubagents === true
-			? [...(options.customTools ?? []), createSpawnAgentTool({ getParentModel: () => agent.state.model })]
-			: options.customTools;
+			? [...(options.customTools ?? []), skillManageTool, createSpawnAgentTool({ getParentModel: () => agent.state.model }), ...mcpTools]
+			: [...(options.customTools ?? []), skillManageTool, ...mcpTools];
 
 	const session = new AgentSession({
 		agent,
@@ -413,5 +431,6 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 		session,
 		extensionsResult,
 		modelFallbackMessage,
+		mcpManager,
 	};
 }

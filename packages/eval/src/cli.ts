@@ -9,6 +9,7 @@ import { argv } from "node:process";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import type { Model } from "@misul/ai";
 import { AuthStorage, ModelRegistry } from "@misul/terminal";
+import { optimizeSkill } from "./gepa.ts";
 import { loadFixtures } from "./fixtures.ts";
 import { gradeRunDir } from "./grader.ts";
 import { cleanupRunDir } from "./isolation.ts";
@@ -20,7 +21,7 @@ import type { AbReport, EvalFixture, QpdReport, ScoredRun } from "./types.ts";
 /** Fixtures live at `<package>/fixtures`, one level up from `src/` or `dist/`. */
 const FIXTURES_ROOT = fileURLToPath(new URL("../fixtures", import.meta.url));
 
-export type EvalCommand = "run" | "compare";
+export type EvalCommand = "run" | "compare" | "gepa";
 
 export interface RunEvalCliOptions {
 	command: EvalCommand;
@@ -186,6 +187,10 @@ export interface ParsedArgv {
 	variantModel?: string;
 	/** Variant report label for `compare`. */
 	variantLabel?: string;
+	/** Skill file path for `gepa`. */
+	skillPath?: string;
+	/** Max optimization iterations for `gepa`. */
+	maxIterations?: number;
 }
 
 function parseCsv(value: string | undefined): string[] {
@@ -208,9 +213,11 @@ export function parseArgv(argv: string[]): ParsedArgv {
 	let variantTools: string[] | undefined;
 	let variantModel: string | undefined;
 	let variantLabel: string | undefined;
+	let skillPath: string | undefined;
+	let maxIterations: number | undefined;
 
 	let i = 0;
-	if (argv[0] === "run" || argv[0] === "compare") {
+	if (argv[0] === "run" || argv[0] === "compare" || argv[0] === "gepa") {
 		command = argv[0];
 		i = 1;
 	}
@@ -223,8 +230,10 @@ export function parseArgv(argv: string[]): ParsedArgv {
 		else if (arg === "--variant-tools") variantTools = parseCsv(argv[++i]);
 		else if (arg === "--variant-model") variantModel = argv[++i];
 		else if (arg === "--variant-label") variantLabel = argv[++i];
+		else if (arg === "--skill") skillPath = argv[++i];
+		else if (arg === "--max-iterations") maxIterations = Number.parseInt(argv[++i] ?? "5", 10) || 5;
 	}
-	return { command, seeds, fixtureIds, label, tools, variantTools, variantModel, variantLabel };
+	return { command, seeds, fixtureIds, label, tools, variantTools, variantModel, variantLabel, skillPath, maxIterations };
 }
 
 /**
@@ -255,6 +264,38 @@ function resolveVariantModel(id: string): Model<string> {
 /** Bin entry: drive the real configured default model (no faux), print, exit 0. */
 async function main(): Promise<void> {
 	const parsed = parseArgv(argv.slice(2));
+
+	if (parsed.command === "gepa") {
+		if (!parsed.skillPath) {
+			console.error("gepa requires --skill <path/to/SKILL.md>");
+			process.exit(1);
+		}
+		const fixtures = loadFixtures(FIXTURES_ROOT, parsed.fixtureIds ? { ids: parsed.fixtureIds } : {});
+		const registry = ModelRegistry.create(AuthStorage.create());
+		const all = registry.getAll();
+		if (all.length === 0) {
+			console.error("No model available. Run misul /login first.");
+			process.exit(1);
+		}
+		const model = all[0] as Model<string>;
+		const result = await optimizeSkill({
+			skillPath: parsed.skillPath,
+			fixtures,
+			agentModel: model as Model<string>,
+			maxIterations: parsed.maxIterations,
+			seeds: parsed.seeds,
+			tools: parsed.tools,
+		});
+		console.log(`\n== GEPA Result ==`);
+		console.log(`Iterations: ${result.iterations.length}`);
+		console.log(`Improved: ${result.improved}`);
+		for (const iter of result.iterations) {
+			const status = iter.kept ? "KEPT" : "reverted";
+			console.log(`  iter ${iter.iteration}: pass=${iter.passRate.toFixed(2)} cost=$${iter.meanCost.toFixed(4)} ${status}${iter.mutation ? ` (${iter.mutation.slice(0, 60)})` : ""}`);
+		}
+		return;
+	}
+
 	const result = await runEvalCli({
 		command: parsed.command,
 		seeds: parsed.seeds,

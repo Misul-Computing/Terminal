@@ -31,7 +31,7 @@ const tracer = trace.getTracer("@misul/eval");
 
 export interface RunFixtureOptions {
 	/**
-	 * Trial index, NOT an RNG seed. pi-ai exposes no RNG seed, so this only
+	 * Trial index, NOT an RNG seed. misul-ai exposes no RNG seed, so this only
 	 * disambiguates and labels repeated trials; it cannot make runs reproducible.
 	 * Variation across trials comes solely from provider sampling nondeterminism.
 	 */
@@ -42,11 +42,11 @@ export interface RunFixtureOptions {
 	tools?: string[];
 	/**
 	 * Sampling temperature forwarded to the agent session (default: undefined =
-	 * provider default). pi-ai exposes no RNG seed; a non-zero temperature is the
+	 * provider default). misul-ai exposes no RNG seed; a non-zero temperature is the
 	 * only lever for trial-to-trial variation under a sampling provider.
 	 */
 	temperature?: number;
-	/** Isolated agent config dir. Defaults to the SDK default (~/.pi/agent). */
+	/** Isolated agent config dir. Defaults to the SDK default (~/.misul/agent). */
 	agentDir?: string;
 	/** Hard cap on the agent prompt; on overrun the run is marked errored. */
 	agentTimeoutMs?: number;

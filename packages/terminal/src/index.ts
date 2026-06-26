@@ -167,6 +167,16 @@ export type {
 export { DefaultPackageManager } from "./core/package-manager.ts";
 export type { ResourceCollision, ResourceDiagnostic, ResourceLoader } from "./core/resource-loader.ts";
 export { DefaultResourceLoader, loadProjectContextFiles } from "./core/resource-loader.ts";
+// Addons (unified skill + extension + MCP container)
+export {
+	type Addon,
+	type AddonManifest,
+	type McpServerConfig,
+	getGlobalAddonsDir,
+	getProjectAddonsDir,
+	loadAddon,
+	loadAddons,
+} from "./core/addons.ts";
 // SDK for programmatic usage
 export {
 	AgentSessionRuntime,

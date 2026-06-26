@@ -4,6 +4,7 @@ export type { EvalCliResult, EvalCommand, ParsedArgv, RunEvalCliOptions } from "
 export { formatAbReport, formatReport, parseArgv, runEvalCli } from "./cli.ts";
 export * from "./cost-adapter.ts";
 export * from "./fixtures.ts";
+export * from "./gepa.ts";
 export * from "./grader.ts";
 export * from "./isolation.ts";
 export * from "./metrics.ts";

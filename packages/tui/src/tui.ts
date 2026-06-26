@@ -8,6 +8,7 @@ import * as path from "node:path";
 import { performance } from "node:perf_hooks";
 import { isKeyRelease, matchesKey } from "./keys.ts";
 import type { Terminal } from "./terminal.ts";
+import type { MouseEvent } from "./terminal.ts";
 import { isOsc11BackgroundColorResponse, parseOsc11BackgroundColor, type RgbColor } from "./terminal-colors.ts";
 import { deleteKittyImage, getCapabilities, isImageLine, setCellDimensions } from "./terminal-image.ts";
 import { extractSegments, normalizeTerminalOutput, sliceByColumn, sliceWithWidth, visibleWidth } from "./utils.ts";
@@ -83,6 +84,13 @@ export interface Component {
 
 type InputListenerResult = { consume?: boolean; data?: string } | undefined;
 type InputListener = (data: string) => InputListenerResult;
+
+/**
+ * Mouse listener callback. Receives decoded mouse events (1-based row/col).
+ * Return `{ consume: true }` to stop further dispatch.
+ */
+export type MouseListenerResult = { consume?: boolean } | undefined;
+export type MouseListener = (event: MouseEvent) => MouseListenerResult;
 type PendingOsc11BackgroundQuery = {
 	settled: boolean;
 	resolve: ((rgb: RgbColor | undefined) => void) | undefined;
@@ -294,6 +302,7 @@ export class TUI extends Container {
 	private previousHeight = 0;
 	private focusedComponent: Component | null = null;
 	private inputListeners = new Set<InputListener>();
+	private mouseListeners = new Set<MouseListener>();
 
 	/** Global callback for debug key (Shift+Ctrl+D). Called before input is forwarded to focused component. */
 	public onDebug?: () => void;
@@ -303,14 +312,19 @@ export class TUI extends Container {
 	private static readonly MIN_RENDER_INTERVAL_MS = 16;
 	private cursorRow = 0; // Logical cursor row (end of rendered content)
 	private hardwareCursorRow = 0; // Actual terminal cursor row (may differ due to IME positioning)
-	private showHardwareCursor = process.env.PI_HARDWARE_CURSOR === "1";
-	private clearOnShrink = process.env.PI_CLEAR_ON_SHRINK === "1"; // Clear empty rows when content shrinks (default: off)
+	private showHardwareCursor = process.env.MISUL_HARDWARE_CURSOR === "1";
+	private clearOnShrink = process.env.MISUL_CLEAR_ON_SHRINK === "1"; // Clear empty rows when content shrinks (default: off)
 	private maxLinesRendered = 0; // Track terminal's working area (max lines ever rendered)
 	private previousViewportTop = 0; // Track previous viewport top for resize-aware cursor moves
 	private fullRedrawCount = 0;
 	private stopped = false;
 	private pendingOsc11BackgroundReplies = 0;
 	private pendingOsc11BackgroundQueries: PendingOsc11BackgroundQuery[] = [];
+
+	// Internal scroll: when > 0, the viewport is shifted up by this many lines
+	// into the line history. Reset to 0 on any new render (new content arrives).
+	private scrollOffset = 0;
+	private lineHistory: string[] = [];
 
 	// Overlay stack for modal components rendered on top of base content
 	private focusOrderCounter = 0;
@@ -630,6 +644,10 @@ export class TUI extends Container {
 			(data) => this.handleInput(data),
 			() => this.requestRender(),
 		);
+		// Wire mouse handler if the terminal supports it
+		if ("mouseHandler" in this.terminal) {
+			(this.terminal as { mouseHandler?: (e: MouseEvent) => void }).mouseHandler = (e) => this.handleMouse(e);
+		}
 		this.terminal.hideCursor();
 		this.queryCellSize();
 		this.requestRender();
@@ -644,6 +662,106 @@ export class TUI extends Container {
 
 	removeInputListener(listener: InputListener): void {
 		this.inputListeners.delete(listener);
+	}
+
+	/**
+	 * Register a mouse listener. Returns an unsubscribe function.
+	 * Listeners are called in insertion order; the first to return
+	 * `{ consume: true }` stops further dispatch.
+	 */
+	addMouseListener(listener: MouseListener): () => void {
+		this.mouseListeners.add(listener);
+		return () => {
+			this.mouseListeners.delete(listener);
+		};
+	}
+
+	removeMouseListener(listener: MouseListener): void {
+		this.mouseListeners.delete(listener);
+	}
+
+	/**
+	 * The rendered lines from the most recent render cycle.
+	 * Used by mouse listeners to map click coordinates to content.
+	 */
+	getRenderedLines(): readonly string[] {
+		return this.previousLines;
+	}
+
+	/**
+	 * The index of the topmost visible line in the viewport.
+	 * Lines above this are scrolled off-screen.
+	 */
+	getViewportTop(): number {
+		return this.previousViewportTop;
+	}
+
+	/**
+	 * Map a 1-based terminal row to a 0-based index into getRenderedLines().
+	 * Returns -1 if the row is outside the rendered content.
+	 */
+	terminalRowToLineIndex(row: number): number {
+		const lineIndex = this.previousViewportTop + (row - 1);
+		if (lineIndex < 0 || lineIndex >= this.previousLines.length) return -1;
+		return lineIndex;
+	}
+
+	private handleMouse(event: MouseEvent): void {
+		// Wheel events control internal scroll. Other events go to listeners.
+		if (event.type === "wheel") {
+			const direction = event.button === 64 ? "up" : "down";
+			this.scroll(direction);
+			return;
+		}
+		for (const listener of this.mouseListeners) {
+			const result = listener(event);
+			if (result?.consume) return;
+		}
+	}
+
+	/** Scroll the internal viewport up or down by one row. */
+	scroll(direction: "up" | "down"): void {
+		if (direction === "up") {
+			const maxOffset = Math.max(0, this.lineHistory.length - this.terminal.rows);
+			if (this.scrollOffset < maxOffset) {
+				this.scrollOffset = Math.min(this.scrollOffset + 3, maxOffset);
+				this.renderScrolled();
+			}
+		} else {
+			if (this.scrollOffset > 0) {
+				this.scrollOffset = Math.max(0, this.scrollOffset - 3);
+				if (this.scrollOffset === 0) {
+					this.requestRender();
+				} else {
+					this.renderScrolled();
+				}
+			}
+		}
+	}
+
+	/** Render the viewport from line history at the current scroll offset. */
+	private renderScrolled(): void {
+		if (this.scrollOffset === 0 || this.lineHistory.length === 0) {
+			this.requestRender();
+			return;
+		}
+		const height = this.terminal.rows;
+		const end = this.lineHistory.length - this.scrollOffset;
+		const start = Math.max(0, end - height);
+		const lines = this.lineHistory.slice(start, end);
+
+		let buffer = "\x1b[?2026h\x1b[2J\x1b[H";
+		for (let i = 0; i < lines.length; i++) {
+			if (i > 0) buffer += "\r\n";
+			buffer += lines[i];
+		}
+		buffer += "\x1b[?2026l";
+		this.terminal.write(buffer);
+	}
+
+	/** Whether the viewport is currently scrolled up (not at the bottom). */
+	isScrolled(): boolean {
+		return this.scrollOffset > 0;
 	}
 
 	private queryCellSize(): void {
@@ -1207,6 +1325,19 @@ export class TUI extends Container {
 
 	private doRender(): void {
 		if (this.stopped) return;
+		const wasScrolled = this.scrollOffset > 0;
+		// Save current lines to history before rendering new content.
+		// Don't push when we were scrolled (previousLines is stale, the
+		// terminal was showing history lines from renderScrolled).
+		if (this.previousLines.length > 0 && !wasScrolled) {
+			this.lineHistory.push(...this.previousLines);
+			// Cap history to avoid unbounded memory growth.
+			if (this.lineHistory.length > 10000) {
+				this.lineHistory = this.lineHistory.slice(-10000);
+			}
+		}
+		// New content arrives: reset scroll to bottom.
+		this.scrollOffset = 0;
 		const width = this.terminal.columns;
 		const height = this.terminal.rows;
 		const widthChanged = this.previousWidth !== 0 && this.previousWidth !== width;
@@ -1234,13 +1365,16 @@ export class TUI extends Container {
 
 		newLines = this.applyLineResets(newLines);
 
-		// Helper to clear scrollback and viewport and render all new lines
+		// Helper to clear viewport and render all new lines.
+		// Note: \x1b[3J (clear scrollback) is intentionally omitted so the
+		// terminal's native scrollback is preserved and the user can scroll
+		// up to review history. \x1b[2J only clears the visible screen.
 		const fullRender = (clear: boolean): void => {
 			this.fullRedrawCount += 1;
 			let buffer = "\x1b[?2026h"; // Begin synchronized output
 			if (clear) {
 				buffer += this.deleteKittyImages(this.previousKittyImageIds);
-				buffer += "\x1b[2J\x1b[H\x1b[3J"; // Clear screen, home, then clear scrollback
+				buffer += "\x1b[2J\x1b[H"; // Clear screen, home (preserve scrollback)
 			}
 			for (let i = 0; i < newLines.length; i++) {
 				if (i > 0) buffer += "\r\n";
@@ -1278,18 +1412,28 @@ export class TUI extends Container {
 			this.previousHeight = height;
 		};
 
-		const debugRedraw = process.env.PI_DEBUG_REDRAW === "1";
+		const debugRedraw = process.env.MISUL_DEBUG_REDRAW === "1";
 		const logRedraw = (reason: string): void => {
 			if (!debugRedraw) return;
-			const logPath = path.join(os.homedir(), ".pi", "agent", "pi-debug.log");
+			const logPath = path.join(os.homedir(), ".misul", "agent", "misul-debug.log");
 			const msg = `[${new Date().toISOString()}] fullRender: ${reason} (prev=${this.previousLines.length}, new=${newLines.length}, height=${height})\n`;
 			fs.appendFileSync(logPath, msg);
 		};
 
-		// First render - just output everything without clearing (assumes clean screen)
+		// First render - clear screen and render from top so that terminal
+		// row coordinates map directly to rendered line indices.
 		if (this.previousLines.length === 0 && !widthChanged && !heightChanged) {
 			logRedraw("first render");
-			fullRender(false);
+			fullRender(true);
+			return;
+		}
+
+		// Returning from scrolled state: terminal shows history lines that
+		// don't match previousLines, so differential render would produce
+		// garbage. Force a full clear.
+		if (wasScrolled) {
+			logRedraw("was scrolled, forcing full clear");
+			fullRender(true);
 			return;
 		}
 
@@ -1311,7 +1455,7 @@ export class TUI extends Container {
 
 		// Content shrunk below the working area and no overlays - re-render to clear empty rows
 		// (overlays need the padding, so only do this when no overlays are active)
-		// Configurable via setClearOnShrink() or PI_CLEAR_ON_SHRINK=0 env var
+		// Configurable via setClearOnShrink() or MISUL_CLEAR_ON_SHRINK=0 env var
 		if (this.clearOnShrink && newLines.length < this.maxLinesRendered && this.overlayStack.length === 0) {
 			logRedraw(`clearOnShrink (maxLinesRendered=${this.maxLinesRendered})`);
 			fullRender(true);
@@ -1473,7 +1617,7 @@ export class TUI extends Container {
 			buffer += "\x1b[2K"; // Clear current line
 			if (!isImage && visibleWidth(line) > width) {
 				// Log all lines to crash file for debugging
-				const crashLogPath = path.join(os.homedir(), ".pi", "agent", "pi-crash.log");
+				const crashLogPath = path.join(os.homedir(), ".misul", "agent", "misul-crash.log");
 				const crashData = [
 					`Crash at ${new Date().toISOString()}`,
 					`Terminal width: ${width}`,
@@ -1523,7 +1667,7 @@ export class TUI extends Container {
 
 		buffer += "\x1b[?2026l"; // End synchronized output
 
-		if (process.env.PI_TUI_DEBUG === "1") {
+		if (process.env.MISUL_TUI_DEBUG === "1") {
 			const debugDir = "/tmp/tui";
 			fs.mkdirSync(debugDir, { recursive: true });
 			const debugPath = path.join(debugDir, `render-${Date.now()}-${Math.random().toString(36).slice(2)}.log`);

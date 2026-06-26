@@ -37,6 +37,7 @@ export interface Args {
 	noBuiltinTools?: boolean;
 	extensions?: string[];
 	noExtensions?: boolean;
+	addons?: string[];
 	print?: boolean;
 	export?: string;
 	noSkills?: boolean;
@@ -50,6 +51,10 @@ export interface Args {
 	offline?: boolean;
 	verbose?: boolean;
 	projectTrustOverride?: boolean;
+	/** Run non-interactively in autonomous goal mode until the goal is achieved. */
+	goal?: string;
+	/** Override the assistant prefill text. Empty string disables prefill. */
+	assistantPrefill?: string;
 	messages: string[];
 	fileArgs: string[];
 	/** Unknown flags (potentially extension flags) - map of flag name to value */
@@ -157,6 +162,10 @@ export function parseArgs(args: string[]): Args {
 				result.messages.push(next);
 				i++;
 			}
+		} else if (arg === "--goal" && i + 1 < args.length) {
+			result.goal = args[++i];
+		} else if (arg === "--assistant-prefill" && i + 1 < args.length) {
+			result.assistantPrefill = args[++i];
 		} else if (arg === "--export" && i + 1 < args.length) {
 			result.export = args[++i];
 		} else if ((arg === "--extension" || arg === "-e") && i + 1 < args.length) {
@@ -164,6 +173,9 @@ export function parseArgs(args: string[]): Args {
 			result.extensions.push(args[++i]);
 		} else if (arg === "--no-extensions" || arg === "-ne") {
 			result.noExtensions = true;
+		} else if (arg === "--addon" && i + 1 < args.length) {
+			result.addons = result.addons ?? [];
+			result.addons.push(args[++i]);
 		} else if (arg === "--skill" && i + 1 < args.length) {
 			result.skills = result.skills ?? [];
 			result.skills.push(args[++i]);
@@ -242,7 +254,7 @@ ${chalk.bold("Commands:")}
   ${APP_NAME} install <source> [-l]     Install extension source and add to settings
   ${APP_NAME} remove <source> [-l]      Remove extension source from settings
   ${APP_NAME} uninstall <source> [-l]   Alias for remove
-  ${APP_NAME} update [source|self|pi]   Update pi and installed extensions
+  ${APP_NAME} update [source|self|misul]   Update misul and installed extensions
   ${APP_NAME} list                      List installed extensions from settings
   ${APP_NAME} config                    Open TUI to enable/disable package resources
   ${APP_NAME} <command> --help          Show help for install/remove/uninstall/update/list
@@ -255,6 +267,8 @@ ${chalk.bold("Options:")}
   --append-system-prompt <text>  Append text or file contents to the system prompt (can be used multiple times)
   --mode <mode>                  Output mode: text (default), json, or rpc
   --print, -p                    Non-interactive mode: process prompt and exit
+  --goal <description>           Non-interactive autonomous goal mode: loop until goal achieved
+  --assistant-prefill <text>     Override or disable (empty string) the assistant prefill text
   --continue, -c                 Continue previous session
   --resume, -r                   Select a session to resume
   --session <path|id>            Use specific session file or partial UUID
@@ -276,6 +290,7 @@ ${chalk.bold("Options:")}
   --thinking <level>             Set thinking level: off, minimal, low, medium, high, xhigh, max
   --extension, -e <path>         Load an extension file (can be used multiple times)
   --no-extensions, -ne           Disable extension discovery (explicit -e paths still work)
+  --addon <path>                 Load an addon directory (skills + extension + MCP server)
   --skill <path>                 Load a skill file or directory (can be used multiple times)
   --no-skills, -ns               Disable skills discovery and loading
   --prompt-template <path>       Load a prompt template file or directory (can be used multiple times)
@@ -288,7 +303,7 @@ ${chalk.bold("Options:")}
   --verbose                      Force verbose startup (overrides quietStartup setting)
   --approve, -a                  Trust project-local files for this run
   --no-approve, -na              Ignore project-local files for this run
-  --offline                      Disable startup network operations (same as PI_OFFLINE=1)
+  --offline                      Disable startup network operations (same as MISUL_OFFLINE=1)
   --help, -h                     Show this help
   --version, -v                  Show version number
 
@@ -388,10 +403,11 @@ ${chalk.bold("Environment Variables:")}
   AWS_REGION                       - AWS region for Amazon Bedrock (e.g., us-east-1)
   ${ENV_AGENT_DIR.padEnd(32)} - Config directory (default: ~/${CONFIG_DIR_NAME}/agent)
   ${ENV_SESSION_DIR.padEnd(32)} - Session storage directory (overridden by --session-dir)
-  PI_PACKAGE_DIR                   - Override package directory (for Nix/Guix store paths)
-  PI_OFFLINE                       - Disable startup network operations when set to 1/true/yes
-  PI_TELEMETRY                     - Override install telemetry when set to 1/true/yes or 0/false/no
-  PI_SHARE_VIEWER_URL              - Base URL for /share command (default: https://pi.dev/session/)
+  MISUL_PACKAGE_DIR                - Override package directory (for Nix/Guix store paths)
+  MISUL_OFFLINE                    - Disable startup network operations when set to 1/true/yes
+  MISUL_TELEMETRY                  - Override install telemetry when set to 1/true/yes or 0/false/no
+  MISUL_SHARE_VIEWER_URL           - Base URL for /share command (default: https://gist.github.com/)
+  (PI_* aliases are still accepted for backward compatibility)
 
 ${chalk.bold("Built-in Tool Names:")}
   read   - Read file contents

@@ -243,6 +243,14 @@ export interface AgentLoopConfig extends SimpleStreamOptions {
 	getFollowUpMessages?: () => Promise<AgentMessage[]>;
 
 	/**
+	 * Text to prepend to the assistant's response. The model continues from
+	 * this text, which biases it toward consistency with the framing.
+	 * Used for honest prefill (Anthropic research: improves honesty rates).
+	 * Only applied on the first turn of a run, not tool-call continuations.
+	 */
+	assistantPrefill?: string;
+
+	/**
 	 * Tool execution mode.
 	 * - "sequential": execute tool calls one by one
 	 * - "parallel": preflight tool calls sequentially, then execute allowed tools concurrently;

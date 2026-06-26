@@ -378,12 +378,14 @@ export function createEditToolDefinition(
 			if (context.argsComplete && previewInput && !component.preview && !component.previewPending) {
 				component.previewPending = true;
 				const requestKey = argsKey;
-				void computeEditsDiff(previewInput.path, previewInput.edits, context.cwd).then((preview) => {
-					if (component.previewArgsKey === requestKey) {
-						setEditPreview(component, preview, requestKey);
-						context.invalidate();
-					}
-				});
+				void computeEditsDiff(previewInput.path, previewInput.edits, context.cwd)
+					.then((preview) => {
+						if (component.previewArgsKey === requestKey) {
+							setEditPreview(component, preview, requestKey);
+							context.invalidate();
+						}
+					})
+					.catch(() => undefined);
 			}
 
 			return buildEditCallComponent(component, args, theme, context.cwd);

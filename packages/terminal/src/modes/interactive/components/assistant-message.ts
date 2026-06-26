@@ -1,5 +1,6 @@
 import type { AssistantMessage } from "@misul/ai";
 import { Container, Markdown, type MarkdownTheme, Spacer, Text } from "@misul/tui";
+import { CenteredContainer } from "./centered-container.ts";
 import { CollapsibleHeader } from "./collapsible-header.ts";
 import { getMarkdownTheme, theme } from "../theme/theme.ts";
 
@@ -174,7 +175,9 @@ export class AssistantMessageComponent extends Container implements CollapsibleC
 		for (let i = 0; i < message.content.length; i++) {
 			const content = message.content[i];
 			if (content.type === "text" && content.text.trim()) {
-				this.contentContainer.addChild(new Markdown(content.text.trim(), 1, 0, this.markdownTheme));
+				const centered = new CenteredContainer(80);
+				centered.addChild(new Markdown(content.text.trim(), 1, 0, this.markdownTheme));
+				this.contentContainer.addChild(centered);
 			} else if (content.type === "thinking" && content.thinking.trim()) {
 				const idx = thinkingIndex++;
 				const isExpanded = this.thinkingExpanded.get(idx) ?? !this.hideThinkingBlock;
@@ -185,12 +188,14 @@ export class AssistantMessageComponent extends Container implements CollapsibleC
 				this.contentContainer.addChild(header);
 
 				if (isExpanded) {
-					this.contentContainer.addChild(
+					const centered = new CenteredContainer(80);
+					centered.addChild(
 						new Markdown(content.thinking.trim(), 1, 0, this.markdownTheme, {
 							color: (text: string) => theme.fg("thinkingText", text),
 							italic: true,
 						}),
 					);
+					this.contentContainer.addChild(centered);
 				}
 
 				const hasVisibleContentAfter = message.content

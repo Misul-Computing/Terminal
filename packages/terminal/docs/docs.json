@@ -12,7 +12,7 @@
           "path": "quickstart.md"
         },
         {
-          "title": "Using Pi",
+          "title": "Using Misul Terminal",
           "path": "usage.md"
         },
         {
@@ -57,6 +57,10 @@
           "path": "skills.md"
         },
         {
+          "title": "Addons",
+          "path": "addons.md"
+        },
+        {
           "title": "Prompt Templates",
           "path": "prompt-templates.md"
         },
@@ -65,7 +69,7 @@
           "path": "themes.md"
         },
         {
-          "title": "Pi Packages",
+          "title": "Misul Terminal Packages",
           "path": "packages.md"
         },
         {

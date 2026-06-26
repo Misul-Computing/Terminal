@@ -47,7 +47,7 @@ export interface CreateSpawnAgentToolOptions {
 }
 
 const spawnAgentParameters = Type.Object({
-	agent: Type.Union([Type.Literal("simple"), Type.Literal("deep-work")], {
+	agent: Type.Union([Type.Literal("simple"), Type.Literal("deep-work"), Type.Literal("review")], {
 		description: "Which built-in agent to run.",
 	}),
 	task: Type.String({ description: "The task to delegate to the subagent." }),

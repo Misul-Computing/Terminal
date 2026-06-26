@@ -38,6 +38,8 @@ export const BUILTIN_SLASH_COMMANDS: ReadonlyArray<BuiltinSlashCommand> = [
 	{ name: "logout", description: "Remove provider authentication" },
 	{ name: "new", description: "Start a new session" },
 	{ name: "compact", description: "Manually compact the session context" },
+	{ name: "goal", description: "Enter autonomous goal mode: agent loops until goal is achieved (Esc to stop)" },
+	{ name: "reality-check", description: "Spawn a devil's advocate subagent to challenge the last response for honesty and accuracy" },
 	{ name: "resume", description: "Resume a different session" },
 	{ name: "reload", description: "Reload keybindings, extensions, skills, prompts, and themes" },
 	{ name: "quit", description: `Quit ${APP_NAME}` },

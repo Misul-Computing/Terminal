@@ -51,7 +51,7 @@ interface ResourceGroup {
 	key: string;
 	label: string;
 	scope: "user" | "project" | "temporary";
-	origin: "package" | "top-level";
+	origin: "package" | "top-level" | "addons";
 	source: string;
 	subgroups: ResourceSubgroup[];
 }

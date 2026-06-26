@@ -1,3 +1,5 @@
+import { getEnv } from "../config.ts";
+
 export function areExperimentalFeaturesEnabled(): boolean {
-	return process.env.PI_EXPERIMENTAL === "1";
+	return getEnv("EXPERIMENTAL") === "1";
 }

@@ -57,6 +57,7 @@ import {
 	getAuthPath,
 	getDebugLogPath,
 	getDocsPath,
+	getEnvFlag,
 	getShareViewerUrl,
 	VERSION,
 } from "../../config.ts";
@@ -84,9 +85,11 @@ import type { ResourceDiagnostic } from "../../core/resource-loader.ts";
 import { formatMissingSessionCwdPrompt, MissingSessionCwdError } from "../../core/session-cwd.ts";
 import { type SessionContext, SessionManager } from "../../core/session-manager.ts";
 import { BUILTIN_SLASH_COMMANDS } from "../../core/slash-commands.ts";
+import { runGoalLoop } from "../../core/goal-loop.ts";
+import { getPreset } from "../../core/subagent/presets.ts";
+import { runSubagent } from "../../core/subagent/runner.ts";
 import { PROBE_TIERS, recordProbedThinkingLevels } from "../../core/thinking-capabilities.ts";
 import type { SourceInfo } from "../../core/source-info.ts";
-import { isInstallTelemetryEnabled } from "../../core/telemetry.ts";
 import type { TruncationResult } from "../../core/tools/truncate.ts";
 import { hasTrustRequiringProjectResources, ProjectTrustStore } from "../../core/trust-manager.ts";
 import { getChangelogPath, getNewEntries, normalizeChangelogLinks, parseChangelog } from "../../utils/changelog.ts";
@@ -96,10 +99,9 @@ import { copyToClipboard } from "../../utils/clipboard.ts";
 import { extensionForImageMimeType, readClipboardImage } from "../../utils/clipboard-image.ts";
 import { parseGitUrl } from "../../utils/git.ts";
 import { getCwdRelativePath } from "../../utils/paths.ts";
-import { getPiUserAgent } from "../../utils/pi-user-agent.ts";
 import { killTrackedDetachedChildren } from "../../utils/shell.ts";
 import { ensureTool } from "../../utils/tools-manager.ts";
-import { checkForNewPiVersion, type LatestPiRelease } from "../../utils/version-check.ts";
+import { checkForNewVersion, type LatestRelease } from "../../utils/version-check.ts";
 import { AssistantMessageComponent, collectCollapsibleItems, type CollapsibleItem } from "./components/assistant-message.ts";
 import { createCoalescer } from "./coalesce.ts";
 import { BashExecutionComponent } from "./components/bash-execution.ts";
@@ -111,6 +113,7 @@ import { CountdownTimer } from "./components/countdown-timer.ts";
 import { CustomEditor } from "./components/custom-editor.ts";
 import { CustomMessageComponent } from "./components/custom-message.ts";
 import { DynamicBorder } from "./components/dynamic-border.ts";
+import { DotsLoader } from "./components/dots-loader.ts";
 import { ExtensionEditorComponent } from "./components/extension-editor.ts";
 import { ExtensionInputComponent } from "./components/extension-input.ts";
 import { ExtensionSelectorComponent } from "./components/extension-selector.ts";
@@ -256,7 +259,7 @@ export interface InteractiveModeOptions {
 	migratedProviders?: string[];
 	/** Warning message if session model couldn't be restored */
 	modelFallbackMessage?: string;
-	/** Cwd to trust after reload if it gained a .pi directory during this implicitly trusted session. */
+	/** Cwd to trust after reload if it gained a .misul directory during this implicitly trusted session. */
 	autoTrustOnReloadCwd?: string;
 	/** Initial message to send on startup (can include @file content) */
 	initialMessage?: string;
@@ -289,10 +292,9 @@ export class InteractiveMode {
 	private isInitialized = false;
 	private onInputCallback?: (text: string) => void;
 	private pendingUserInputs: string[] = [];
-	private loadingAnimation: Loader | undefined = undefined;
+	private loadingAnimation: DotsLoader | undefined = undefined;
 	private workingMessage: string | undefined = undefined;
 	private workingVisible = true;
-	private workingIndicatorOptions: LoaderIndicatorOptions | undefined = undefined;
 	private readonly defaultWorkingMessage = "Working...";
 	private readonly defaultHiddenThinkingLabel = "Thinking";
 	private hiddenThinkingLabel = this.defaultHiddenThinkingLabel;
@@ -410,7 +412,7 @@ export class InteractiveMode {
 		this.ui = new TUI(new ProcessTerminal(), this.settingsManager.getShowHardwareCursor());
 		this.ui.setClearOnShrink(this.settingsManager.getClearOnShrink());
 		this.headerContainer = new Container();
-		this.chatContainer = new CenteredContainer(120);
+		this.chatContainer = new CenteredContainer(80);
 		this.pendingMessagesContainer = new Container();
 		this.statusContainer = new Container();
 		this.widgetContainerAbove = new Container();
@@ -649,35 +651,37 @@ export class InteractiveMode {
 
 		// Add header container as first child. Populate it after detectThemeIfUnset.
 		// All sections are wrapped in CenteredContainer for consistent centering.
-		const centeredHeader = new CenteredContainer(120);
+		const centeredHeader = new CenteredContainer(80);
 		centeredHeader.addChild(this.headerContainer);
 		this.ui.addChild(centeredHeader);
 
-		this.ui.addChild(this.chatContainer);
+		const centeredChat = new CenteredContainer(80);
+		centeredChat.addChild(this.chatContainer);
+		this.ui.addChild(centeredChat);
 
-		const centeredPending = new CenteredContainer(120);
+		const centeredPending = new CenteredContainer(80);
 		centeredPending.addChild(this.pendingMessagesContainer);
 		this.ui.addChild(centeredPending);
 
-		const centeredStatus = new CenteredContainer(120);
+		const centeredStatus = new CenteredContainer(80);
 		centeredStatus.addChild(this.statusContainer);
 		this.ui.addChild(centeredStatus);
 
 		this.renderWidgets(); // Initialize with default spacer
 
-		const centeredWidgetAbove = new CenteredContainer(120);
+		const centeredWidgetAbove = new CenteredContainer(80);
 		centeredWidgetAbove.addChild(this.widgetContainerAbove);
 		this.ui.addChild(centeredWidgetAbove);
 
-		const centeredEditor = new CenteredContainer(120);
+		const centeredEditor = new CenteredContainer(80);
 		centeredEditor.addChild(this.editorContainer);
 		this.ui.addChild(centeredEditor);
 
-		const centeredWidgetBelow = new CenteredContainer(120);
+		const centeredWidgetBelow = new CenteredContainer(80);
 		centeredWidgetBelow.addChild(this.widgetContainerBelow);
 		this.ui.addChild(centeredWidgetBelow);
 
-		const centeredFooter = new CenteredContainer(120);
+		const centeredFooter = new CenteredContainer(80);
 		centeredFooter.addChild(this.footer);
 		this.footerWrapper = centeredFooter;
 		this.ui.addChild(centeredFooter);
@@ -759,25 +763,31 @@ export class InteractiveMode {
 		await this.init();
 
 		// Start version check asynchronously
-		checkForNewPiVersion(this.version).then((newRelease) => {
-			if (newRelease) {
-				this.showNewVersionNotification(newRelease);
-			}
-		});
+		checkForNewVersion(this.version)
+			.then((newRelease) => {
+				if (newRelease) {
+					this.showNewVersionNotification(newRelease);
+				}
+			})
+			.catch(() => undefined);
 
 		// Start package update check asynchronously
-		this.checkForPackageUpdates().then((updates) => {
-			if (updates.length > 0) {
-				this.showPackageUpdateNotification(updates);
-			}
-		});
+		this.checkForPackageUpdates()
+			.then((updates) => {
+				if (updates.length > 0) {
+					this.showPackageUpdateNotification(updates);
+				}
+			})
+			.catch(() => undefined);
 
 		// Check tmux keyboard setup asynchronously
-		this.checkTmuxKeyboardSetup().then((warning) => {
-			if (warning) {
-				this.showWarning(warning);
-			}
-		});
+		this.checkTmuxKeyboardSetup()
+			.then((warning) => {
+				if (warning) {
+					this.showWarning(warning);
+				}
+			})
+			.catch(() => undefined);
 
 		// Show startup warnings
 		const { migratedProviders, modelFallbackMessage, initialMessage, initialImages, initialMessages } = this.options;
@@ -831,7 +841,7 @@ export class InteractiveMode {
 	}
 
 	private async checkForPackageUpdates(): Promise<string[]> {
-		if (process.env.PI_OFFLINE) {
+		if (getEnvFlag("OFFLINE")) {
 			return [];
 		}
 
@@ -900,49 +910,13 @@ export class InteractiveMode {
 	 * Only shows new entries since last seen version, skips for resumed sessions.
 	 */
 	private getChangelogForDisplay(): string | undefined {
-		// Skip changelog for resumed/continued sessions (already have messages)
-		if (this.session.state.messages.length > 0) {
-			return undefined;
-		}
-
-		const lastVersion = this.settingsManager.getLastChangelogVersion();
-		const changelogPath = getChangelogPath();
-		const entries = parseChangelog(changelogPath);
-
-		if (!lastVersion) {
-			// Fresh install - record the version, send telemetry, don't show changelog
-			this.settingsManager.setLastChangelogVersion(VERSION);
-			this.reportInstallTelemetry(VERSION);
-			return undefined;
-		}
-
-		const newEntries = getNewEntries(entries, lastVersion);
-		if (newEntries.length > 0) {
-			this.settingsManager.setLastChangelogVersion(VERSION);
-			this.reportInstallTelemetry(VERSION);
-			return newEntries.map((e) => normalizeChangelogLinks(e.content, e)).join("\n\n");
-		}
-
+		// Changelog display disabled
 		return undefined;
 	}
 
-	private reportInstallTelemetry(version: string): void {
-		if (process.env.PI_OFFLINE) {
-			return;
-		}
-
-		if (!isInstallTelemetryEnabled(this.settingsManager)) {
-			return;
-		}
-
-		void fetch(`https://pi.dev/api/report-install?version=${encodeURIComponent(version)}`, {
-			headers: {
-				"User-Agent": getPiUserAgent(version),
-			},
-			signal: AbortSignal.timeout(5000),
-		})
-			.then(() => undefined)
-			.catch(() => undefined);
+	private reportInstallTelemetry(_version: string): void {
+		// Install telemetry removed — Misul Terminal does not phone home.
+		// Telemetry setting is still respected for provider attribution headers.
 	}
 
 	private getMarkdownThemeWithSettings(): MarkdownTheme {
@@ -1721,15 +1695,10 @@ export class InteractiveMode {
 		return this.workingMessage ?? this.defaultWorkingMessage;
 	}
 
-	private createWorkingLoader(): Loader {
-		return new Loader(
-			this.ui,
-			(spinner) => theme.fg("accent", spinner),
-			(text) => theme.fg("muted", text),
-			this.getWorkingLoaderMessage(),
-			this.workingIndicatorOptions,
-			true, // show live elapsed time on the working spinner
-		);
+	private createWorkingLoader(): DotsLoader {
+		const loader = new DotsLoader(() => this.ui.requestRender());
+		loader.start();
+		return loader;
 	}
 
 	private stopWorkingLoader(): void {
@@ -1755,9 +1724,7 @@ export class InteractiveMode {
 		this.ui.requestRender();
 	}
 
-	private setWorkingIndicator(options?: LoaderIndicatorOptions): void {
-		this.workingIndicatorOptions = options;
-		this.loadingAnimation?.setIndicator(options);
+	private setWorkingIndicator(_options?: LoaderIndicatorOptions): void {
 		this.ui.requestRender();
 	}
 
@@ -1848,9 +1815,6 @@ export class InteractiveMode {
 		this.workingMessage = undefined;
 		this.workingVisible = true;
 		this.setWorkingIndicator();
-		if (this.loadingAnimation) {
-			this.loadingAnimation.setMessage(`${this.defaultWorkingMessage} (${keyText("app.interrupt")} to interrupt)`);
-		}
 		this.setHiddenThinkingLabel();
 	}
 
@@ -2023,9 +1987,6 @@ export class InteractiveMode {
 			setStatus: (key, text) => this.setExtensionStatus(key, text),
 			setWorkingMessage: (message) => {
 				this.workingMessage = message;
-				if (this.loadingAnimation) {
-					this.loadingAnimation.setMessage(message ?? this.defaultWorkingMessage);
-				}
 			},
 			setWorkingVisible: (visible) => this.setWorkingVisible(visible),
 			setWorkingIndicator: (options) => this.setWorkingIndicator(options),
@@ -2492,6 +2453,9 @@ export class InteractiveMode {
 		// Chat cursor navigation: up arrow at the top of an empty editor enters chat-cursor mode
 		this.defaultEditor.onNavigateUpFromTop = () => this.enterChatCursorMode();
 		this.defaultEditor.onChatCursorKey = (data: string) => this.handleChatCursorKey(data);
+
+		// Mouse click support: clicking a collapsible header toggles it
+		this.setupMouseListener();
 	}
 
 	/**
@@ -2500,6 +2464,71 @@ export class InteractiveMode {
 	 */
 	private getChatCollapsibleItems(): CollapsibleItem[] {
 		return collectCollapsibleItems(this.chatContainer.children);
+	}
+
+	/**
+	 * Register a mouse listener that toggles collapsible blocks (thinking
+	 * traces, tool calls) when their header line is clicked.
+	 *
+	 * CollapsibleHeader renders lines like " Thinking  −" or " bash  +"
+	 * (with ANSI styling). The marker uses − (U+2212) or +, which is
+	 * distinctive enough to identify header lines in the rendered output.
+	 */
+	private setupMouseListener(): void {
+		this.ui.addMouseListener((event) => {
+			if (process.env.MISUL_MOUSE_DEBUG) {
+				fs.appendFileSync("/tmp/misul-mouse.log", `LISTENER: type=${event.type} button=${event.button} col=${event.col} row=${event.row}\n`);
+			}
+			if (event.type !== "press") return;
+
+			const lineIndex = this.ui.terminalRowToLineIndex(event.row);
+			if (process.env.MISUL_MOUSE_DEBUG) {
+				fs.appendFileSync("/tmp/misul-mouse.log", `  lineIndex=${lineIndex}\n`);
+			}
+			if (lineIndex < 0) return;
+
+			const items = this.getChatCollapsibleItems();
+			if (items.length === 0) return;
+
+			const tuiLines = this.ui.getRenderedLines();
+			const clickedLine = tuiLines[lineIndex];
+			if (!clickedLine) return;
+
+			// Strip ANSI escape codes to check the visible content
+			const stripped = clickedLine.replace(/\x1b\[[0-9;]*m/g, "").replace(/\x1b\][^\x07]*\x07/g, "");
+
+			if (process.env.MISUL_MOUSE_DEBUG) {
+				fs.appendFileSync("/tmp/misul-mouse.log", `  stripped=${JSON.stringify(stripped)}\n`);
+			}
+
+			// CollapsibleHeader pattern: " {label}  {−|+}"
+			// The − is U+2212 (MINUS SIGN), very unlikely in regular text
+			if (!/^\s+\S.+\s{2}[−+]\s*$/.test(stripped)) return;
+
+			// Count how many header lines appear before (and including) the
+			// clicked line to determine which collapsible item was clicked.
+			let headerIndex = -1;
+			for (let i = 0; i <= lineIndex; i++) {
+				const line = tuiLines[i];
+				if (!line) continue;
+				const s = line.replace(/\x1b\[[0-9;]*m/g, "").replace(/\x1b\][^\x07]*\x07/g, "");
+				if (/^\s+\S.+\s{2}[−+]\s*$/.test(s)) {
+					headerIndex++;
+				}
+			}
+
+			if (process.env.MISUL_MOUSE_DEBUG) {
+				fs.appendFileSync("/tmp/misul-mouse.log", `  headerIndex=${headerIndex} items=${items.length}\n`);
+			}
+
+			if (headerIndex >= 0 && headerIndex < items.length) {
+				items[headerIndex].setExpanded(!items[headerIndex].expanded);
+				this.ui.requestRender();
+				return { consume: true };
+			}
+
+			return undefined;
+		});
 	}
 
 	/** Enter chat-cursor mode: select the last collapsible block (closest to the editor). */
@@ -2585,7 +2614,7 @@ export class InteractiveMode {
 			// Write to temp file
 			const tmpDir = os.tmpdir();
 			const ext = extensionForImageMimeType(image.mimeType) ?? "png";
-			const fileName = `pi-clipboard-${crypto.randomUUID()}.${ext}`;
+			const fileName = `misul-clipboard-${crypto.randomUUID()}.${ext}`;
 			const filePath = path.join(tmpDir, fileName);
 			fs.writeFileSync(filePath, Buffer.from(image.bytes));
 
@@ -2715,6 +2744,17 @@ export class InteractiveMode {
 				await this.handleCompactCommand(customInstructions);
 				return;
 			}
+			if (text === "/goal" || text.startsWith("/goal ")) {
+				const goalText = text.startsWith("/goal ") ? text.slice(6).trim() : "";
+				this.editor.setText("");
+				await this.handleGoalCommand(goalText);
+				return;
+			}
+			if (text === "/reality-check") {
+				this.editor.setText("");
+				await this.handleRealityCheckCommand();
+				return;
+			}
 			if (text === "/reload") {
 				this.editor.setText("");
 				await this.handleReloadCommand();
@@ -2839,6 +2879,12 @@ export class InteractiveMode {
 			case "session_info_changed":
 				this.updateTerminalTitle();
 				this.footer.invalidate();
+				this.ui.requestRender();
+				break;
+
+			case "model_select":
+				this.footer.invalidate();
+				this.updateEditorBorderColor();
 				this.ui.requestRender();
 				break;
 
@@ -3387,7 +3433,7 @@ export class InteractiveMode {
 			new Text(
 				theme.fg(
 					"warning",
-					"This project is not trusted. Project .pi resources and packages are ignored. Use /trust to save a trust decision, then restart pi.",
+					"This project is not trusted. Project .misul resources and packages are ignored. Use /trust to save a trust decision, then restart Misul.",
 				),
 				1,
 				0,
@@ -3514,7 +3560,7 @@ export class InteractiveMode {
 		try {
 			this.ui.stop();
 		} catch {}
-		console.error("pi exiting due to uncaughtException:");
+		console.error("Misul exiting due to uncaughtException:");
 		console.error(error);
 		process.exit(1);
 	}
@@ -3561,7 +3607,7 @@ export class InteractiveMode {
 
 		// Restore the terminal before the process dies on any uncaught throw.
 		// Without this, an unhandled exception from extension code (or anywhere
-		// in pi) leaves the terminal in raw mode with no cursor.
+		// in Misul) leaves the terminal in raw mode with no cursor.
 		const uncaughtExceptionHandler = (error: Error) => this.uncaughtCrash(error);
 		process.prependListener("uncaughtException", uncaughtExceptionHandler);
 		this.signalCleanupHandlers.push(() => process.off("uncaughtException", uncaughtExceptionHandler));
@@ -3721,7 +3767,7 @@ export class InteractiveMode {
 		}
 
 		const currentText = this.editor.getExpandedText?.() ?? this.editor.getText();
-		const tmpFile = path.join(os.tmpdir(), `pi-editor-${Date.now()}.pi.md`);
+		const tmpFile = path.join(os.tmpdir(), `misul-editor-${Date.now()}.misul.md`);
 
 		try {
 			// Write current content to temp file
@@ -3790,7 +3836,7 @@ export class InteractiveMode {
 		this.ui.requestRender();
 	}
 
-	showNewVersionNotification(release: LatestPiRelease): void {
+	showNewVersionNotification(release: LatestRelease): void {
 		const action = theme.fg("accent", `${APP_NAME} update`);
 		const updateInstruction = theme.fg("muted", `New version ${release.version} is available. Run `) + action;
 		const changelogLine =
@@ -4319,7 +4365,7 @@ export class InteractiveMode {
 					trustStore.setMany(selection.updates);
 					done();
 					this.showStatus(
-						`Saved trust decision: ${selection.trusted ? "trusted" : "untrusted"}. Restart pi for this to take effect.`,
+						`Saved trust decision: ${selection.trusted ? "trusted" : "untrusted"}. Restart Misul for this to take effect.`,
 					);
 				},
 				onCancel: () => {
@@ -5879,6 +5925,128 @@ export class InteractiveMode {
 		} catch {
 			// Ignore, will be emitted as an event
 		}
+	}
+
+	private async handleGoalCommand(goalText: string): Promise<void> {
+		if (!goalText.trim()) {
+			this.showWarning("Usage: /goal <description of what you want the agent to accomplish>");
+			return;
+		}
+
+		const model = this.session.agent.state.model;
+		if (!model) {
+			this.showWarning("No model selected. Use /model to select one.");
+			return;
+		}
+
+		const cwd = this.sessionManager.getCwd();
+		const guidelines = this.session.systemPrompt;
+		const abortController = new AbortController();
+
+		// Esc interrupts the goal loop. Save and restore the previous handler.
+		const previousEscape = this.defaultEditor.onEscape;
+		this.defaultEditor.onEscape = () => {
+			abortController.abort();
+		};
+
+		this.showWarning(`Goal mode: "${goalText.slice(0, 80)}${goalText.length > 80 ? "..." : ""}" (Esc to stop)`);
+
+		try {
+			const result = await runGoalLoop({
+				goal: goalText,
+				guidelines,
+				model,
+				cwd,
+				signal: abortController.signal,
+				prompt: (text) => this.session.prompt(text),
+				getLastResponse: () => {
+					const messages = this.session.agent.state.messages;
+					for (let i = messages.length - 1; i >= 0; i--) {
+						const msg = messages[i];
+						if (msg.role === "assistant") {
+							const content = msg.content;
+							if (Array.isArray(content)) {
+								return content
+									.filter((b): b is Extract<typeof b, { type: "text" }> => b.type === "text")
+									.map((b) => b.text)
+									.join("\n");
+							}
+						}
+					}
+					return undefined;
+				},
+				onStatus: (status) => this.showWarning(status),
+			});
+
+			if (result.achieved) {
+				this.showWarning(`Goal achieved in ${result.iterations} iterations (${result.thinkingRounds} thinking rounds).`);
+			} else {
+				this.showWarning(`Goal mode ended: ${result.finalStatus} (${result.iterations} iterations).`);
+			}
+		} catch (err) {
+			this.showWarning(`Goal mode error: ${err instanceof Error ? err.message : String(err)}`);
+		} finally {
+			this.defaultEditor.onEscape = previousEscape;
+		}
+	}
+
+	private async handleRealityCheckCommand(): Promise<void> {
+		const messages = this.session.agent.state.messages;
+		let lastResponse = "";
+		for (let i = messages.length - 1; i >= 0; i--) {
+			const msg = messages[i];
+			if (msg.role === "assistant") {
+				const content = msg.content;
+				if (Array.isArray(content)) {
+					lastResponse = content
+						.filter((b): b is Extract<typeof b, { type: "text" }> => b.type === "text")
+						.map((b) => b.text)
+						.join("\n");
+					if (lastResponse) break;
+				}
+			}
+		}
+
+		if (!lastResponse.trim()) {
+			this.showWarning("No assistant response to reality-check yet.");
+			return;
+		}
+
+		const model = this.session.agent.state.model;
+		if (!model) {
+			this.showWarning("No model selected.");
+			return;
+		}
+
+		this.showWarning("Running reality check on last response...");
+
+		const preset = getPreset("simple");
+		if (!preset) {
+			this.showWarning("Simple preset not available.");
+			return;
+		}
+
+		const cwd = this.sessionManager.getCwd();
+		const task =
+			`You are a devil's advocate. Your job is to find every flaw in the following assistant response. ` +
+			`Check for: unverified claims (did it actually read the code, or is it guessing?), sycophancy ` +
+			`(did it agree with the user instead of pushing back?), overconfidence (stating things as fact ` +
+			`that are actually uncertain), missing edge cases, and plain factual errors. Be specific. ` +
+			`Quote the exact claim and explain why it's wrong or unverified. If the response is actually ` +
+			`solid, say so and explain what you checked.\n\n` +
+			`## ASSISTANT RESPONSE TO CHECK\n${lastResponse.slice(0, 8000)}`;
+
+		const result = await runSubagent({ preset, task, model, cwd, timeoutMs: 120000 });
+		const output = result.errored
+			? `Reality check failed: ${result.errorMessage}`
+			: result.output || "Reality check produced no output.";
+
+		this.showWarning(`Reality check complete. See response below.`);
+		await this.session.prompt(
+			`A devil's advocate subagent reviewed your last response for honesty and accuracy. Here is its report. ` +
+			`Address every valid criticism. If a criticism is wrong, explain why. Do not just agree with the ` +
+			`criticism to be agreeable.\n\n## REALITY CHECK REPORT\n${output}`,
+		);
 	}
 
 	stop(): void {

@@ -210,11 +210,16 @@ export class ScopedModelsSelectorComponent extends Container implements Focusabl
 		for (let i = startIndex; i < endIndex; i++) {
 			const item = this.filteredItems[i]!;
 			const isSelected = i === this.selectedIndex;
-			const prefix = isSelected ? theme.fg("accent", "→ ") : "  ";
-			const modelText = isSelected ? theme.fg("accent", item.model.id) : item.model.id;
 			const providerBadge = theme.fg("muted", ` [${item.model.provider}]`);
 			const status = allEnabled ? "" : item.enabled ? theme.fg("success", " ✓") : theme.fg("dim", " ✗");
-			this.listContainer.addChild(new Text(`${prefix}${modelText}${providerBadge}${status}`, 0, 0));
+			let line = "";
+			if (isSelected) {
+				const content = theme.fg("accent", item.model.id) + providerBadge + status;
+				line = `  ${theme.bg("selectedBg", content)}`;
+			} else {
+				line = `  ${item.model.id}${providerBadge}${status}`;
+			}
+			this.listContainer.addChild(new Text(line, 0, 0));
 		}
 
 		// Add scroll indicator if needed
@@ -225,9 +230,12 @@ export class ScopedModelsSelectorComponent extends Container implements Focusabl
 		}
 
 		if (this.filteredItems.length > 0) {
-			const selected = this.filteredItems[this.selectedIndex];
+			const m = this.filteredItems[this.selectedIndex].model;
+			const parts = [m.name];
+			if (m.contextWindow) parts.push(`${Math.round(m.contextWindow / 1000)}k ctx`);
+			if (m.reasoning) parts.push("reasoning");
 			this.listContainer.addChild(new Spacer(1));
-			this.listContainer.addChild(new Text(theme.fg("muted", `  Model Name: ${selected.model.name}`), 0, 0));
+			this.listContainer.addChild(new Text(theme.fg("muted", `  ${parts.join("  ·  ")}`), 0, 0));
 		}
 	}
 

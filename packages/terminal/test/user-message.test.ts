@@ -8,7 +8,7 @@ const OSC133_ZONE_FINAL = "\x1b]133;C\x07";
 const BG_RESET = "\x1b[49m";
 
 describe("UserMessageComponent", () => {
-	test("renders the user message boxless (no colored background) with OSC zone markers", () => {
+	test("renders the user message with a background color and OSC zone markers", () => {
 		initTheme("dark");
 
 		const component = new UserMessageComponent("hello");
@@ -16,9 +16,13 @@ describe("UserMessageComponent", () => {
 		const joined = lines.join("\n");
 
 		expect(joined).toContain("hello");
-		expect(lines[0]).toContain(OSC133_ZONE_START);
-		expect(lines[lines.length - 1]).toContain(OSC133_ZONE_END + OSC133_ZONE_FINAL);
-		// No big colored box: no background fill/reset sequence anywhere.
-		expect(joined).not.toContain(BG_RESET);
+		// OSC start marker on the first content line (has "hello").
+		const startLine = lines.find((l) => l.includes("hello"));
+		expect(startLine).toBeDefined();
+		expect(startLine).toContain(OSC133_ZONE_START);
+		// OSC end marker also on the last content line.
+		expect(startLine).toContain(OSC133_ZONE_END + OSC133_ZONE_FINAL);
+		// User messages now have a background color fill.
+		expect(joined).toContain(BG_RESET);
 	});
 });

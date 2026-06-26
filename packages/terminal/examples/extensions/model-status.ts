@@ -4,13 +4,13 @@
  * Demonstrates the `model_select` hook which fires when the model changes
  * via /model command, Ctrl+P cycling, or session restore.
  *
- * Usage: pi -e ./model-status.ts
+ * Usage: misul -e ./model-status.ts
  */
 
 import type { ExtensionAPI } from "@misul/terminal";
 
-export default function (pi: ExtensionAPI) {
-	pi.on("model_select", async (event, ctx) => {
+export default function (api: ExtensionAPI) {
+	api.on("model_select", async (event, ctx) => {
 		const { model, previousModel, source } = event;
 
 		// Format model identifiers
@@ -23,7 +23,7 @@ export default function (pi: ExtensionAPI) {
 		}
 
 		// Update status bar with current model
-		ctx.ui.setStatus("model", `🤖 ${model.id}`);
+		ctx.ui.setStatus("model", `[AI] ${model.id}`);
 
 		// Log change details (visible in debug output)
 		console.log(`[model_select] ${prev} → ${next} (${source})`);

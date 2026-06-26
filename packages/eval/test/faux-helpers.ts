@@ -13,7 +13,7 @@ export interface FauxRig {
 	model: ReturnType<ReturnType<typeof registerFauxProvider>["getModel"]>;
 	/**
 	 * Isolated empty agent dir. Pass this to runFixture/runEvalCli so offline runs
-	 * do not discover the developer's real ~/.pi/agent extensions, which can do
+	 * do not discover the developer's real ~/.misul/agent extensions, which can do
 	 * blocking network work during load and make tests slow (perf bug P10).
 	 */
 	agentDir: string;

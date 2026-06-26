@@ -15,7 +15,7 @@ import { listModels } from "./cli/list-models.ts";
 import { createProjectTrustContext } from "./cli/project-trust.ts";
 import { selectSession } from "./cli/session-picker.ts";
 import { shouldRunFirstTimeSetup, showFirstTimeSetup, showStartupSelector } from "./cli/startup-ui.ts";
-import { ENV_SESSION_DIR, expandTildePath, getAgentDir, getPackageDir, VERSION } from "./config.ts";
+import { ENV_SESSION_DIR, expandTildePath, getAgentDir, getEnvFlag, getPackageDir, VERSION } from "./config.ts";
 import { type CreateAgentSessionRuntimeFactory, createAgentSessionRuntime } from "./core/agent-session-runtime.ts";
 import {
 	type AgentSessionRuntimeDiagnostic,
@@ -108,7 +108,7 @@ function resolveAppMode(parsed: Args, stdinIsTTY: boolean, stdoutIsTTY: boolean)
 	if (parsed.mode === "json") {
 		return "json";
 	}
-	if (parsed.print || !stdinIsTTY || !stdoutIsTTY) {
+	if (parsed.goal || parsed.print || !stdinIsTTY || !stdoutIsTTY) {
 		return "print";
 	}
 	return "interactive";
@@ -446,6 +446,10 @@ export function buildSessionOptions(
 		options.enableSubagents = true;
 	}
 
+	if (parsed.assistantPrefill !== undefined) {
+		options.assistantPrefill = parsed.assistantPrefill;
+	}
+
 	return { options, cliThinkingFromModel, diagnostics };
 }
 
@@ -469,10 +473,10 @@ export interface MainOptions {
 
 export async function main(args: string[], options?: MainOptions) {
 	resetTimings();
-	const offlineMode = args.includes("--offline") || isTruthyEnvFlag(process.env.PI_OFFLINE);
+	const offlineMode = args.includes("--offline") || getEnvFlag("OFFLINE");
 	if (offlineMode) {
-		process.env.PI_OFFLINE = "1";
-		process.env.PI_SKIP_VERSION_CHECK = "1";
+		process.env.MISUL_OFFLINE = "1";
+		process.env.MISUL_SKIP_VERSION_CHECK = "1";
 	}
 
 	if (process.platform === "win32") {
@@ -490,7 +494,7 @@ export async function main(args: string[], options?: MainOptions) {
 		if (process.platform === "win32" && exitCode === 0 && args[0] === "update") {
 			// We normally prefer process.exit(0) for package commands so bad extensions cannot keep
 			// one-shot commands alive. On Windows, Node can assert after fetch() if process.exit(0)
-			// runs during teardown; let successful `pi update` drain naturally instead.
+			// runs during teardown; let successful `misul update` drain naturally instead.
 			// https://github.com/nodejs/node/issues/56645
 			return;
 		}
@@ -628,6 +632,7 @@ export async function main(args: string[], options?: MainOptions) {
 	const resolvedSkillPaths = resolveCliPaths(cwd, parsed.skills);
 	const resolvedPromptTemplatePaths = resolveCliPaths(cwd, parsed.promptTemplates);
 	const resolvedThemePaths = resolveCliPaths(cwd, parsed.themes);
+	const resolvedAddonPaths = resolveCliPaths(cwd, parsed.addons);
 	const authStorage = AuthStorage.create();
 	const createRuntime: CreateAgentSessionRuntimeFactory = async ({
 		cwd,
@@ -689,6 +694,7 @@ export async function main(args: string[], options?: MainOptions) {
 				additionalSkillPaths: resolvedSkillPaths,
 				additionalPromptTemplatePaths: resolvedPromptTemplatePaths,
 				additionalThemePaths: resolvedThemePaths,
+				additionalAddonPaths: resolvedAddonPaths,
 				noExtensions: parsed.noExtensions,
 				noSkills: parsed.noSkills,
 				noPromptTemplates: parsed.noPromptTemplates,
@@ -826,9 +832,9 @@ export async function main(args: string[], options?: MainOptions) {
 		process.exit(1);
 	}
 
-	const startupBenchmark = isTruthyEnvFlag(process.env.PI_STARTUP_BENCHMARK);
+	const startupBenchmark = getEnvFlag("STARTUP_BENCHMARK");
 	if (startupBenchmark && appMode !== "interactive") {
-		console.error(chalk.red("Error: PI_STARTUP_BENCHMARK only supports interactive mode"));
+		console.error(chalk.red("Error: MISUL_STARTUP_BENCHMARK only supports interactive mode"));
 		process.exit(1);
 	}
 
@@ -864,6 +870,47 @@ export async function main(args: string[], options?: MainOptions) {
 		await interactiveMode.run();
 	} else {
 		printTimings();
+
+		if (parsed.goal) {
+			const { runGoalLoop } = await import("./core/goal-loop.ts");
+			const model = session.agent.state.model;
+			if (!model) {
+				console.error("No model selected.");
+				process.exit(1);
+			}
+			const abortController = new AbortController();
+			process.on("SIGINT", () => abortController.abort());
+			const result = await runGoalLoop({
+				goal: parsed.goal,
+				model,
+				cwd: sessionManager.getCwd(),
+				signal: abortController.signal,
+				prompt: (text) => session.prompt(text),
+				getLastResponse: () => {
+					const msgs = session.agent.state.messages;
+					for (let i = msgs.length - 1; i >= 0; i--) {
+						const m = msgs[i];
+						if (m.role === "assistant") {
+							const content = m.content;
+							if (Array.isArray(content)) {
+								return content
+									.filter((b): b is Extract<typeof b, { type: "text" }> => b.type === "text")
+									.map((b) => b.text)
+									.join("\n");
+							}
+						}
+					}
+					return undefined;
+				},
+				onStatus: (status) => console.error(`[goal] ${status}`),
+			});
+			console.error(`[goal] ${result.finalStatus} (${result.iterations} iterations, ${result.thinkingRounds} thinking rounds)`);
+			stopThemeWatcher();
+			restoreStdout();
+			process.exitCode = result.achieved ? 0 : 1;
+			return;
+		}
+
 		const exitCode = await runPrintMode(runtime, {
 			mode: toPrintOutputMode(appMode),
 			messages: parsed.messages,

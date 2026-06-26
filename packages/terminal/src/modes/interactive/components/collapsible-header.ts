@@ -37,6 +37,10 @@ export class CollapsibleHeader implements Component {
 		return this.selected;
 	}
 
+	getLabelText(): string {
+		return this.labelText;
+	}
+
 	invalidate(): void {}
 
 	render(width: number): string[] {

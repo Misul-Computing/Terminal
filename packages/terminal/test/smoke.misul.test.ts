@@ -17,7 +17,7 @@ describe("misul cli smoke", () => {
 		expect(out.length).toBeGreaterThan(0);
 	});
 
-	it("identifies as Misul, not pi, in the --help banner", () => {
+	it("identifies as Misul, not misul, in the --help banner", () => {
 		const out = execFileSync(process.execPath, [cli, "--help"], { encoding: "utf8" }).toLowerCase();
 		expect(out).toContain("misul");
 	});

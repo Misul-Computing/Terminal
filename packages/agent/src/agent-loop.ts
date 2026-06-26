@@ -46,9 +46,13 @@ export function agentLoop(
 		},
 		signal,
 		streamFn,
-	).then((messages) => {
-		stream.end(messages);
-	});
+	)
+		.then((messages) => {
+			stream.end(messages);
+		})
+		.catch(() => {
+			stream.end([]);
+		});
 
 	return stream;
 }
@@ -85,9 +89,13 @@ export function agentLoopContinue(
 		},
 		signal,
 		streamFn,
-	).then((messages) => {
-		stream.end(messages);
-	});
+	)
+		.then((messages) => {
+			stream.end(messages);
+		})
+		.catch(() => {
+			stream.end([]);
+		});
 
 	return stream;
 }
@@ -288,6 +296,22 @@ async function streamAssistantResponse(
 	// Convert to LLM-compatible messages (AgentMessage[] → Message[])
 	const llmMessages = await config.convertToLlm(messages);
 
+	// Apply honest prefill: inject a partial assistant message so the model
+	// continues from honesty-framing text. Only when the last message is a
+	// user message (not a tool result, which is a tool-call continuation).
+	let prefillApplied = false;
+	if (config.assistantPrefill && llmMessages.length > 0) {
+		const last = llmMessages[llmMessages.length - 1];
+		if (last.role === "user") {
+			llmMessages.push({
+				role: "assistant",
+				content: [{ type: "text", text: config.assistantPrefill }],
+				timestamp: Date.now(),
+			} as AssistantMessage);
+			prefillApplied = true;
+		}
+	}
+
 	// Build LLM context
 	const llmContext: Context = {
 		systemPrompt: context.systemPrompt,
@@ -357,14 +381,32 @@ async function streamAssistantResponse(
 	}
 
 	const finalMessage = await response.result();
+
+	// Strip the prefill text from the response so the user never sees it.
+	// The model continues from the prefill, so its text block starts with it.
+	const cleanedMessage = prefillApplied && config.assistantPrefill
+		? stripPrefill(finalMessage, config.assistantPrefill)
+		: finalMessage;
+
 	if (addedPartial) {
-		context.messages[context.messages.length - 1] = finalMessage;
+		context.messages[context.messages.length - 1] = cleanedMessage;
 	} else {
-		context.messages.push(finalMessage);
-		await emit({ type: "message_start", message: { ...finalMessage } });
+		context.messages.push(cleanedMessage);
+		await emit({ type: "message_start", message: { ...cleanedMessage } });
 	}
-	await emit({ type: "message_end", message: finalMessage });
-	return finalMessage;
+	await emit({ type: "message_end", message: cleanedMessage });
+	return cleanedMessage;
+}
+
+/** Remove the prefill text from the first text block of the message. */
+function stripPrefill(message: AssistantMessage, prefill: string): AssistantMessage {
+	const content = message.content.map((block) => {
+		if (block.type === "text" && block.text.startsWith(prefill)) {
+			return { ...block, text: block.text.slice(prefill.length).replace(/^\s+/, "") };
+		}
+		return block;
+	});
+	return { ...message, content };
 }
 
 /**

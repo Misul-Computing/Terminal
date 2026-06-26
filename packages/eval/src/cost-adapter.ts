@@ -1,8 +1,8 @@
 /**
- * Thin adapter between pi-ai `AssistantMessage` cost fields and the cherry-picked
+ * Thin adapter between misul-ai `AssistantMessage` cost fields and the cherry-picked
  * {@link AgentRunCollector}. The collector is provider-agnostic and expects the
  * caller to extract `{ costUsd, costUnavailableReason }`; this module is the only
- * place that knows pi-ai's `usage.cost.total` shape.
+ * place that knows misul-ai's `usage.cost.total` shape.
  */
 
 import type { AssistantMessage } from "@misul/ai";

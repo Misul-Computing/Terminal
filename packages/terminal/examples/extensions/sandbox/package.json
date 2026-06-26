@@ -1,5 +1,5 @@
 {
-	"name": "pi-extension-sandbox",
+	"name": "misul-extension-sandbox",
 	"private": true,
 	"version": "1.9.5",
 	"type": "module",
@@ -8,7 +8,7 @@
 		"build": "echo 'nothing to build'",
 		"check": "echo 'nothing to check'"
 	},
-	"pi": {
+	"misul": {
 		"extensions": [
 			"./index.ts"
 		]

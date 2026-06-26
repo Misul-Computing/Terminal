@@ -13,11 +13,11 @@ describe("createAgentSession skills option", () => {
 	let skillsDir: string;
 
 	beforeEach(() => {
-		tempDir = join(tmpdir(), `pi-sdk-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+		tempDir = join(tmpdir(), `misul-sdk-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
 		skillsDir = join(tempDir, "skills", "test-skill");
 		mkdirSync(skillsDir, { recursive: true });
 
-		// Create a test skill in the pi skills directory
+		// Create a test skill in the misul skills directory
 		writeFileSync(
 			join(skillsDir, "SKILL.md"),
 			`---
@@ -60,6 +60,8 @@ This is a test skill.
 			getMemory: () => undefined,
 			getSystemPrompt: () => undefined,
 			getAppendSystemPrompt: () => [],
+			getAddons: () => [],
+			getAddonMcpServers: () => ({}),
 			extendResources: () => {},
 			reload: async () => {},
 		};
@@ -94,6 +96,8 @@ This is a test skill.
 			getMemory: () => undefined,
 			getSystemPrompt: () => undefined,
 			getAppendSystemPrompt: () => [],
+			getAddons: () => [],
+			getAddonMcpServers: () => ({}),
 			extendResources: () => {},
 			reload: async () => {},
 		};

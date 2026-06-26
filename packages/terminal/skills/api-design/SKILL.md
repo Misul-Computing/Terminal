@@ -9,7 +9,6 @@ description: >
   auth/security floor, idempotency, observability). Use whenever designing,
   building, or changing an HTTP API, endpoint, route, service, or backend
   contract — REST or RPC.
-license: MIT
 ---
 
 # API Design

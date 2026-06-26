@@ -46,15 +46,16 @@ describe("buildSystemPrompt", () => {
 			expect(prompt).toContain("- write:");
 		});
 
-		test("uses the Misul identity by default, not pi branding", () => {
+		test("uses the Misul Terminal identity by default, not misul branding", () => {
 			const prompt = buildSystemPrompt({
 				contextFiles: [],
 				skills: [],
 				cwd: process.cwd(),
 			});
 
-			expect(prompt).toContain("You are Misul, the coding agent of Misul Terminal");
-			expect(prompt).not.toContain("operating inside pi");
+			expect(prompt).toContain("You are the coding agent of Misul Terminal");
+			expect(prompt).not.toContain("You are Misul");
+			expect(prompt).not.toContain("operating inside misul");
 		});
 	});
 

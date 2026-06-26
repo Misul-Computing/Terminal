@@ -14,7 +14,7 @@ import type { createAgentSession } from "../sdk.ts";
 import type { ToolName } from "../tools/index.ts";
 
 /** Identifier of a built-in preset. */
-export type AgentName = "simple" | "deep-work";
+export type AgentName = "simple" | "deep-work" | "review";
 
 /** Orchestration strategy a preset runs under. */
 export type AgentStrategy = "single" | "deep-work";

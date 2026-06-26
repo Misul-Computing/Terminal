@@ -11,7 +11,6 @@ description: >
   redesigning any user interface — web pages, components, landing pages,
   dashboards, apps, micro-interactions/animations — or when frontend output looks
   generic, templated, or "AI-generated".
-license: MIT
 ---
 
 # Frontend Design
@@ -166,8 +165,8 @@ case, plain verbs, no filler; one element, one job.
 
 ---
 
-*Original Misul Terminal skill (MIT). Aesthetic principles informed by
-Anthropic's `frontend-design` skill (Apache-2.0); the execution scaffolding,
+*Original Misul Terminal skill. Aesthetic principles informed by
+Anthropic's `frontend-design` skill; the execution scaffolding,
 token system, and quality floor are added to make the guidance universal across
 models. The §9 micro-detail techniques are informed by Jakub Krehel's "Details
 that make interfaces feel better" (jakub.kr). No text is copied from either

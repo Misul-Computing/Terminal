@@ -1,26 +1,26 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
-	checkForNewPiVersion,
+	checkForNewVersion,
 	comparePackageVersions,
-	getLatestPiRelease,
-	getLatestPiVersion,
+	getLatestRelease,
+	getLatestVersion,
 	isNewerPackageVersion,
 } from "../src/utils/version-check.ts";
 
-const originalSkipVersionCheck = process.env.PI_SKIP_VERSION_CHECK;
-const originalOffline = process.env.PI_OFFLINE;
+const originalSkipVersionCheck = process.env.MISUL_SKIP_VERSION_CHECK;
+const originalOffline = process.env.MISUL_OFFLINE;
 
 afterEach(() => {
 	vi.unstubAllGlobals();
 	if (originalSkipVersionCheck === undefined) {
-		delete process.env.PI_SKIP_VERSION_CHECK;
+		delete process.env.MISUL_SKIP_VERSION_CHECK;
 	} else {
-		process.env.PI_SKIP_VERSION_CHECK = originalSkipVersionCheck;
+		process.env.MISUL_SKIP_VERSION_CHECK = originalSkipVersionCheck;
 	}
 	if (originalOffline === undefined) {
-		delete process.env.PI_OFFLINE;
+		delete process.env.MISUL_OFFLINE;
 	} else {
-		process.env.PI_OFFLINE = originalOffline;
+		process.env.MISUL_OFFLINE = originalOffline;
 	}
 });
 
@@ -35,16 +35,16 @@ describe("version checks", () => {
 	});
 
 	it("does not poll any release endpoint (release discovery disabled)", async () => {
-		// Misul Terminal is its own agent with no pi.dev release feed; it must never
+		// Misul Terminal is its own agent with no misul.dev release feed; it must never
 		// phone home or self-update to a foreign package. All discovery returns
 		// undefined without making a network call, regardless of what an endpoint
 		// would return.
-		const fetchMock = vi.fn(async () => Response.json({ version: "9.9.9", packageName: "@new-scope/pi" }));
+		const fetchMock = vi.fn(async () => Response.json({ version: "9.9.9", packageName: "@new-scope/misul" }));
 		vi.stubGlobal("fetch", fetchMock);
 
-		await expect(getLatestPiRelease("1.2.3")).resolves.toBeUndefined();
-		await expect(getLatestPiVersion("1.2.3")).resolves.toBeUndefined();
-		await expect(checkForNewPiVersion("1.2.2")).resolves.toBeUndefined();
+		await expect(getLatestRelease("1.2.3")).resolves.toBeUndefined();
+		await expect(getLatestVersion("1.2.3")).resolves.toBeUndefined();
+		await expect(checkForNewVersion("1.2.2")).resolves.toBeUndefined();
 		expect(fetchMock).not.toHaveBeenCalled();
 	});
 });

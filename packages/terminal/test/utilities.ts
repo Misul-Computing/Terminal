@@ -113,9 +113,6 @@ export function hasAuthForProvider(provider: string): boolean {
 	return provider in storage;
 }
 
-/** Path to the real pi agent config directory */
-export const PI_AGENT_DIR = join(homedir(), ".misul", "agent");
-
 /**
  * Get an AuthStorage instance backed by ~/.misul/agent/auth.json
  * Use this for tests that need real OAuth credentials.
@@ -223,6 +220,8 @@ export function createTestResourceLoader(options: CreateTestResourceLoaderOption
 		getMemory: () => undefined,
 		getSystemPrompt: () => undefined,
 		getAppendSystemPrompt: () => [],
+		getAddons: () => [],
+		getAddonMcpServers: () => ({}),
 		extendResources: () => {},
 		reload: async () => {},
 	};
@@ -233,7 +232,7 @@ export function createTestResourceLoader(options: CreateTestResourceLoaderOption
  * Use this for e2e tests that need real LLM calls.
  */
 export function createTestSession(options: TestSessionOptions = {}): TestSessionContext {
-	const tempDir = join(tmpdir(), `pi-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+	const tempDir = join(tmpdir(), `misul-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
 	mkdirSync(tempDir, { recursive: true });
 
 	const model = getModel("anthropic", "claude-sonnet-4-5")!;

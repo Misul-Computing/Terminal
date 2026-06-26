@@ -1,5 +1,5 @@
 /**
- * Standalone JSONL session aggregator. Folds a pi session log into a single
+ * Standalone JSONL session aggregator. Folds a misul session log into a single
  * cost/token rollup by summing assistant-message usage. Independent of the
  * SDK (no in-process state) so it can cross-check `getSessionStats()` and be
  * run over persisted session files. Tolerant of blank/partial lines so a

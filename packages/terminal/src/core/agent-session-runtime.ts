@@ -79,6 +79,7 @@ export class AgentSessionRuntime {
 	private readonly createRuntime: CreateAgentSessionRuntimeFactory;
 	private _diagnostics: AgentSessionRuntimeDiagnostic[];
 	private _modelFallbackMessage?: string;
+	private _mcpManager?: import("./mcp-client.ts").McpManager;
 
 	constructor(
 		_session: AgentSession,
@@ -172,6 +173,8 @@ export class AgentSessionRuntime {
 		});
 		this.beforeSessionInvalidate?.();
 		this.session.dispose();
+		this._mcpManager?.stopAll();
+		this._mcpManager = undefined;
 	}
 
 	private apply(result: CreateAgentSessionRuntimeResult): void {
@@ -179,6 +182,7 @@ export class AgentSessionRuntime {
 		this._services = result.services;
 		this._diagnostics = result.diagnostics;
 		this._modelFallbackMessage = result.modelFallbackMessage;
+		this._mcpManager = result.mcpManager;
 	}
 
 	private async finishSessionReplacement(withSession?: (ctx: ReplacedSessionContext) => Promise<void>): Promise<void> {

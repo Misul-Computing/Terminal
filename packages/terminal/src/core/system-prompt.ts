@@ -4,6 +4,7 @@
 
 import type { LoadedMemory } from "./memory.ts";
 import { MISUL_CONSTITUTION } from "./misul-system-prompt.ts";
+import { getDocsPath } from "../config.ts";
 import { formatSkillsForPrompt, type Skill } from "./skills.ts";
 
 export interface BuildSystemPromptOptions {
@@ -87,6 +88,7 @@ export function buildSystemPrompt(options: BuildSystemPromptOptions): string {
 		// Add date and working directory last
 		prompt += `\nCurrent date: ${date}`;
 		prompt += `\nCurrent working directory: ${promptCwd}`;
+		prompt += `\nMisul Terminal documentation: ${getDocsPath()}/ (read .md files there when modifying Misul Terminal itself)`;
 
 		return prompt;
 	}
@@ -166,6 +168,7 @@ ${guidelines}`;
 	// Add date and working directory last
 	prompt += `\nCurrent date: ${date}`;
 	prompt += `\nCurrent working directory: ${promptCwd}`;
+	prompt += `\nMisul Terminal documentation: ${getDocsPath()}/ (read .md files there when modifying Misul Terminal itself)`;
 
 	return prompt;
 }

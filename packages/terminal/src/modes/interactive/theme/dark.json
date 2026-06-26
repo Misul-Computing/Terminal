@@ -1,5 +1,5 @@
 {
-	"$schema": "https://raw.githubusercontent.com/earendil-works/pi/main/packages/coding-agent/src/modes/interactive/theme/theme-schema.json",
+	"$schema": "./theme-schema.json",
 	"name": "dark",
 	"vars": {
 		"text": "#d4d4d4",
@@ -12,7 +12,16 @@
 		"toolPendingBg": "#282828",
 		"toolSuccessBg": "#282828",
 		"toolErrorBg": "#383838",
-		"customMsgBg": "#282828"
+		"customMsgBg": "#282828",
+		"syntaxKeyword": "#c678dd",
+		"syntaxFunction": "#61afef",
+		"syntaxType": "#e5c07b",
+		"syntaxString": "#98c379",
+		"syntaxNumber": "#d19a66",
+		"syntaxComment": "#7f848e",
+		"syntaxVariable": "#e06c75",
+		"syntaxOperator": "#56b6c2",
+		"syntaxPunctuation": "#abb2bf"
 	},
 	"colors": {
 		"accent": "bright",
@@ -54,15 +63,15 @@
 		"toolDiffRemoved": "dimGray",
 		"toolDiffContext": "darkGray",
 
-		"syntaxComment": "dimGray",
-		"syntaxKeyword": "bright",
-		"syntaxFunction": "text",
-		"syntaxVariable": "text",
-		"syntaxString": "gray",
-		"syntaxNumber": "text",
-		"syntaxType": "bright",
-		"syntaxOperator": "text",
-		"syntaxPunctuation": "gray",
+		"syntaxComment": "syntaxComment",
+		"syntaxKeyword": "syntaxKeyword",
+		"syntaxFunction": "syntaxFunction",
+		"syntaxVariable": "syntaxVariable",
+		"syntaxString": "syntaxString",
+		"syntaxNumber": "syntaxNumber",
+		"syntaxType": "syntaxType",
+		"syntaxOperator": "syntaxOperator",
+		"syntaxPunctuation": "syntaxPunctuation",
 
 		"thinkingOff": "darkGray",
 		"thinkingMinimal": "dimGray",

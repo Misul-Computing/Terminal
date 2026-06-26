@@ -15,9 +15,7 @@
 			"@misul/terminal/*": ["./packages/terminal/src/*"],
 			"typebox": ["./node_modules/typebox"],
 			"@misul/tui": ["./packages/tui/src/index.ts"],
-			"@misul/tui/*": ["./packages/tui/src/*"],
-			"@earendil-works/pi-agent-old": ["./packages/agent-old/src/index.ts"],
-			"@earendil-works/pi-agent-old/*": ["./packages/agent-old/src/*"]
+			"@misul/tui/*": ["./packages/tui/src/*"]
 		}
 	},
 	"include": ["packages/*/src/**/*", "packages/*/test/**/*", "packages/terminal/examples/**/*"],

@@ -5,9 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createFindToolDefinition } from "../../../src/core/tools/find.ts";
 
 /**
- * Regression test for https://github.com/earendil-works/pi-mono/issues/3302
- *
- * The `find` tool advertises glob patterns like `src/**\/*.spec.ts`, but the
+ * Regression test: the `find` tool advertises glob patterns like `src/**\/*.spec.ts`, but the
  * default fd-backed implementation used `fd --glob <pattern>` without
  * `--full-path`, which makes fd match only against the basename. Any pattern
  * containing a `/` therefore silently returned no matches.
@@ -20,7 +18,7 @@ describe("issue #3302 find returns no results for path-based glob patterns", () 
 	let tempRoot: string;
 
 	beforeEach(() => {
-		tempRoot = mkdtempSync(join(tmpdir(), "pi-3302-"));
+		tempRoot = mkdtempSync(join(tmpdir(), "misul-3302-"));
 		mkdirSync(join(tempRoot, "some", "parent", "child"), { recursive: true });
 		mkdirSync(join(tempRoot, "src", "foo", "bar"), { recursive: true });
 		writeFileSync(join(tempRoot, "some", "parent", "child", "file.ext"), "");

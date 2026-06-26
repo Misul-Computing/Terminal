@@ -54,7 +54,7 @@ Oracle files default to auto-detected `*.test.*` / `*.spec.*`; override per fixt
 
 ## Trial semantics ("seed")
 
-The `seed` field is a **trial index, not an RNG seed**. pi-ai exposes no RNG
+The `seed` field is a **trial index, not an RNG seed**. @misul/ai exposes no RNG
 seed, so the meter cannot make runs reproducible. Variation across trials comes
 solely from provider sampling nondeterminism. With a deterministic model and no
 temperature, repeated trials are identical and the meter correctly reports no
@@ -96,5 +96,5 @@ Flags: `--seeds N`, `--fixtures a,b`, `--label name`, `--tools a,b`,
 npx vitest run
 ```
 
-Offline tests use the pi-ai faux provider (zero API cost). The live smoke test is
+Offline tests use the @misul/ai faux provider (zero API cost). The live smoke test is
 gated behind `MISUL_EVAL_LIVE` and skipped by default.

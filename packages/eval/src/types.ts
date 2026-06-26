@@ -1,6 +1,6 @@
 /** Core data shapes for the QpD eval meter. */
 
-/** Token buckets captured for a single run, mirroring pi-ai `Usage`. */
+/** Token buckets captured for a single run, mirroring misul-ai `Usage`. */
 export interface TokenUsage {
 	input: number;
 	output: number;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEEP_WORK, getPreset, listPresets, SIMPLE } from "../../src/core/subagent/presets.ts";
+import { DEEP_WORK, getPreset, listPresets, REVIEW, SIMPLE } from "../../src/core/subagent/presets.ts";
 
 describe("subagent presets", () => {
 	it("SIMPLE is a single-pass preset with write-capable tools and references ponytail", () => {
@@ -25,10 +25,11 @@ describe("subagent presets", () => {
 	it("getPreset resolves known names and rejects unknown ones", () => {
 		expect(getPreset("simple")).toBe(SIMPLE);
 		expect(getPreset("deep-work")).toBe(DEEP_WORK);
+		expect(getPreset("review")).toBe(REVIEW);
 		expect(getPreset("nope")).toBeUndefined();
 	});
 
-	it("listPresets returns both built-in presets", () => {
-		expect(listPresets().map((p) => p.name).sort()).toEqual(["deep-work", "simple"]);
+	it("listPresets returns all built-in presets", () => {
+		expect(listPresets().map((p) => p.name).sort()).toEqual(["deep-work", "review", "simple"]);
 	});
 });

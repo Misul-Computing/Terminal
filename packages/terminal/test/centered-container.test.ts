@@ -70,7 +70,7 @@ describe("CenteredContainer", () => {
 
 		const lines = c.render(121);
 
-		// width 121, contentWidth = 120, leftPad = floor((121-120)/2) = 0 -> no pad
+		// width 121, contentWidth = 120, leftPad = floor((121-120)/2) = 0
 		expect(lines[0]).toBe("w=120");
 		expect(lines[1]).toBe("x");
 	});

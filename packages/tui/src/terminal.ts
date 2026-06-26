@@ -94,12 +94,27 @@ export interface Terminal {
 }
 
 /**
+ * Mouse event from SGR mouse protocol.
+ * Row and col are 1-based terminal coordinates.
+ */
+export interface MouseEvent {
+	type: "press" | "release" | "drag" | "wheel";
+	button: number; // 0=left, 1=middle, 2=right, 64=wheel-up, 65=wheel-down
+	col: number; // 1-based
+	row: number; // 1-based
+}
+
+// SGR mouse sequence: ESC[<button;col;rowM (press/drag) or m (release)
+const SGR_MOUSE_REGEX = /^\x1b\[<(\d+);(\d+);(\d+)([Mm])$/;
+
+/**
  * Real terminal using process.stdin/stdout
  */
 export class ProcessTerminal implements Terminal {
 	private wasRaw = false;
 	private inputHandler?: (data: string) => void;
 	private resizeHandler?: () => void;
+	public mouseHandler?: (event: MouseEvent) => void;
 	private _kittyProtocolActive = false;
 	private _modifyOtherKeysActive = false;
 	private keyboardProtocolPushed = false;
@@ -109,7 +124,7 @@ export class ProcessTerminal implements Terminal {
 	private stdinDataHandler?: (data: string) => void;
 	private progressInterval?: ReturnType<typeof setInterval>;
 	private writeLogPath = (() => {
-		const env = process.env.PI_TUI_WRITE_LOG || "";
+		const env = process.env.MISUL_TUI_WRITE_LOG || "";
 		if (!env) return "";
 		try {
 			if (fs.statSync(env).isDirectory()) {
@@ -145,6 +160,14 @@ export class ProcessTerminal implements Terminal {
 
 		// Enable bracketed paste mode - terminal will wrap pastes in \x1b[200~ ... \x1b[201~
 		process.stdout.write("\x1b[?2004h");
+
+		// Enable SGR mouse mode (1006) + click tracking (1000).
+		// Mode 1000 reports button press/release only, NOT drag motion.
+		// This preserves native text selection (drag is not captured).
+		// Wheel events (button 64/65) are captured and handled in-app
+		// for internal scrolling. Shift+wheel bypasses mouse tracking for
+		// native terminal scrollback in most terminals.
+		process.stdout.write("\x1b[?1006h\x1b[?1000h");
 
 		// Set up resize handler immediately
 		process.stdout.on("resize", this.resizeHandler);
@@ -307,6 +330,39 @@ export class ProcessTerminal implements Terminal {
 	}
 
 	private forwardInputSequence(sequence: string): void {
+		// Check for SGR mouse sequence before keyboard handling
+		const mouseMatch = sequence.match(SGR_MOUSE_REGEX);
+		if (mouseMatch) {
+			const button = Number.parseInt(mouseMatch[1]!, 10);
+			const col = Number.parseInt(mouseMatch[2]!, 10);
+			const row = Number.parseInt(mouseMatch[3]!, 10);
+			const isRelease = mouseMatch[4] === "m";
+			// SGR button encoding: 0=left, 1=middle, 2=right, 3=release(legacy)
+			// bits: +8=ctrl, +16=alt, +32=shift. For drag, button has +32.
+			// Wheel: button 64=scroll up, 65=scroll down (always press+release pair).
+			const isWheel = button === 64 || button === 65;
+			const lowButton = isWheel ? button : button % 3;
+			const type: MouseEvent["type"] = isWheel
+				? "wheel"
+				: isRelease
+					? "release"
+					: button >= 32 ? "drag" : "press";
+			if (process.env.MISUL_MOUSE_DEBUG) {
+				fs.appendFileSync("/tmp/misul-mouse.log", `MOUSE: type=${type} button=${lowButton} col=${col} row=${row} raw=${JSON.stringify(sequence)} handler=${this.mouseHandler ? "yes" : "no"}\n`);
+			}
+			if (!this.mouseHandler) return;
+			// Forward left-click press/release and wheel events.
+			if (lowButton === 0 || isWheel) {
+				this.mouseHandler({ type, button: lowButton, col, row });
+			}
+			return;
+		}
+
+		// Debug log for non-mouse sequences that look like they might be mouse-related
+		if (process.env.MISUL_MOUSE_DEBUG && sequence.startsWith("\x1b[<")) {
+			fs.appendFileSync("/tmp/misul-mouse.log", `NON-MATCH MOUSE-LIKE: ${JSON.stringify(sequence)}\n`);
+		}
+
 		if (!this.inputHandler) return;
 		const isAppleTerminal = sequence === "\r" && isAppleTerminalSession();
 		const input = normalizeAppleTerminalInput(
@@ -410,6 +466,9 @@ export class ProcessTerminal implements Terminal {
 
 		// Disable bracketed paste mode
 		process.stdout.write("\x1b[?2004l");
+
+		// Disable mouse tracking
+		process.stdout.write("\x1b[?1000l\x1b[?1006l");
 
 		const shouldDisableKittyProtocol = this.keyboardProtocolPushed || this._kittyProtocolActive;
 		this.clearKeyboardProtocolNegotiationBuffer();

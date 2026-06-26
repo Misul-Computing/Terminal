@@ -1,8 +1,8 @@
 import { isAbsolute, relative, resolve, sep } from "node:path";
-import { thinkingLevelLabel } from "@misul/ai";
 import { type Component, truncateToWidth, visibleWidth } from "@misul/tui";
 import type { AgentSession } from "../../../core/agent-session.ts";
 import { areExperimentalFeaturesEnabled } from "../../../core/experimental.ts";
+import type { ContextUsage } from "../../../core/extensions/types.ts";
 import type { ReadonlyFooterDataProvider } from "../../../core/footer-data-provider.ts";
 import { theme } from "../theme/theme.ts";
 
@@ -46,11 +46,32 @@ export function formatCwdForFooter(cwd: string, home: string | undefined): strin
 /**
  * Footer component that shows pwd, token stats, and context usage.
  * Computes token/context stats from session, gets git branch and extension statuses from provider.
+ *
+ * Token stats are cached and only recomputed when the session entry count changes,
+ * avoiding a full iteration of all session entries on every render frame.
  */
 export class FooterComponent implements Component {
 	private autoCompactEnabled = true;
 	private session: AgentSession;
 	private footerData: ReadonlyFooterDataProvider;
+
+	// Cached token stats — recomputed only when entry count changes
+	private cachedEntryCount = -1;
+	private cachedStats: {
+		totalInput: number;
+		totalOutput: number;
+		totalCacheRead: number;
+		totalCacheWrite: number;
+		totalCost: number;
+		latestCacheHitRate: number | undefined;
+		tokensPerSec: number | undefined;
+	} | undefined;
+
+	// Cached context usage — recomputed only when entry count changes.
+	// getContextUsage() walks the branch + estimates tokens from all messages,
+	// so caching it avoids O(n) work on every render frame.
+	private cachedContextUsage: ContextUsage | undefined;
+	private cachedContextUsageEntryCount = -1;
 
 	constructor(session: AgentSession, footerData: ReadonlyFooterDataProvider) {
 		this.session = session;
@@ -59,6 +80,10 @@ export class FooterComponent implements Component {
 
 	setSession(session: AgentSession): void {
 		this.session = session;
+		this.cachedEntryCount = -1;
+		this.cachedStats = undefined;
+		this.cachedContextUsage = undefined;
+		this.cachedContextUsageEntryCount = -1;
 	}
 
 	setAutoCompactEnabled(enabled: boolean): void {
@@ -66,11 +91,13 @@ export class FooterComponent implements Component {
 	}
 
 	/**
-	 * No-op: git branch caching now handled by provider.
-	 * Kept for compatibility with existing call sites in interactive-mode.
+	 * Invalidates cached stats. Called when session state changes.
 	 */
 	invalidate(): void {
-		// No-op: git branch is cached/invalidated by provider
+		this.cachedEntryCount = -1;
+		this.cachedStats = undefined;
+		this.cachedContextUsage = undefined;
+		this.cachedContextUsageEntryCount = -1;
 	}
 
 	/**
@@ -81,35 +108,100 @@ export class FooterComponent implements Component {
 		// Git watcher cleanup handled by provider
 	}
 
-	render(width: number): string[] {
-		const state = this.session.state;
+	private computeStats(): {
+		totalInput: number;
+		totalOutput: number;
+		totalCacheRead: number;
+		totalCacheWrite: number;
+		totalCost: number;
+		latestCacheHitRate: number | undefined;
+		tokensPerSec: number | undefined;
+	} {
+		const entries = this.session.sessionManager.getEntries();
+		const entryCount = entries.length;
 
-		// Calculate cumulative usage from ALL session entries (not just post-compaction messages)
+		// Return cache if entry count hasn't changed
+		if (this.cachedStats && this.cachedEntryCount === entryCount) {
+			return this.cachedStats;
+		}
+
 		let totalInput = 0;
 		let totalOutput = 0;
 		let totalCacheRead = 0;
 		let totalCacheWrite = 0;
 		let totalCost = 0;
 		let latestCacheHitRate: number | undefined;
+		let tokensPerSec: number | undefined;
 
-		for (const entry of this.session.sessionManager.getEntries()) {
+		// Only collect what we need — avoid creating intermediate arrays
+		let prevAssistant: { usage: any; timestamp: number } | undefined;
+		let lastAssistant: { usage: any; timestamp: number } | undefined;
+
+		for (const entry of entries) {
 			if (entry.type === "message" && entry.message.role === "assistant") {
-				totalInput += entry.message.usage.input;
-				totalOutput += entry.message.usage.output;
-				totalCacheRead += entry.message.usage.cacheRead;
-				totalCacheWrite += entry.message.usage.cacheWrite;
-				totalCost += entry.message.usage.cost.total;
+				const msg = entry.message;
+				totalInput += msg.usage.input;
+				totalOutput += msg.usage.output;
+				totalCacheRead += msg.usage.cacheRead;
+				totalCacheWrite += msg.usage.cacheWrite;
+				totalCost += msg.usage.cost.total;
 
 				const latestPromptTokens =
-					entry.message.usage.input + entry.message.usage.cacheRead + entry.message.usage.cacheWrite;
+					msg.usage.input + msg.usage.cacheRead + msg.usage.cacheWrite;
 				latestCacheHitRate =
-					latestPromptTokens > 0 ? (entry.message.usage.cacheRead / latestPromptTokens) * 100 : undefined;
+					latestPromptTokens > 0 ? (msg.usage.cacheRead / latestPromptTokens) * 100 : undefined;
+
+				prevAssistant = lastAssistant;
+				lastAssistant = { usage: msg.usage, timestamp: msg.timestamp };
 			}
 		}
 
+		// Calculate tokens/sec from the last two assistant messages
+		if (prevAssistant && lastAssistant) {
+			const timeDeltaMs = lastAssistant.timestamp - prevAssistant.timestamp;
+			if (timeDeltaMs > 0) {
+				tokensPerSec = (lastAssistant.usage.output / timeDeltaMs) * 1000;
+			}
+		}
+
+		const stats = {
+			totalInput,
+			totalOutput,
+			totalCacheRead,
+			totalCacheWrite,
+			totalCost,
+			latestCacheHitRate,
+			tokensPerSec,
+		};
+		this.cachedEntryCount = entryCount;
+		this.cachedStats = stats;
+		return stats;
+	}
+
+	render(width: number): string[] {
+		const state = this.session.state;
+
+		const stats = this.computeStats();
+		const {
+			totalInput,
+			totalOutput,
+			totalCacheRead,
+			totalCacheWrite,
+			totalCost,
+			latestCacheHitRate,
+			tokensPerSec,
+		} = stats;
+
 		// Calculate context usage from session (handles compaction correctly).
 		// After compaction, tokens are unknown until the next LLM response.
-		const contextUsage = this.session.getContextUsage();
+		// Cached by entry count — getContextUsage() walks the branch and
+		// estimates tokens from all messages, so we avoid O(n) work per frame.
+		const entryCount = this.cachedEntryCount; // already updated by computeStats()
+		if (this.cachedContextUsageEntryCount !== entryCount) {
+			this.cachedContextUsage = this.session.getContextUsage();
+			this.cachedContextUsageEntryCount = entryCount;
+		}
+		const contextUsage = this.cachedContextUsage;
 		const contextWindow = contextUsage?.contextWindow ?? state.model?.contextWindow ?? 0;
 		const contextPercentValue = contextUsage?.percent ?? 0;
 		const contextPercent = contextUsage?.percent !== null ? contextPercentValue.toFixed(1) : "?";
@@ -129,22 +221,8 @@ export class FooterComponent implements Component {
 			pwd = `${pwd} • ${sessionName}`;
 		}
 
-		// Build stats line
+		// Build stats line: context gauge first (leftmost), then t/s and price.
 		const statsParts = [];
-		if (totalInput) statsParts.push(`↑${formatTokens(totalInput)}`);
-		if (totalOutput) statsParts.push(`↓${formatTokens(totalOutput)}`);
-		if (totalCacheRead) statsParts.push(`R${formatTokens(totalCacheRead)}`);
-		if (totalCacheWrite) statsParts.push(`W${formatTokens(totalCacheWrite)}`);
-		if ((totalCacheRead > 0 || totalCacheWrite > 0) && latestCacheHitRate !== undefined) {
-			statsParts.push(`CH${latestCacheHitRate.toFixed(1)}%`);
-		}
-
-		// Show cost with "(sub)" indicator if using OAuth subscription
-		const usingSubscription = state.model ? this.session.modelRegistry.isUsingOAuth(state.model) : false;
-		if (totalCost || usingSubscription) {
-			const costStr = `$${totalCost.toFixed(3)}${usingSubscription ? " (sub)" : ""}`;
-			statsParts.push(costStr);
-		}
 
 		// Compact context-usage gauge + percentage, colorized by usage severity.
 		let contextPercentStr: string;
@@ -154,11 +232,11 @@ export class FooterComponent implements Component {
 			contextPercent === "?"
 				? 0
 				: Math.max(0, Math.min(gaugeWidth, Math.round((contextPercentValue / 100) * gaugeWidth)));
-		const gauge = `${"▰".repeat(filledSegments)}${"▱".repeat(gaugeWidth - filledSegments)} `;
+		const gauge = `${"▰".repeat(filledSegments)}${"▱".repeat(gaugeWidth - filledSegments)}`;
 		const contextPercentDisplay =
 			contextPercent === "?"
-				? `${gauge}?/${formatTokens(contextWindow)}${autoIndicator}`
-				: `${gauge}${contextPercent}%/${formatTokens(contextWindow)}${autoIndicator}`;
+				? `${gauge} ?/${formatTokens(contextWindow)}${autoIndicator}`
+				: `${gauge} ${contextPercent}%/${formatTokens(contextWindow)}${autoIndicator}`;
 		if (contextPercentValue > 90) {
 			contextPercentStr = theme.fg("error", contextPercentDisplay);
 		} else if (contextPercentValue > 70) {
@@ -167,14 +245,25 @@ export class FooterComponent implements Component {
 			contextPercentStr = theme.fg("accent", contextPercentDisplay);
 		}
 		statsParts.push(contextPercentStr);
+
+		if (tokensPerSec !== undefined && tokensPerSec > 0) {
+			statsParts.push(theme.fg("muted", `${tokensPerSec.toFixed(1)} t/s`));
+		}
+
+		// Show cost with "(sub)" indicator if using OAuth subscription
+		const usingSubscription = state.model ? this.session.modelRegistry.isUsingOAuth(state.model) : false;
+		if (totalCost || usingSubscription) {
+			const costStr = `$${totalCost.toFixed(3)}${usingSubscription ? " (sub)" : ""}`;
+			statsParts.push(theme.fg("muted", costStr));
+		}
 		if (areExperimentalFeaturesEnabled()) {
 			statsParts.push(`${theme.fg("dim", "•")} ${theme.bold(theme.fg("warning", "xp"))}`);
 		}
 
 		let statsLeft = statsParts.join(" ");
 
-		// Add model name on the right side, plus thinking level if model supports it
-		const modelName = state.model?.id || "no-model";
+		// Add model name on the right side.
+		const modelName = state.model?.name || state.model?.id || "no-model";
 
 		let statsLeftWidth = visibleWidth(statsLeft);
 
@@ -187,23 +276,13 @@ export class FooterComponent implements Component {
 		// Calculate available space for padding (minimum 2 spaces between stats and model)
 		const minPadding = 2;
 
-		// Add thinking level indicator if model supports reasoning
-		let rightSideWithoutProvider = modelName;
-		if (state.model?.reasoning) {
-			const thinkingLevel = state.thinkingLevel || "off";
-			rightSideWithoutProvider =
-				thinkingLevel === "off"
-					? `${modelName} • thinking off`
-					: `${modelName} • ${thinkingLevelLabel(state.model, thinkingLevel)}`;
-		}
-
 		// Prepend the provider in parentheses if there are multiple providers and there's enough room
-		let rightSide = rightSideWithoutProvider;
+		let rightSide = modelName;
 		if (this.footerData.getAvailableProviderCount() > 1 && state.model) {
-			rightSide = `(${state.model!.provider}) ${rightSideWithoutProvider}`;
+			rightSide = `(${state.model!.provider}) ${modelName}`;
 			if (statsLeftWidth + minPadding + visibleWidth(rightSide) > width) {
 				// Too wide, fall back
-				rightSide = rightSideWithoutProvider;
+				rightSide = modelName;
 			}
 		}
 
@@ -219,7 +298,7 @@ export class FooterComponent implements Component {
 			// Need to truncate right side
 			const availableForRight = width - statsLeftWidth - minPadding;
 			if (availableForRight > 0) {
-				const truncatedRight = truncateToWidth(rightSide, availableForRight, "");
+				const truncatedRight = truncateToWidth(rightSide, availableForRight, "…");
 				const truncatedRightWidth = visibleWidth(truncatedRight);
 				const padding = " ".repeat(Math.max(0, width - statsLeftWidth - truncatedRightWidth));
 				statsLine = statsLeft + padding + truncatedRight;

@@ -30,7 +30,7 @@ afterEach(() => {
 });
 
 function createTempDir(): string {
-	const dir = mkdtempSync(join(tmpdir(), "pi-startup-perf-"));
+	const dir = mkdtempSync(join(tmpdir(), "misul-startup-perf-"));
 	tempDirs.push(dir);
 	return dir;
 }
@@ -46,7 +46,7 @@ function writeTrapExtension(agentDir: string): void {
 	writeFileSync(
 		join(extDir, "trap.ts"),
 		[
-			"export default async function (pi) {",
+			"export default async function (misul) {",
 			// Emitted the instant the factory runs, BEFORE the hanging fetch — so "the
 			// extension loaded at all" is observable on stderr independent of timing.
 			'\tconsole.error("TRAP_EXTENSION_LOADED");',
@@ -81,7 +81,7 @@ function runCli(args: string[], options?: { offline?: boolean }): Promise<RunRes
 		TSX_TSCONFIG_PATH: resolve(__dirname, "../../../tsconfig.json"),
 	};
 	if (options?.offline) {
-		env.PI_OFFLINE = "1";
+		env.MISUL_OFFLINE = "1";
 	}
 
 	const start = Date.now();

@@ -9,7 +9,6 @@ description: >
   output encoding, authn/authz, secrets, crypto, dependencies, and safe failure.
   Use whenever writing or reviewing code that handles user input, queries, auth,
   secrets, file paths, web requests, serialization, or any untrusted data.
-license: MIT
 ---
 
 # Secure Coding

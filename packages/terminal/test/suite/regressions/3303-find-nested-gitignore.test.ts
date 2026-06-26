@@ -5,9 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createFindToolDefinition } from "../../../src/core/tools/find.ts";
 
 /**
- * Regression test for https://github.com/earendil-works/pi-mono/issues/3303
- *
- * The `find` tool previously collected every `.gitignore` under the search
+ * Regression test: the `find` tool previously collected every `.gitignore` under the search
  * path and passed them to `fd` via `--ignore-file`. fd treats `--ignore-file`
  * entries as a single global ignore source, so rules from `a/.gitignore`
  * also filtered files under sibling `b/`. The fix switches to fd's
@@ -38,7 +36,7 @@ describe("issue #3303 nested .gitignore rules leak into sibling directories", ()
 
 	describe("flat sibling case", () => {
 		beforeEach(() => {
-			tempRoot = mkdtempSync(join(tmpdir(), "pi-3303-flat-"));
+			tempRoot = mkdtempSync(join(tmpdir(), "misul-3303-flat-"));
 			mkdirSync(join(tempRoot, "a"), { recursive: true });
 			mkdirSync(join(tempRoot, "b"), { recursive: true });
 			writeFileSync(join(tempRoot, "a", ".gitignore"), "ignored.txt\n");
@@ -57,7 +55,7 @@ describe("issue #3303 nested .gitignore rules leak into sibling directories", ()
 
 	describe("deeply nested case", () => {
 		beforeEach(() => {
-			tempRoot = mkdtempSync(join(tmpdir(), "pi-3303-deep-"));
+			tempRoot = mkdtempSync(join(tmpdir(), "misul-3303-deep-"));
 			mkdirSync(join(tempRoot, "a", "deep"), { recursive: true });
 			mkdirSync(join(tempRoot, "b"), { recursive: true });
 			writeFileSync(join(tempRoot, "a", ".gitignore"), "ignored.txt\n");

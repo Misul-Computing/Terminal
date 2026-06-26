@@ -319,7 +319,7 @@ export function getSelfUpdateUnavailableInstruction(
 ): string {
 	const method = detectInstallMethod();
 	if (method === "bun-binary") {
-		return `Download from: https://github.com/earendil-works/pi-mono/releases/latest`;
+		return `Download from: https://github.com/Misul-Computing/Terminal/releases/latest`;
 	}
 	const command = getSelfUpdateCommandForMethod(method, packageName, updatePackageName, npmCommand);
 	if (command) {
@@ -352,7 +352,7 @@ export function getUpdateInstruction(packageName: string): string {
  */
 export function getPackageDir(): string {
 	// Allow override via environment variable (useful for Nix/Guix where store paths tokenize poorly)
-	const envDir = process.env.PI_PACKAGE_DIR;
+	const envDir = getEnv("PACKAGE_DIR");
 	if (envDir) {
 		return normalizePath(envDir);
 	}
@@ -450,13 +450,13 @@ export function getBundledInteractiveAssetPath(name: string): string {
 }
 
 // =============================================================================
-// App Config (from package.json piConfig)
+// App Config (from package.json misulConfig)
 // =============================================================================
 
 interface PackageJson {
 	name?: string;
 	version?: string;
-	piConfig?: {
+	misulConfig?: {
 		name?: string;
 		/** Display title (e.g. "Misul Terminal"). Falls back to name. */
 		title?: string;
@@ -472,27 +472,45 @@ try {
 	if (err.code !== "ENOENT") throw e;
 }
 
-const piConfigName: string | undefined = pkg.piConfig?.name;
+const appConfig = pkg.misulConfig;
+const configName: string | undefined = appConfig?.name;
 export const PACKAGE_NAME: string = pkg.name || "@misul/terminal";
-export const APP_NAME: string = piConfigName || "pi";
-export const APP_TITLE: string = pkg.piConfig?.title || (piConfigName ? APP_NAME : "π");
-export const CONFIG_DIR_NAME: string = pkg.piConfig?.configDir || ".misul";
+export const APP_NAME: string = configName || "misul";
+export const APP_TITLE: string = appConfig?.title || (configName ? APP_NAME : "Misul");
+export const CONFIG_DIR_NAME: string = appConfig?.configDir || ".misul";
 export const VERSION: string = pkg.version || "0.0.0";
 
-// Derived from APP_NAME, e.g. MISUL_CODING_AGENT_DIR
-export const ENV_AGENT_DIR = `${APP_NAME.toUpperCase()}_CODING_AGENT_DIR`;
-export const ENV_SESSION_DIR = `${APP_NAME.toUpperCase()}_CODING_AGENT_SESSION_DIR`;
+// Derived from APP_NAME, e.g. MISUL_TERMINAL_DIR
+export const ENV_AGENT_DIR = `${APP_NAME.toUpperCase()}_TERMINAL_DIR`;
+export const ENV_SESSION_DIR = `${APP_NAME.toUpperCase()}_TERMINAL_SESSION_DIR`;
 
 export function expandTildePath(path: string): string {
 	return normalizePath(path);
 }
 
-const DEFAULT_SHARE_VIEWER_URL = "https://pi.dev/session/";
+/**
+ * Read an environment variable with the MISUL_ prefix.
+ * Falls back to PI_ prefix for backward compatibility with the old name.
+ */
+export function getEnv(name: string): string | undefined {
+	return process.env[`MISUL_${name}`] ?? process.env[`PI_${name}`];
+}
+
+/**
+ * Read a boolean environment variable (1/true/yes) with the MISUL_ prefix.
+ */
+export function getEnvFlag(name: string): boolean {
+	const value = getEnv(name);
+	if (!value) return false;
+	return value === "1" || value.toLowerCase() === "true" || value.toLowerCase() === "yes";
+}
+
+const DEFAULT_SHARE_VIEWER_URL = "https://gist.github.com/";
 
 /** Get the share viewer URL for a gist ID */
 export function getShareViewerUrl(gistId: string): string {
-	const baseUrl = process.env.PI_SHARE_VIEWER_URL || DEFAULT_SHARE_VIEWER_URL;
-	return `${baseUrl}#${gistId}`;
+	const baseUrl = getEnv("SHARE_VIEWER_URL") || DEFAULT_SHARE_VIEWER_URL;
+	return `${baseUrl}${gistId}`;
 }
 
 // =============================================================================
