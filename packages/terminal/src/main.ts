@@ -463,9 +463,7 @@ export function buildSessionOptions(
 		options.autoReviewSubagents = parsed.autoreview || settingsManager.getAutoReviewSubagents();
 	}
 
-	// Permission mode: --permission flag overrides setting, default is "ask"
-	const permissionMode = parsed.permission ?? settingsManager.getPermissionMode() ?? "ask";
-	options.permissionMode = permissionMode;
+	// Permission gate is always on. No flag, no setting.
 
 	if (parsed.assistantPrefill !== undefined) {
 		options.assistantPrefill = parsed.assistantPrefill;

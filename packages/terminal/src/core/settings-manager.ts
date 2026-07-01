@@ -128,7 +128,6 @@ export interface Settings {
 	autoReviewSubagents?: boolean; // default: false - run autoreview after work subagents
 	addons?: string[]; // Array of addon source strings (git/npm/local) for persistent install tracking
 	addonStoreUrl?: string; // URL of the addon registry JSON; falls back to DEFAULT_ADDON_STORE_URL
-	permissionMode?: "ask" | "auto" | "plan"; // default: "ask" - permission mode for tool calls
 }
 
 /** Deep merge settings: project/overrides take precedence, nested objects merge recursively */
@@ -1009,16 +1008,6 @@ export class SettingsManager {
 
 	getAddonStoreUrl(): string | undefined {
 		return this.settings.addonStoreUrl;
-	}
-
-	getPermissionMode(): "ask" | "auto" | "plan" | undefined {
-		return this.settings.permissionMode;
-	}
-
-	setPermissionMode(mode: "ask" | "auto" | "plan"): void {
-		this.globalSettings.permissionMode = mode;
-		this.markModified("permissionMode");
-		this.save();
 	}
 
 	getExtensionPaths(): string[] {

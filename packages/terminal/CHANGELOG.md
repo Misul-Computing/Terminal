@@ -14,18 +14,16 @@ Misul Terminal — a coding agent by Misul Computing.
   background watcher). If so, a lightweight reload picks up the changes
   without restart. The prompt cache prefix stays stable when only skills
   change. No-op while streaming or compacting.
-- Permission modes: three modes for tool execution, cycled with Shift+Tab.
-  "ask" (default) asks the user in chat before risky actions. "auto" allows
-  everything. "plan" is read-only, blocking all mutations. Replaces the old
-  --auto flag and autoMode setting. Set via --permission CLI flag or
-  permissionMode setting. Risk is assessed by rules first (zero tokens):
+- Permission gate is always on. Safe operations run automatically; risky
+  actions (edits, deletes, pushes) ask the user in chat first. No flag,
+  no setting, no opt-in. Risk is assessed by rules first (zero tokens):
   reads are safe, edits are moderate, rm/git push/sudo are dangerous.
   Ambiguous cases use a lightweight model call (256 max tokens). The user
   replies in natural language; responses are interpreted by keyword
   matching first, then a lightweight model call for complex replies.
-- System prompt now tells the agent about addons, permission modes, and
-  live reload. The agent knows about `misul addon` CLI commands and can
-  install addons for the user.
+- System prompt now tells the agent about the permission gate, addons,
+  and live reload. The agent knows about `misul addon` CLI commands and
+  can install addons for the user.
 - Fix: syntax highlighting breaks on multi-line spans (strings, comments,
   template literals). ANSI codes are now applied per line so each line
   has balanced codes.

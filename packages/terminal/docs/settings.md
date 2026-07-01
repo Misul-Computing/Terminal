@@ -162,7 +162,6 @@ Keep `retry.provider.maxRetries` at `0` unless provider-level retries are explic
 | `cacheAggressiveness` | string | `"standard"` | Prompt cache breakpoint placement for Anthropic: `"off"` (no markers), `"standard"` (3 breakpoints: system, tools, last message), `"aggressive"` (4 breakpoints: adds second-to-last message). See `docs/cache-aware-design.md`. |
 | `soloMode` | boolean | `false` | Disable subagent spawning entirely. The main agent handles all work directly without delegating to `spawn_agent`. Overrides `--agent`. Also settable via `--solo` CLI flag. |
 | `autoReviewSubagents` | boolean | `false` | Run a ruthless read-only review agent after work subagents (simple, deep-work) complete. Checks git diff, build, tests, and AI tells. Emits `AUTOREVIEW: PASS` or `AUTOREVIEW: FAIL`. Also settable via `--autoreview` CLI flag. |
-| `permissionMode` | string | `"ask"` | Permission mode for tool execution: `"ask"` (agent asks before risky actions), `"auto"` (allow everything), `"plan"` (read-only, block all mutations). Also settable via `--permission` CLI flag. Cycle at runtime with Shift+Tab. |
 
 ### Terminal & Images
 

@@ -61,8 +61,6 @@ export interface Args {
 	solo?: boolean;
 	/** Run autoreview after work subagents complete. */
 	autoreview?: boolean;
-	/** Permission mode: ask (default), auto, plan */
-	permission?: "ask" | "auto" | "plan";
 	messages: string[];
 	fileArgs: string[];
 	/** Unknown flags (potentially extension flags) - map of flag name to value */
@@ -222,13 +220,6 @@ export function parseArgs(args: string[]): Args {
 			result.laplaceModel = args[++i];
 		} else if (arg === "--solo") {
 			result.solo = true;
-		} else if (arg === "--permission" && i + 1 < args.length) {
-			const mode = args[++i];
-			if (mode === "ask" || mode === "auto" || mode === "plan") {
-				result.permission = mode;
-			} else {
-				result.diagnostics.push({ type: "error", message: `Invalid --permission mode: ${mode}. Use ask, auto, or plan.` });
-			}
 		} else if (arg === "--autoreview") {
 			result.autoreview = true;
 		} else if (arg.startsWith("@")) {
@@ -316,10 +307,6 @@ ${chalk.bold("Options:")}
   --agent <name>                 Enable the chosen agent persona (simple or deep-work)
                                  and subagent delegation (the spawn_agent tool)
   --solo                         Disable subagent spawning entirely (overrides --agent)
-  --permission <mode>            Permission mode: ask (default), auto, or plan
-                                 ask: agent asks before risky actions
-                                 auto: allow everything without asking
-                                 plan: read-only, block all mutations
   --autoreview                   Run autoreview after work subagents complete
   --thinking <level>             Set thinking level: off, minimal, low, medium, high, xhigh, max
   --extension, -e <path>         Load an extension file (can be used multiple times)
