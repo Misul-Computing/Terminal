@@ -61,6 +61,8 @@ export interface Args {
 	solo?: boolean;
 	/** Run autoreview after work subagents complete. */
 	autoreview?: boolean;
+	/** Enable automode (conversational permission gate). */
+	auto?: boolean;
 	messages: string[];
 	fileArgs: string[];
 	/** Unknown flags (potentially extension flags) - map of flag name to value */
@@ -220,6 +222,8 @@ export function parseArgs(args: string[]): Args {
 			result.laplaceModel = args[++i];
 		} else if (arg === "--solo") {
 			result.solo = true;
+		} else if (arg === "--auto") {
+			result.auto = true;
 		} else if (arg === "--autoreview") {
 			result.autoreview = true;
 		} else if (arg.startsWith("@")) {
@@ -307,6 +311,7 @@ ${chalk.bold("Options:")}
   --agent <name>                 Enable the chosen agent persona (simple or deep-work)
                                  and subagent delegation (the spawn_agent tool)
   --solo                         Disable subagent spawning entirely (overrides --agent)
+  --auto                         Enable automode (conversational permission gate)
   --autoreview                   Run autoreview after work subagents complete
   --thinking <level>             Set thinking level: off, minimal, low, medium, high, xhigh, max
   --extension, -e <path>         Load an extension file (can be used multiple times)

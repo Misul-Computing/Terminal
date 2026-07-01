@@ -463,6 +463,12 @@ export function buildSessionOptions(
 		options.autoReviewSubagents = parsed.autoreview || settingsManager.getAutoReviewSubagents();
 	}
 
+	// --auto or autoMode setting: enable conversational permission gate
+	const autoMode = parsed.auto || settingsManager.getAutoMode();
+	if (autoMode) {
+		options.autoMode = true;
+	}
+
 	if (parsed.assistantPrefill !== undefined) {
 		options.assistantPrefill = parsed.assistantPrefill;
 	}

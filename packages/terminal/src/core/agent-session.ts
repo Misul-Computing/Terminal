@@ -85,6 +85,7 @@ import type { BashExecutionMessage, CustomMessage } from "./messages.ts";
 import type { ModelRegistry } from "./model-registry.ts";
 import { expandPromptTemplate, type PromptTemplate } from "./prompt-templates.ts";
 import type { ResourceExtensionPaths, ResourceLoader } from "./resource-loader.ts";
+import { needsPermission, type PermissionGateConfig } from "./permission-gate.ts";
 import type { BranchSummaryEntry, CompactionEntry, SessionManager } from "./session-manager.ts";
 import { CURRENT_SESSION_VERSION, getLatestCompactionEntry, type SessionHeader } from "./session-manager.ts";
 import { createLoopGuard, type LoopGuard, stripVolatileIds } from "./loop-guard.ts";
@@ -190,6 +191,8 @@ export interface AgentSessionConfig {
 	extensionRunnerRef?: { current?: ExtensionRunner };
 	/** Session start event metadata emitted when extensions bind to this runtime. */
 	sessionStartEvent?: SessionStartEvent;
+	/** Whether automode (conversational permission gate) is enabled. */
+	autoMode?: boolean;
 }
 
 export interface ExtensionBindings {
@@ -347,6 +350,7 @@ export class AgentSession {
 	private _allowedToolNames?: Set<string>;
 	private _excludedToolNames?: Set<string>;
 	private _baseToolsOverride?: Record<string, AgentTool>;
+	private _autoMode: boolean;
 	private _sessionStartEvent: SessionStartEvent;
 	private _extensionUIContext?: ExtensionUIContext;
 	private _extensionMode: ExtensionMode = "print";
@@ -389,6 +393,7 @@ export class AgentSession {
 		this._allowedToolNames = config.allowedToolNames ? new Set(config.allowedToolNames) : undefined;
 		this._excludedToolNames = config.excludedToolNames ? new Set(config.excludedToolNames) : undefined;
 		this._baseToolsOverride = config.baseToolsOverride;
+		this._autoMode = config.autoMode ?? false;
 		this._sessionStartEvent = config.sessionStartEvent ?? { type: "session_start", reason: "startup" };
 
 		// Always subscribe to agent events for internal handling
@@ -457,6 +462,22 @@ export class AgentSession {
 	 */
 	private _installAgentToolHooks(): void {
 		this.agent.beforeToolCall = async ({ toolCall, args }) => {
+			// Automode permission gate: check risk before extension hooks
+			if (this._autoMode) {
+				const gateConfig = await this._getPermissionGateConfig();
+				const { ask, assessment } = await needsPermission(
+					toolCall.name,
+					args as Record<string, unknown>,
+					gateConfig,
+				);
+				if (ask) {
+					return {
+						block: true,
+						reason: `I need to run: ${assessment.summary}. Please confirm before I proceed.`,
+					};
+				}
+			}
+
 			const runner = this._extensionRunner;
 			if (!runner.hasHandlers("tool_call")) {
 				return undefined;
@@ -866,6 +887,38 @@ export class AgentSession {
 	/** Current model (may be undefined if not yet selected) */
 	get model(): Model<any> | undefined {
 		return this.agent.state.model;
+	}
+
+	/** Whether automode (conversational permission gate) is active */
+	get autoMode(): boolean {
+		return this._autoMode;
+	}
+
+	/** Toggle automode at runtime */
+	setAutoMode(enabled: boolean): void {
+		this._autoMode = enabled;
+	}
+
+	/** Build the permission gate config from current session state */
+	private async _getPermissionGateConfig(): Promise<PermissionGateConfig> {
+		const model = this.model;
+		let apiKey: string | undefined;
+		let headers: Record<string, string> | undefined;
+		if (model) {
+			const auth = await this._modelRegistry.getApiKeyAndHeaders(model);
+			if (auth.ok) {
+				apiKey = auth.apiKey;
+				headers = auth.headers;
+			}
+		}
+		return {
+			enabled: this._autoMode,
+			model,
+			apiKey,
+			headers,
+			maxTokens: 256,
+			timeoutMs: 10000,
+		};
 	}
 
 	/** Current thinking level */

@@ -98,6 +98,8 @@ export interface CreateAgentSessionOptions {
 	sessionStartEvent?: SessionStartEvent;
 	/** Override the assistant prefill text. Empty string disables prefill. */
 	assistantPrefill?: string;
+	/** Enable automode (conversational permission gate). */
+	autoMode?: boolean;
 }
 
 /** Result from createAgentSession */
@@ -439,6 +441,7 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 		excludedToolNames,
 		extensionRunnerRef,
 		sessionStartEvent: options.sessionStartEvent,
+		autoMode: options.autoMode,
 	});
 	const extensionsResult = resourceLoader.getExtensions();
 

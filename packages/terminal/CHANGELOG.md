@@ -8,6 +8,13 @@ Misul Terminal — a coding agent by Misul Computing.
 
 ### Added
 
+- Automode: conversational permission gate. When enabled via `--auto` or
+  the `autoMode` setting, the agent asks in chat before risky actions.
+  Risk is assessed by rules first (zero tokens): reads are safe, edits
+  are moderate, rm/git push/sudo are dangerous. Ambiguous cases use a
+  lightweight model call (256 max tokens) to decide. The user replies in
+  natural language; responses are interpreted by keyword matching first,
+  then a lightweight model call for complex replies.
 - Addon install/remove/list/search/store CLI commands. Addons can be
   installed from git, npm, or local sources and are tracked in settings.
 - Addon store registry with configurable URL. Search and browse

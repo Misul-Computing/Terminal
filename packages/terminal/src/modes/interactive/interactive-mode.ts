@@ -4123,6 +4123,7 @@ export class InteractiveMode {
 					cacheAggressiveness: this.settingsManager.getCacheAggressiveness(),
 					soloMode: this.settingsManager.getSoloMode(),
 					autoReviewSubagents: this.settingsManager.getAutoReviewSubagents(),
+					autoMode: this.settingsManager.getAutoMode(),
 				},
 				{
 					onAutoCompactChange: (enabled) => {
@@ -4258,6 +4259,11 @@ export class InteractiveMode {
 					onAutoReviewSubagentsChange: (enabled) => {
 						this.settingsManager.setAutoReviewSubagents(enabled);
 						this.showStatus("Autoreview subagents: " + (enabled ? "on" : "off"));
+					},
+					onAutoModeChange: (enabled) => {
+						this.settingsManager.setAutoMode(enabled);
+						this.session.setAutoMode(enabled);
+						this.showStatus("Auto mode: " + (enabled ? "on" : "off"));
 					},
 					onCancel: () => {
 						done();

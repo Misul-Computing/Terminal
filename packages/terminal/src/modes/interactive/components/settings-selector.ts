@@ -73,6 +73,7 @@ export interface SettingsConfig {
 	cacheAggressiveness: CacheAggressivenessSetting;
 	soloMode: boolean;
 	autoReviewSubagents: boolean;
+	autoMode: boolean;
 }
 
 export interface SettingsCallbacks {
@@ -105,6 +106,7 @@ export interface SettingsCallbacks {
 	onCacheAggressivenessChange: (value: CacheAggressivenessSetting) => void;
 	onSoloModeChange: (enabled: boolean) => void;
 	onAutoReviewSubagentsChange: (enabled: boolean) => void;
+	onAutoModeChange: (enabled: boolean) => void;
 	onCancel: () => void;
 }
 
@@ -377,6 +379,13 @@ export class SettingsSelectorComponent extends Container {
 				values: ["true", "false"],
 			},
 			{
+				id: "auto-mode",
+				label: "Auto mode",
+				description: "Conversational permission gate. The agent asks in chat before risky actions. Safe operations run automatically.",
+				currentValue: config.autoMode ? "true" : "false",
+				values: ["true", "false"],
+			},
+			{
 				id: "thinking",
 				label: "Thinking level",
 				description: "Reasoning depth for thinking-capable models",
@@ -620,6 +629,9 @@ export class SettingsSelectorComponent extends Container {
 						break;
 					case "autoreview-subagents":
 						callbacks.onAutoReviewSubagentsChange(newValue === "true");
+						break;
+					case "auto-mode":
+						callbacks.onAutoModeChange(newValue === "true");
 						break;
 				}
 			},
