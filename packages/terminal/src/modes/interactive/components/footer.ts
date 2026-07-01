@@ -247,23 +247,6 @@ export class FooterComponent implements Component {
 		}
 		statsParts.push(contextPercentStr);
 
-		if (latestCacheHitRate !== undefined && latestCacheHitRate > 0) {
-			// Color the hit rate: warning below 70% (design doc target), muted otherwise.
-			const hitColor = latestCacheHitRate < 70 ? "warning" : "muted";
-			const cacheLabel = `cache ${latestCacheHitRate.toFixed(0)}%`;
-			// Append absolute read/write counts when there is room (compact format).
-			if (totalCacheRead > 0 || totalCacheWrite > 0) {
-				statsParts.push(
-					`${theme.fg(hitColor, cacheLabel)} ${theme.fg("dim", `r${formatTokens(totalCacheRead)} w${formatTokens(totalCacheWrite)}`)}`,
-				);
-			} else {
-				statsParts.push(theme.fg(hitColor, cacheLabel));
-			}
-		}
-
-		if (tokensPerSec !== undefined && tokensPerSec > 0) {
-			statsParts.push(theme.fg("muted", `${tokensPerSec.toFixed(1)} t/s`));
-		}
 
 		// Show cost with "(sub)" indicator if using OAuth subscription
 		const usingSubscription = state.model ? this.session.modelRegistry.isUsingOAuth(state.model) : false;

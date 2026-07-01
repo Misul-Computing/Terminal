@@ -431,12 +431,14 @@ let BUILTIN_THEMES: Record<string, ThemeJson> | undefined;
 function getBuiltinThemes(): Record<string, ThemeJson> {
 	if (!BUILTIN_THEMES) {
 		const themesDir = getThemesDir();
-		const darkPath = path.join(themesDir, "dark.json");
-		const lightPath = path.join(themesDir, "light.json");
-		BUILTIN_THEMES = {
-			dark: JSON.parse(fs.readFileSync(darkPath, "utf-8")) as ThemeJson,
-			light: JSON.parse(fs.readFileSync(lightPath, "utf-8")) as ThemeJson,
-		};
+		const themesPath = path.join(themesDir, "themes.json");
+		const raw = JSON.parse(fs.readFileSync(themesPath, "utf-8")) as Record<string, ThemeJson>;
+		// Inject the key as the theme name since the consolidated file
+		// doesn't repeat it inside each theme object.
+		BUILTIN_THEMES = {};
+		for (const [key, theme] of Object.entries(raw)) {
+			BUILTIN_THEMES[key] = { ...theme, name: key };
+		}
 	}
 	return BUILTIN_THEMES;
 }
@@ -464,7 +466,7 @@ export function getAvailableThemesWithPaths(): ThemeInfo[] {
 
 	// Built-in themes
 	for (const name of Object.keys(getBuiltinThemes())) {
-		addTheme({ name, path: path.join(themesDir, `${name}.json`) });
+		addTheme({ name, path: path.join(themesDir, "themes.json") });
 	}
 
 	// Custom themes
@@ -531,7 +533,7 @@ function parseThemeJson(label: string, json: unknown): ThemeJson {
 				.map((color) => `  - ${color}`)
 				.join("\n");
 			errorMessage += '\n\nPlease add these colors to your theme\'s "colors" object.';
-			errorMessage += "\nSee the built-in themes (dark.json, light.json) for reference values.";
+			errorMessage += "\nSee the built-in themes (themes.json) for reference values.";
 		}
 		if (otherErrors.length > 0) {
 			errorMessage += `\n\nOther errors:\n${otherErrors.join("\n")}`;
@@ -1195,7 +1197,8 @@ export function getSelectListTheme(): SelectListTheme {
 	return {
 		selectedPrefix: (text: string) => theme.fg("accent", text),
 		selectedText: (text: string) => theme.fg("accent", text),
-		description: (text: string) => theme.fg("muted", text),
+		unselectedText: (text: string) => theme.fg("muted", text),
+		description: (text: string) => theme.fg("dim", text),
 		scrollInfo: (text: string) => theme.fg("muted", text),
 		noMatch: (text: string) => theme.fg("muted", text),
 	};
