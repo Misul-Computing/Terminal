@@ -82,7 +82,7 @@ import { defaultModelPerProvider, findExactModelReferenceMatch, resolveModelScop
 import { DefaultPackageManager } from "../../core/package-manager.ts";
 import { BUILT_IN_PROVIDER_DISPLAY_NAMES } from "../../core/provider-display-names.ts";
 import type { ResourceDiagnostic } from "../../core/resource-loader.ts";
-import { ResourceWatcher } from "../../core/resource-watcher.ts";
+import { ResourceChangeChecker, type ResourceDirs } from "../../core/resource-watcher.ts";
 import { formatMissingSessionCwdPrompt, MissingSessionCwdError } from "../../core/session-cwd.ts";
 import { type SessionContext, SessionManager } from "../../core/session-manager.ts";
 import { BUILTIN_SLASH_COMMANDS } from "../../core/slash-commands.ts";
@@ -291,7 +291,6 @@ export class InteractiveMode {
 	private keybindings: KeybindingsManager;
 	private version: string;
 	private isInitialized = false;
-	private resourceWatcher: ResourceWatcher | undefined;
 	private onInputCallback?: (text: string) => void;
 	private pendingUserInputs: string[] = [];
 	private loadingAnimation: DotsLoader | undefined = undefined;
@@ -1557,43 +1556,28 @@ export class InteractiveMode {
 		this.setupExtensionShortcuts(extensionRunner);
 		this.showLoadedResources({ force: false, showDiagnosticsWhenQuiet: true });
 		this.showStartupNoticesIfNeeded();
-		this.startResourceWatcher();
+		this.initResourceChecker();
 	}
 
 	/**
-	 * Start watching resource directories for live reload.
-	 * When skills, extensions, prompts, or addons change on disk, the session
-	 * picks up the changes without a full reload or cache invalidation.
+	 * Initialize the resource change checker for live reload.
+	 * No background watcher - the checker runs on demand after each tool call
+	 * via the agent session's afterToolCall hook.
 	 */
-	private startResourceWatcher(): void {
-		this.resourceWatcher?.stop();
+	private initResourceChecker(): void {
 		const agentDir = getAgentDir();
 		const cwd = this.sessionManager.getCwd();
-		const watcher = new ResourceWatcher();
-		watcher.start(
-			{
-				globalSkills: [path.join(agentDir, "skills")],
-				projectSkills: [path.join(cwd, ".misul", "skills")],
-				globalExtensions: [path.join(agentDir, "extensions")],
-				projectExtensions: [path.join(cwd, ".misul", "extensions")],
-				globalPrompts: [path.join(agentDir, "prompts")],
-				projectPrompts: [path.join(cwd, ".misul", "prompts")],
-				globalAddons: path.join(agentDir, "addons"),
-				projectAddons: path.join(cwd, ".misul", "addons"),
-			},
-			(_scope) => {
-				// Live reload: pick up changed resources without full session reload.
-				// The system prompt is rebuilt, but the cache prefix (constitution +
-				// tools + guidelines) stays stable when only skills change.
-				void this.session.liveReload().then(() => {
-					// Refresh themes in case theme files changed
-					setRegisteredThemes(this.session.resourceLoader.getThemes().themes);
-					// Refresh autocomplete (skill commands may have changed)
-					this.setupAutocompleteProvider();
-				});
-			},
-		);
-		this.resourceWatcher = watcher;
+		const dirs: ResourceDirs = {
+			globalSkills: [path.join(agentDir, "skills")],
+			projectSkills: [path.join(cwd, ".misul", "skills")],
+			globalExtensions: [path.join(agentDir, "extensions")],
+			projectExtensions: [path.join(cwd, ".misul", "extensions")],
+			globalPrompts: [path.join(agentDir, "prompts")],
+			projectPrompts: [path.join(cwd, ".misul", "prompts")],
+			globalAddons: path.join(agentDir, "addons"),
+			projectAddons: path.join(cwd, ".misul", "addons"),
+		};
+		this.session.initResourceChecker(dirs);
 	}
 
 	private applyRuntimeSettings(): void {
@@ -6167,8 +6151,6 @@ export class InteractiveMode {
 	}
 
 	stop(): void {
-		this.resourceWatcher?.stop();
-		this.resourceWatcher = undefined;
 		if (this.settingsManager.getShowTerminalProgress()) {
 			this.ui.terminal.setProgress(false);
 		}

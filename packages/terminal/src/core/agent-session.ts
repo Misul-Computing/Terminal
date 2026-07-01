@@ -86,6 +86,7 @@ import type { ModelRegistry } from "./model-registry.ts";
 import { expandPromptTemplate, type PromptTemplate } from "./prompt-templates.ts";
 import type { ResourceExtensionPaths, ResourceLoader } from "./resource-loader.ts";
 import { needsPermission, type PermissionGateConfig } from "./permission-gate.ts";
+import { ResourceChangeChecker, type ResourceDirs } from "./resource-watcher.ts";
 import type { BranchSummaryEntry, CompactionEntry, SessionManager } from "./session-manager.ts";
 import { CURRENT_SESSION_VERSION, getLatestCompactionEntry, type SessionHeader } from "./session-manager.ts";
 import { createLoopGuard, type LoopGuard, stripVolatileIds } from "./loop-guard.ts";
@@ -351,6 +352,7 @@ export class AgentSession {
 	private _excludedToolNames?: Set<string>;
 	private _baseToolsOverride?: Record<string, AgentTool>;
 	private _autoMode: boolean;
+	private _resourceChecker: ResourceChangeChecker | undefined;
 	private _sessionStartEvent: SessionStartEvent;
 	private _extensionUIContext?: ExtensionUIContext;
 	private _extensionMode: ExtensionMode = "print";
@@ -499,6 +501,16 @@ export class AgentSession {
 		};
 
 		this.agent.afterToolCall = async ({ toolCall, args, result, isError }) => {
+			// Live reload: after each tool call, check if resource dirs changed.
+			// This catches the agent installing a skill via bash, editing an
+			// extension, etc. No background watcher - just a few statSync calls.
+			if (this._resourceChecker) {
+				const scope = this._resourceChecker.checkForChanges();
+				if (scope) {
+					await this.liveReload();
+				}
+			}
+
 			const runner = this._extensionRunner;
 			if (!runner.hasHandlers("tool_result")) {
 				return undefined;
@@ -2699,6 +2711,16 @@ export class AgentSession {
 		await this._resourceLoader.reload();
 		this._baseSystemPrompt = this._rebuildSystemPrompt(this.getActiveToolNames());
 		this.agent.state.systemPrompt = this._baseSystemPrompt;
+	}
+
+	/**
+	 * Initialize the resource change checker for live reload.
+	 * Called after the runtime is built. Records current directory mtimes
+	 * so the first afterToolCall check doesn't trigger a spurious reload.
+	 */
+	initResourceChecker(dirs: ResourceDirs): void {
+		this._resourceChecker = new ResourceChangeChecker();
+		this._resourceChecker.init(dirs);
 	}
 
 	// =========================================================================

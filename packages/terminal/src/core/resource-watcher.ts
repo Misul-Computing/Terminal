@@ -1,182 +1,126 @@
 /**
- * Resource file watcher for live reload.
+ * Resource change checker for live reload.
  *
- * Watches skill, extension, prompt, theme, and addon directories for changes.
- * When files change, triggers a debounced reload callback. The callback can
- * do a granular reload (e.g. only rebuild the skills block) to preserve the
- * prompt cache prefix.
+ * Instead of running constant file watchers, this checks for changes on
+ * demand - called by the agent loop after tool calls complete, before the
+ * next LLM turn. No background process, no file descriptors held.
+ *
+ * Records directory modification times (mtime) for each resource directory.
+ * When checkForChanges() is called, compares current mtimes to the last
+ * recorded values. If any changed, returns the scope of the change so the
+ * caller can do a granular reload.
  */
 
-import { type FSWatcher, watch } from "node:fs";
-import { existsSync, statSync } from "node:fs";
+import { existsSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { closeWatcher, watchWithErrorHandler } from "../utils/fs-watch.ts";
 
-/** Directories to watch for live reload. */
-export interface WatchDirs {
-	/** Global skill directories */
+/** Resource directories to check. */
+export interface ResourceDirs {
 	globalSkills?: string[];
-	/** Project skill directories */
 	projectSkills?: string[];
-	/** Global extension directories */
 	globalExtensions?: string[];
-	/** Project extension directories */
 	projectExtensions?: string[];
-	/** Global prompt template directories */
 	globalPrompts?: string[];
-	/** Project prompt template directories */
 	projectPrompts?: string[];
-	/** Global addon directory */
 	globalAddons?: string;
-	/** Project addon directory */
 	projectAddons?: string;
-	/** Additional CLI-specified paths */
-	cliPaths?: string[];
 }
 
 /** What changed, for granular reload. */
 export type ReloadScope = "skills" | "extensions" | "prompts" | "themes" | "addons" | "all";
 
-/** Callback for reload. */
-export type ReloadCallback = (scope: ReloadScope) => void;
-
-const DEBOUNCE_MS = 300;
-
 /**
- * Resource watcher that monitors directories and triggers debounced reloads.
+ * On-demand change checker for resource directories.
  *
  * Usage:
- *   const watcher = new ResourceWatcher();
- *   watcher.start({ globalSkills: [...], projectSkills: [...] }, (scope) => {
- *     // Do granular reload based on scope
- *   });
- *   // Later:
- *   watcher.stop();
+ *   const checker = new ResourceChangeChecker();
+ *   checker.init(dirs);
+ *   // ... after a tool call ...
+ *   const scope = checker.checkForChanges();
+ *   if (scope) await session.liveReload();
  */
-export class ResourceWatcher {
-	private _watchers: FSWatcher[] = [];
-	private _debounceTimer: ReturnType<typeof setTimeout> | undefined;
-	private _pendingScope: Set<ReloadScope> = new Set();
-	private _callback: ReloadCallback | undefined;
-	private _stopped = false;
+export class ResourceChangeChecker {
+	private _dirMtimes = new Map<string, number>();
+	private _dirs: Array<{ path: string; scope: ReloadScope }> = [];
 
 	/**
-	 * Start watching the given directories.
-	 * @param dirs Directories to watch
-	 * @param callback Called with the scope of changes (debounced)
+	 * Initialize with the directories to monitor.
+	 * Records current mtimes so the first checkForChanges() doesn't fire.
 	 */
-	start(dirs: WatchDirs, callback: ReloadCallback): void {
-		this.stop();
-		this._stopped = false;
-		this._callback = callback;
+	init(dirs: ResourceDirs): void {
+		this._dirs = [];
+		this._dirMtimes.clear();
 
-		const watchDir = (dir: string, scope: ReloadScope): void => {
-			if (!dir || !existsSync(dir)) return;
-			try {
-				if (!statSync(dir).isDirectory()) return;
-			} catch {
-				return;
-			}
-
-			const watcher = watchWithErrorHandler(
-				dir,
-				(_eventType, _filename) => {
-					this._scheduleReload(scope);
-				},
-				() => {
-					// On error, the watcher is already closed
-				},
-			);
-			if (watcher) {
-				this._watchers.push(watcher);
-			}
+		const add = (dir: string | undefined, scope: ReloadScope): void => {
+			if (!dir) return;
+			this._dirs.push({ path: dir, scope });
 		};
 
-		// Watch skill directories
-		for (const dir of dirs.globalSkills ?? []) {
-			watchDir(dir, "skills");
-		}
-		for (const dir of dirs.projectSkills ?? []) {
-			watchDir(dir, "skills");
-		}
+		for (const d of dirs.globalSkills ?? []) add(d, "skills");
+		for (const d of dirs.projectSkills ?? []) add(d, "skills");
+		for (const d of dirs.globalExtensions ?? []) add(d, "extensions");
+		for (const d of dirs.projectExtensions ?? []) add(d, "extensions");
+		for (const d of dirs.globalPrompts ?? []) add(d, "prompts");
+		for (const d of dirs.projectPrompts ?? []) add(d, "prompts");
+		add(dirs.globalAddons, "addons");
+		add(dirs.projectAddons, "addons");
 
-		// Watch extension directories
-		for (const dir of dirs.globalExtensions ?? []) {
-			watchDir(dir, "extensions");
-		}
-		for (const dir of dirs.projectExtensions ?? []) {
-			watchDir(dir, "extensions");
-		}
-
-		// Watch prompt directories
-		for (const dir of dirs.globalPrompts ?? []) {
-			watchDir(dir, "prompts");
-		}
-		for (const dir of dirs.projectPrompts ?? []) {
-			watchDir(dir, "prompts");
-		}
-
-		// Watch addon directories
-		if (dirs.globalAddons) {
-			watchDir(dirs.globalAddons, "addons");
-		}
-		if (dirs.projectAddons) {
-			watchDir(dirs.projectAddons, "addons");
-		}
-
-		// Watch CLI-specified paths
-		for (const p of dirs.cliPaths ?? []) {
-			watchDir(p, "all");
-		}
+		this._recordMtimes();
 	}
 
-	/** Stop all watchers and clear pending timers. */
-	stop(): void {
-		this._stopped = true;
-		if (this._debounceTimer) {
-			clearTimeout(this._debounceTimer);
-			this._debounceTimer = undefined;
-		}
-		this._pendingScope.clear();
-		for (const watcher of this._watchers) {
-			closeWatcher(watcher);
-		}
-		this._watchers = [];
-		this._callback = undefined;
-	}
+	/**
+	 * Check if any monitored directory has changed since the last check.
+	 * Returns the scope of the change, or undefined if nothing changed.
+	 *
+	 * This is a cheap operation: a few statSync calls on directory entries.
+	 * No file watchers, no background process, no file descriptors held.
+	 */
+	checkForChanges(): ReloadScope | undefined {
+		const changedScopes = new Set<ReloadScope>();
 
-	/** Whether the watcher is currently active. */
-	get isWatching(): boolean {
-		return this._watchers.length > 0 && !this._stopped;
-	}
-
-	private _scheduleReload(scope: ReloadScope): void {
-		this._pendingScope.add(scope);
-
-		if (this._debounceTimer) {
-			clearTimeout(this._debounceTimer);
-		}
-
-		this._debounceTimer = setTimeout(() => {
-			this._debounceTimer = undefined;
-			if (this._stopped || !this._callback) return;
-
-			// Determine the broadest scope
-			const scopes = [...this._pendingScope];
-			this._pendingScope.clear();
-
-			if (scopes.includes("all")) {
-				this._callback("all");
-				return;
+		for (const { path: dir, scope } of this._dirs) {
+			if (!existsSync(dir)) continue;
+			const currentMtime = this._getDirMtime(dir);
+			const lastMtime = this._dirMtimes.get(dir);
+			if (lastMtime !== currentMtime) {
+				changedScopes.add(scope);
+				this._dirMtimes.set(dir, currentMtime);
 			}
+		}
 
-			// If multiple scopes changed, reload all
-			if (scopes.length > 1) {
-				this._callback("all");
-				return;
+		if (changedScopes.size === 0) return undefined;
+		if (changedScopes.has("all")) return "all";
+		if (changedScopes.size > 1) return "all";
+		return [...changedScopes][0];
+	}
+
+	/**
+	 * Get the most recent mtime among a directory and its immediate children.
+	 * This catches new files (new entry in the directory) and changed files
+	 * (child mtime updated) without deep recursion.
+	 */
+	private _getDirMtime(dir: string): number {
+		try {
+			let max = statSync(dir).mtimeMs;
+			for (const entry of readdirSync(dir)) {
+				try {
+					const mtime = statSync(join(dir, entry)).mtimeMs;
+					if (mtime > max) max = mtime;
+				} catch {
+					// Skip entries that can't be stat'd
+				}
 			}
+			return max;
+		} catch {
+			return -1;
+		}
+	}
 
-			this._callback(scopes[0]);
-		}, DEBOUNCE_MS);
+	private _recordMtimes(): void {
+		for (const { path: dir } of this._dirs) {
+			if (existsSync(dir)) {
+				this._dirMtimes.set(dir, this._getDirMtime(dir));
+			}
+		}
 	}
 }
