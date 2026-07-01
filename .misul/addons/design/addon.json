@@ -1,0 +1,7 @@
+{
+	"name": "design",
+	"description": "WebGL2 fragment shader knowledge and templates for animated backgrounds and visual effects.",
+	"version": "0.1.0",
+	"author": { "name": "Misul Computing" },
+	"license": "Apache-2.0"
+}
