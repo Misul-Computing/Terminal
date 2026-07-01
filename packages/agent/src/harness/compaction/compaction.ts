@@ -411,8 +411,20 @@ Use this EXACT format:
 ### Blocked
 - [Issues preventing progress, if any]
 
+## Changed Files
+- [Files modified, created, or deleted. Include paths and what changed.]
+- [Or "(none)" if no files were changed]
+
+## Failed Attempts
+- [Approaches tried that did not work, with the reason they failed]
+- [Or "(none)" if no failed attempts]
+
 ## Key Decisions
 - **[Decision]**: [Brief rationale]
+
+## Open Risks
+- [Things that could go wrong, unverified assumptions, or unfinished work that needs attention]
+- [Or "(none)" if no open risks]
 
 ## Next Steps
 1. [Ordered list of what should happen next]
@@ -430,6 +442,9 @@ Update the existing structured summary with new information. RULES:
 - ADD new progress, decisions, and context from the new messages
 - UPDATE the Progress section: move items from "In Progress" to "Done" when completed
 - UPDATE "Next Steps" based on what was accomplished
+- UPDATE Changed Files with any new file modifications
+- ADD any new failed attempts to the Failed Attempts section
+- UPDATE Open Risks: add new risks, remove resolved ones
 - PRESERVE exact file paths, function names, and error messages
 - If something is no longer relevant, you may remove it
 
@@ -451,8 +466,17 @@ Use this EXACT format:
 ### Blocked
 - [Current blockers - remove if resolved]
 
+## Changed Files
+- [All files modified so far. Include paths and what changed.]
+
+## Failed Attempts
+- [All approaches tried that did not work, with reasons]
+
 ## Key Decisions
 - **[Decision]**: [Brief rationale] (preserve all previous, add new)
+
+## Open Risks
+- [Current risks and unverified assumptions. Remove resolved ones.]
 
 ## Next Steps
 1. [Update based on current state]

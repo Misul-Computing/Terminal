@@ -94,6 +94,7 @@ import type { SettingsManager } from "./settings-manager.ts";
 import type { SlashCommandInfo } from "./slash-commands.ts";
 import { createSyntheticSourceInfo, type SourceInfo } from "./source-info.ts";
 import { type BuildSystemPromptOptions, type PromptBlock, buildSystemPromptWithBlocks } from "./system-prompt.ts";
+import { CapabilityRegistry, type CapabilityContext } from "./capabilities.ts";
 import { MemoryStore, type MemoryEntry } from "./memory/index.ts";
 import { RunTelemetry, type TelemetryStats } from "./telemetry/index.ts";
 import { BackgroundReviewLoop } from "./background-review.ts";
@@ -387,6 +388,9 @@ export class AgentSession {
 	// Advisor: strategy reviewer on the main agent, triggered by session hardness
 	private _advisor = new AdvisorLoop();
 
+	// Capability registry: internal spine for tool/action permissions
+	private _capabilities: CapabilityRegistry;
+
 	// Per-project long-term memory store (initialized lazily)
 	private _memoryStore: MemoryStore | undefined;
 	private _memoryStoreInit: Promise<MemoryStore | undefined> | undefined;
@@ -401,6 +405,7 @@ export class AgentSession {
 		this.agent = config.agent;
 		this.sessionManager = config.sessionManager;
 		this.settingsManager = config.settingsManager;
+		this._capabilities = new CapabilityRegistry(config.settingsManager);
 		this._scopedModels = config.scopedModels ?? [];
 		this._resourceLoader = config.resourceLoader;
 		this._customTools = config.customTools ?? [];
@@ -483,6 +488,19 @@ export class AgentSession {
 	 */
 	private _installAgentToolHooks(): void {
 		this.agent.beforeToolCall = async ({ toolCall, args }) => {
+			// Capability check: if the tool's capability isn't available
+			// for this session context, block immediately without asking.
+			const cap = CapabilityRegistry.toolToCapability(toolCall.name);
+			if (cap) {
+				const decision = this._capabilities.check(cap, this._capabilityContext());
+				if (!decision.available) {
+					return {
+						block: true,
+						reason: `Capability "${cap}" is not available: ${decision.reason}.`,
+					};
+				}
+			}
+
 			// Permission gate: always on. Safe operations run automatically;
 			// risky ones ask the user in chat before proceeding.
 			const gateConfig = await this._getPermissionGateConfig();
@@ -929,6 +947,18 @@ export class AgentSession {
 	/** Current model (may be undefined if not yet selected) */
 	get model(): Model<any> | undefined {
 		return this.agent.state.model;
+	}
+
+	/** Build the capability context from current session state */
+	private _capabilityContext(): CapabilityContext {
+		return {
+			cwd: this._cwd,
+			projectTrusted: this.settingsManager.isProjectTrusted(),
+			activeTools: this.getActiveToolNames(),
+			enableSubagents: true,
+			goalMode: false,
+			addonTools: [],
+		};
 	}
 
 	/** Build the permission gate config from current session state */
