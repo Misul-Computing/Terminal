@@ -52,6 +52,7 @@ export type KnownProvider =
 	| "kimi-coding"
 	| "cloudflare-workers-ai"
 	| "cloudflare-ai-gateway"
+	| "cline-pass"
 	| "xiaomi"
 	| "xiaomi-token-plan-cn"
 	| "xiaomi-token-plan-ams"
@@ -76,6 +77,16 @@ export interface ThinkingBudgets {
 
 // Base options all providers share
 export type CacheRetention = "none" | "short" | "long";
+
+/**
+ * Cache breakpoint aggressiveness for providers that support explicit
+ * breakpoints (Anthropic). Controls how many cache_control markers are placed.
+ * - "off": no cache_control markers (same as cacheRetention "none")
+ * - "standard": system + tools + last message (3 breakpoints)
+ * - "aggressive": standard + second-to-last message (4 breakpoints)
+ * Providers without explicit breakpoints ignore this and use implicit caching.
+ */
+export type CacheAggressiveness = "off" | "standard" | "aggressive";
 
 export type Transport = "sse" | "websocket" | "websocket-cached" | "auto";
 
@@ -102,6 +113,11 @@ export interface StreamOptions {
 	 * Default: "short".
 	 */
 	cacheRetention?: CacheRetention;
+	/**
+	 * Cache breakpoint aggressiveness for providers with explicit breakpoints.
+	 * Default: "standard". When "off", no cache_control markers are placed.
+	 */
+	cacheAggressiveness?: CacheAggressiveness;
 	/**
 	 * Optional session identifier for providers that support session-based caching.
 	 * Providers can use this to enable prompt caching, request routing, or other

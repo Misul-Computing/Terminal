@@ -422,22 +422,22 @@ describe("Kitty image cursor movement", () => {
 });
 
 describe("hyperlink", () => {
-	it("wraps text in OSC 8 open and close sequences", () => {
+	it("wraps text in OSC 8 open and close sequences with BEL terminator", () => {
 		const result = hyperlink("click me", "https://example.com");
-		assert.strictEqual(result, "\x1b]8;;https://example.com\x1b\\click me\x1b]8;;\x1b\\");
+		assert.strictEqual(result, "\x1b]8;;https://example.com\x07click me\x1b]8;;\x07");
 	});
 
 	it("preserves ANSI styling inside the hyperlink", () => {
 		const styled = "\x1b[4m\x1b[34mclick me\x1b[0m";
 		const result = hyperlink(styled, "https://example.com");
-		assert.ok(result.startsWith("\x1b]8;;https://example.com\x1b\\"));
+		assert.ok(result.startsWith("\x1b]8;;https://example.com\x07"));
 		assert.ok(result.includes(styled));
-		assert.ok(result.endsWith("\x1b]8;;\x1b\\"));
+		assert.ok(result.endsWith("\x1b]8;;\x07"));
 	});
 
 	it("works with empty text", () => {
 		const result = hyperlink("", "https://example.com");
-		assert.strictEqual(result, "\x1b]8;;https://example.com\x1b\\\x1b]8;;\x1b\\");
+		assert.strictEqual(result, "\x1b]8;;https://example.com\x07\x1b]8;;\x07");
 	});
 
 	it("works with file:// URIs", () => {

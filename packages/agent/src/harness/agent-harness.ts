@@ -109,6 +109,7 @@ function applyStreamOptionsPatch(
 	if (Object.hasOwn(patch, "maxRetries")) result.maxRetries = patch.maxRetries;
 	if (Object.hasOwn(patch, "maxRetryDelayMs")) result.maxRetryDelayMs = patch.maxRetryDelayMs;
 	if (Object.hasOwn(patch, "cacheRetention")) result.cacheRetention = patch.cacheRetention;
+	if (Object.hasOwn(patch, "cacheAggressiveness")) result.cacheAggressiveness = patch.cacheAggressiveness;
 
 	if (Object.hasOwn(patch, "headers")) {
 		if (patch.headers === undefined) {
@@ -385,6 +386,7 @@ export class AgentHarness<
 			const requestOptions = await this.emitBeforeProviderRequest(model, turnState.sessionId, snapshotOptions);
 			return streamSimple(model, context, {
 				cacheRetention: requestOptions.cacheRetention,
+				cacheAggressiveness: requestOptions.cacheAggressiveness,
 				headers: requestOptions.headers,
 				maxRetries: requestOptions.maxRetries,
 				maxRetryDelayMs: requestOptions.maxRetryDelayMs,

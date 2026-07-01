@@ -81,9 +81,13 @@ export interface CreateAgentSessionOptions {
 	 * always pass false so they cannot recursively spawn further subagents.
 	 */
 	enableSubagents?: boolean;
+	autoReviewSubagents?: boolean;
 
 	/** Resource loader. When omitted, DefaultResourceLoader is used. */
 	resourceLoader?: ResourceLoader;
+
+	/** Extra text appended to the system prompt (e.g. subagent role overlay). */
+	appendSystemPrompt?: string;
 
 	/** Session manager. Default: SessionManager.create(cwd) */
 	sessionManager?: SessionManager;
@@ -194,7 +198,12 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 	const sessionManager = options.sessionManager ?? SessionManager.create(cwd, getDefaultSessionDir(cwd, agentDir));
 
 	if (!resourceLoader) {
-		resourceLoader = new DefaultResourceLoader({ cwd, agentDir, settingsManager });
+		resourceLoader = new DefaultResourceLoader({
+			cwd,
+			agentDir,
+			settingsManager,
+			...(options.appendSystemPrompt ? { appendSystemPrompt: [options.appendSystemPrompt] } : {}),
+		});
 		await resourceLoader.reload();
 		time("resourceLoader.reload");
 	}
@@ -334,6 +343,7 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 				env,
 				timeoutMs,
 				websocketConnectTimeoutMs,
+				cacheAggressiveness: options?.cacheAggressiveness ?? settingsManager.getCacheAggressiveness(),
 				maxRetries: options?.maxRetries ?? providerRetrySettings.maxRetries,
 				maxRetryDelayMs: options?.maxRetryDelayMs ?? providerRetrySettings.maxRetryDelayMs,
 				headers: mergeProviderAttributionHeaders(
@@ -374,9 +384,14 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 		transport: settingsManager.getTransport(),
 		thinkingBudgets: settingsManager.getThinkingBudgets(),
 		maxRetryDelayMs: settingsManager.getProviderRetrySettings().maxRetryDelayMs,
+		// Off by default. A trailing assistant prefill is a forced prefix-continuation
+		// on openai-completions providers, which collapses reasoning models into
+		// repeating themselves; the honesty intent lives in the system prompt instead.
+		// Still available via --assistant-prefill or the setting for providers that
+		// genuinely support prefill (e.g. Anthropic).
 		assistantPrefill: options.assistantPrefill !== undefined
 			? (options.assistantPrefill || undefined)
-			: (settingsManager.getAssistantPrefill() ?? "I will be honest and accurate. If I'm not sure, I'll say so. If I haven't verified something, I won't claim it as fact."),
+			: settingsManager.getAssistantPrefill(),
 	});
 
 	// Restore messages if session has existing data
@@ -407,7 +422,7 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 
 	const customTools =
 		options.enableSubagents === true
-			? [...(options.customTools ?? []), skillManageTool, createSpawnAgentTool({ getParentModel: () => agent.state.model }), ...mcpTools]
+			? [...(options.customTools ?? []), skillManageTool, createSpawnAgentTool({ getParentModel: () => agent.state.model, autoReview: options.autoReviewSubagents }), ...mcpTools]
 			: [...(options.customTools ?? []), skillManageTool, ...mcpTools];
 
 	const session = new AgentSession({

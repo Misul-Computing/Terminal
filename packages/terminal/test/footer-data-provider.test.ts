@@ -202,8 +202,12 @@ describe("FooterDataProvider reftable branch detection", () => {
 			writeFileSync(join(reftableDir, "tables.list"), "1\n");
 			writeFileSync(join(reftableDir, "tables.list"), "2\n");
 			writeFileSync(join(reftableDir, "tables.list"), "3\n");
-			await waitFor(() => vi.mocked(execFile).mock.calls.length === 1);
-			await new Promise((resolve) => setTimeout(resolve, 650));
+			// Wait for the debounce window (500ms) to elapse after the last write,
+			// plus extra margin for fs.watch event delivery under parallel load.
+			// Checking too early can miss a late-arriving watch event that
+			// schedules a second refresh.
+			await waitFor(() => vi.mocked(execFile).mock.calls.length >= 1);
+			await new Promise((resolve) => setTimeout(resolve, 1200));
 
 			expect(vi.mocked(execFile)).toHaveBeenCalledTimes(1);
 		} finally {

@@ -114,6 +114,7 @@ export function serializeConversation(messages: Message[]): string {
 				} else if (block.type === "toolCall") {
 					const args = block.arguments as Record<string, unknown>;
 					const argsStr = Object.entries(args)
+						.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
 						.map(([k, v]) => `${k}=${safeJsonStringify(v)}`)
 						.join(", ");
 					toolCalls.push(`${block.name}(${argsStr})`);

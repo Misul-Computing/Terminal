@@ -13,7 +13,7 @@
  * Modes use this class and add their own I/O layer on top.
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname } from "node:path";
 import type {
 	Agent,
@@ -91,7 +91,7 @@ import { createLoopGuard, type LoopGuard, stripVolatileIds } from "./loop-guard.
 import type { SettingsManager } from "./settings-manager.ts";
 import type { SlashCommandInfo } from "./slash-commands.ts";
 import { createSyntheticSourceInfo, type SourceInfo } from "./source-info.ts";
-import { type BuildSystemPromptOptions, buildSystemPrompt } from "./system-prompt.ts";
+import { type BuildSystemPromptOptions, type PromptBlock, buildSystemPromptWithBlocks } from "./system-prompt.ts";
 import { BackgroundReviewLoop } from "./background-review.ts";
 import { type BashOperations, createLocalBashOperations } from "./tools/bash.ts";
 import { createAllToolDefinitions } from "./tools/index.ts";
@@ -243,6 +243,44 @@ export interface SessionStats {
 	contextUsage?: ContextUsage;
 }
 
+/** Per-call cache telemetry entry */
+export interface CacheCallEntry {
+	input: number;
+	cacheRead: number;
+	cacheWrite: number;
+	output: number;
+	hitRate: number;
+	cost: number;
+}
+
+/** Session-level cache statistics for /cache command */
+export interface CacheStats {
+	/** Total uncached input tokens across all assistant turns */
+	totalInput: number;
+	/** Total cache read tokens across all assistant turns */
+	totalCacheRead: number;
+	/** Total cache write tokens across all assistant turns */
+	totalCacheWrite: number;
+	/** Total output tokens across all assistant turns */
+	totalOutput: number;
+	/** Number of assistant turns with usage data */
+	callCount: number;
+	/** Session-level hit rate: cacheRead / (input + cacheRead + cacheWrite) * 100 */
+	hitRate: number;
+	/** Estimated cost if no caching were used (all tokens at full input price) */
+	estimatedNoCacheCost: number;
+	/** Actual cost paid (input + cacheRead + cacheWrite costs) */
+	actualCacheCost: number;
+	/** Net savings = estimatedNoCacheCost - actualCacheCost (can be negative) */
+	savings: number;
+	/** SHA-256 prefix hash of the last-built system prompt (first 16 chars) */
+	prefixHash: string;
+	/** Current compaction epoch ID, or null */
+	epochId: string | null;
+	/** Per-call breakdown (most recent last) */
+	calls: CacheCallEntry[];
+}
+
 interface ToolDefinitionEntry {
 	definition: ToolDefinition;
 	sourceInfo: SourceInfo;
@@ -330,6 +368,9 @@ export class AgentSession {
 	// Base system prompt (without extension appends) - used to apply fresh appends each turn
 	private _baseSystemPrompt = "";
 	private _baseSystemPromptOptions!: BuildSystemPromptOptions;
+	/** Block hashes for the last-built system prompt, for cache diagnostics. */
+	private _systemPromptBlocks: PromptBlock[] = [];
+	private _systemPromptPrefixHash = "";
 
 	// Background review loop (memory + skill nudges)
 	private _backgroundReview = new BackgroundReviewLoop();
@@ -589,6 +630,28 @@ export class AgentSession {
 					this._overflowRecoveryAttempted = false;
 				}
 
+				// Cache telemetry: log per-call cache stats when MISUL_CACHE_DEBUG is set.
+				// Also logs to a file when MISUL_CACHE_LOG_FILE is set (append mode).
+				if (process.env.MISUL_CACHE_DEBUG || process.env.MISUL_CACHE_LOG_FILE) {
+					const u = assistantMsg.usage;
+					const promptTokens = u.input + u.cacheRead + u.cacheWrite;
+					const hitRate = promptTokens > 0 ? ((u.cacheRead / promptTokens) * 100).toFixed(1) : "0.0";
+					const line =
+						`[cache] in=${u.input} read=${u.cacheRead} write=${u.cacheWrite} hit=${hitRate}% ` +
+						`prefix=${this._systemPromptPrefixHash.slice(0, 8)} ` +
+						`epoch=${this.compactionEpochId ?? "none"}\n`;
+					if (process.env.MISUL_CACHE_DEBUG) {
+						process.stderr.write(line);
+					}
+					if (process.env.MISUL_CACHE_LOG_FILE) {
+						try {
+							appendFileSync(process.env.MISUL_CACHE_LOG_FILE, line);
+						} catch {
+							// Ignore write errors - logging is best-effort
+						}
+					}
+				}
+
 				// Reset retry counter immediately on successful assistant response
 				// This prevents accumulation across multiple LLM calls within a turn
 				if (assistantMsg.stopReason !== "error" && this._retryAttempt > 0) {
@@ -820,6 +883,21 @@ export class AgentSession {
 		return this.agent.state.systemPrompt;
 	}
 
+	/** Block hashes for the last-built base system prompt, for cache diagnostics. */
+	get systemPromptBlocks(): readonly PromptBlock[] {
+		return this._systemPromptBlocks;
+	}
+
+	/** SHA-256 prefix hash of the last-built base system prompt. */
+	get systemPromptPrefixHash(): string {
+		return this._systemPromptPrefixHash;
+	}
+
+	/** Current compaction epoch ID, or null if no compaction has occurred. */
+	get compactionEpochId(): string | null {
+		return this.sessionManager.buildSessionContext().compactionEpochId ?? null;
+	}
+
 	/** Current retry attempt (0 if not retrying) */
 	get retryAttempt(): number {
 		return this._retryAttempt;
@@ -985,7 +1063,10 @@ export class AgentSession {
 			toolSnippets,
 			promptGuidelines,
 		};
-		return buildSystemPrompt(this._baseSystemPromptOptions);
+		const built = buildSystemPromptWithBlocks(this._baseSystemPromptOptions);
+		this._systemPromptBlocks = built.blocks;
+		this._systemPromptPrefixHash = built.prefixHash;
+		return built.prompt;
 	}
 
 	// =========================================================================
@@ -3056,6 +3137,70 @@ export class AgentSession {
 			},
 			cost: totalCost,
 			contextUsage: this.getContextUsage(),
+		};
+	}
+
+	/**
+	 * Get session-level cache statistics for the /cache command.
+	 *
+	 * Computes total cache reads/writes, session-level hit rate, estimated cost
+	 * savings vs no-cache, per-call breakdown, and current prefix hash/epoch.
+	 */
+	getCacheStats(): CacheStats {
+		const state = this.state;
+		const model = this.model;
+
+		let totalInput = 0;
+		let totalCacheRead = 0;
+		let totalCacheWrite = 0;
+		let totalOutput = 0;
+		let actualCacheCost = 0;
+		let estimatedNoCacheCost = 0;
+		const calls: CacheCallEntry[] = [];
+
+		for (const message of state.messages) {
+			if (message.role !== "assistant") continue;
+			const u = (message as AssistantMessage).usage;
+			const promptTokens = u.input + u.cacheRead + u.cacheWrite;
+			const hitRate = promptTokens > 0 ? (u.cacheRead / promptTokens) * 100 : 0;
+
+			totalInput += u.input;
+			totalCacheRead += u.cacheRead;
+			totalCacheWrite += u.cacheWrite;
+			totalOutput += u.output;
+			actualCacheCost += u.cost.input + u.cost.cacheRead + u.cost.cacheWrite;
+
+			// What this call would have cost without caching: all prompt tokens at full input price.
+			if (model) {
+				estimatedNoCacheCost += (promptTokens * model.cost.input) / 1000000;
+			}
+
+			calls.push({
+				input: u.input,
+				cacheRead: u.cacheRead,
+				cacheWrite: u.cacheWrite,
+				output: u.output,
+				hitRate,
+				cost: u.cost.input + u.cost.cacheRead + u.cost.cacheWrite,
+			});
+		}
+
+		const totalPromptTokens = totalInput + totalCacheRead + totalCacheWrite;
+		const hitRate = totalPromptTokens > 0 ? (totalCacheRead / totalPromptTokens) * 100 : 0;
+
+		return {
+			totalInput,
+			totalCacheRead,
+			totalCacheWrite,
+			totalOutput,
+			callCount: calls.length,
+			hitRate,
+			estimatedNoCacheCost,
+			actualCacheCost,
+			savings: estimatedNoCacheCost - actualCacheCost,
+			prefixHash: this._systemPromptPrefixHash.slice(0, 16),
+			epochId: this.compactionEpochId,
+			calls,
 		};
 	}
 

@@ -12,7 +12,7 @@ that aims to get the best work out of whatever model drives it.
 ### Added
 
 - Quality-per-dollar evaluation harness for measuring harness changes on a fixed task suite.
-- Bundled universal skills: `frontend-design`, `api-design`, `secure-coding`, plus `ponytail` and `semantic-compression`.
+- Bundled universal skills: `frontend-design`, `api-design`, `secure-coding`, plus `semantic-compression`.
 - Deep-work and simple subagents that inherit the active session model.
 - A Misul-adapted default system prompt (identity, tone, and behavior).
 

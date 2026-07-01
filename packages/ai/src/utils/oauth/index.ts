@@ -9,6 +9,8 @@
 
 // Anthropic
 export { anthropicOAuthProvider, loginAnthropic, refreshAnthropicToken } from "./anthropic.ts";
+// ClinePass
+export { clinePassOAuthProvider } from "./cline-pass.ts";
 export * from "./device-code.ts";
 // GitHub Copilot
 export {
@@ -35,12 +37,14 @@ export * from "./types.ts";
 // ============================================================================
 
 import { anthropicOAuthProvider } from "./anthropic.ts";
+import { clinePassOAuthProvider } from "./cline-pass.ts";
 import { githubCopilotOAuthProvider } from "./github-copilot.ts";
 import { openaiCodexOAuthProvider } from "./openai-codex.ts";
 import type { OAuthCredentials, OAuthProviderId, OAuthProviderInfo, OAuthProviderInterface } from "./types.ts";
 
 const BUILT_IN_OAUTH_PROVIDERS: OAuthProviderInterface[] = [
 	anthropicOAuthProvider,
+	clinePassOAuthProvider,
 	githubCopilotOAuthProvider,
 	openaiCodexOAuthProvider,
 ];

@@ -25,6 +25,19 @@ import type {
 export type AgentEventSink = (event: AgentEvent) => Promise<void> | void;
 
 /**
+ * Compute a stable signature for a tool set so we can detect mid-session
+ * changes that invalidate the cacheable prefix. Tools are sorted by name
+ * and joined with a NUL separator (names cannot contain NUL).
+ */
+export function computeToolSetSignature(tools: AgentTool[] | undefined): string {
+	if (!tools || tools.length === 0) return "";
+	return [...tools]
+		.map((t) => t.name)
+		.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))
+		.join("\0");
+}
+
+/**
  * Start an agent loop with a new prompt message.
  * The prompt is added to the context and events are emitted for it.
  */
@@ -171,6 +184,8 @@ async function runLoop(
 	let currentContext = initialContext;
 	let config = initialConfig;
 	let firstTurn = true;
+	// Track tool set signature across turns to detect cache-invalidating changes.
+	let prevToolSig = computeToolSetSignature(currentContext.tools);
 	// Check for steering messages at start (user may have typed while waiting)
 	let pendingMessages: AgentMessage[] = (await config.getSteeringMessages?.()) || [];
 
@@ -246,6 +261,23 @@ async function runLoop(
 				};
 			}
 
+			// Detect tool set changes between turns. A changed tool set
+			// invalidates the cacheable prefix (tool schema block).
+			const nextToolSig = computeToolSetSignature(currentContext.tools);
+			if (nextToolSig !== prevToolSig) {
+				const prevNames = prevToolSig ? prevToolSig.split("\0") : [];
+				const nextNames = nextToolSig ? nextToolSig.split("\0") : [];
+				const added = nextNames.filter((n: string) => !prevNames.includes(n));
+				const removed = prevNames.filter((n: string) => !nextNames.includes(n));
+				const parts: string[] = [];
+				if (added.length > 0) parts.push(`added: ${added.join(", ")}`);
+				if (removed.length > 0) parts.push(`removed: ${removed.join(", ")}`);
+				console.warn(
+					`[cache] Tool set changed mid-session (${parts.join("; ")}). Cacheable prefix invalidated.`,
+				);
+				prevToolSig = nextToolSig;
+			}
+
 			if (
 				await config.shouldStopAfterTurn?.({
 					message,
@@ -312,11 +344,12 @@ async function streamAssistantResponse(
 		}
 	}
 
-	// Build LLM context
+	// Build LLM context. Sort tools by stable name so the serialized tool
+	// array is byte-identical across turns, preserving the cacheable prefix.
 	const llmContext: Context = {
 		systemPrompt: context.systemPrompt,
 		messages: llmMessages,
-		tools: context.tools,
+		tools: context.tools ? [...context.tools].sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0)) : undefined,
 	};
 
 	const streamFunction = streamFn || streamSimple;
@@ -365,7 +398,14 @@ async function streamAssistantResponse(
 
 			case "done":
 			case "error": {
-				const finalMessage = await response.result();
+				const rawFinal = await response.result();
+				// Strip the prefill the model continued from so it never reaches the
+				// user or the persisted transcript. No-op when the provider did not
+				// echo it (e.g. Anthropic builds the message from deltas only). This
+				// is the branch every provider actually hits (they all emit "done"),
+				// so the stripping must happen here, not only in the post-loop path.
+				const finalMessage =
+					prefillApplied && config.assistantPrefill ? stripPrefill(rawFinal, config.assistantPrefill) : rawFinal;
 				if (addedPartial) {
 					context.messages[context.messages.length - 1] = finalMessage;
 				} else {

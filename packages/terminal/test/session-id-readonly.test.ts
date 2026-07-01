@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -18,6 +18,11 @@ function createTempDir(): string {
 	const dir = mkdtempSync(join(tmpdir(), "misul-session-id-readonly-"));
 	tempDirs.push(dir);
 	return dir;
+}
+
+/** Resolve symlinks so the path matches what process.cwd() returns in the child. */
+function realPath(p: string): string {
+	return realpathSync(p);
 }
 
 function hasSessionWithId(root: string, sessionId: string): boolean {
@@ -49,13 +54,14 @@ async function runCli(
 	setup?: (dirs: CliDirs) => void,
 ): Promise<{ code: number | null; agentDir: string; stderr: string }> {
 	const tempRoot = createTempDir();
+	const projectDirRaw = join(tempRoot, "project");
+	mkdirSync(projectDirRaw, { recursive: true });
 	const dirs: CliDirs = {
 		agentDir: join(tempRoot, "agent"),
-		projectDir: join(tempRoot, "project"),
+		projectDir: realPath(projectDirRaw),
 		sessionDir: join(tempRoot, "sessions"),
 	};
 	mkdirSync(dirs.agentDir, { recursive: true });
-	mkdirSync(dirs.projectDir, { recursive: true });
 	setup?.(dirs);
 	const resolvedArgs = typeof args === "function" ? args(dirs) : args;
 

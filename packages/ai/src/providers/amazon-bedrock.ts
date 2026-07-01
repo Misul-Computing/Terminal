@@ -30,6 +30,7 @@ import { calculateCost } from "../models.ts";
 import type {
 	Api,
 	AssistantMessage,
+	CacheAggressiveness,
 	CacheRetention,
 	Context,
 	ImageContent,
@@ -208,16 +209,17 @@ export const streamBedrock: StreamFunction<"bedrock-converse-stream", BedrockOpt
 				addCustomHeadersMiddleware(client, options.headers);
 			}
 			const cacheRetention = resolveCacheRetention(options.cacheRetention, options.env);
+			const aggressiveness = resolveCacheAggressiveness(options?.cacheAggressiveness);
 			const inferenceMaxTokens = options.maxTokens ?? (isAnthropicClaudeModel(model) ? model.maxTokens : undefined);
 			let commandInput = {
 				modelId: model.id,
-				messages: convertMessages(context, model, cacheRetention, options.env),
-				system: buildSystemPrompt(context.systemPrompt, model, cacheRetention, options.env),
+				messages: convertMessages(context, model, cacheRetention, options.env, aggressiveness),
+				system: buildSystemPrompt(context.systemPrompt, model, cacheRetention, options.env, aggressiveness),
 				inferenceConfig: {
 					...(inferenceMaxTokens !== undefined && { maxTokens: inferenceMaxTokens }),
 					...(options.temperature !== undefined && { temperature: options.temperature }),
 				},
-				toolConfig: convertToolConfig(context.tools, options.toolChoice),
+				toolConfig: convertToolConfig(context.tools, options.toolChoice, cacheRetention, options.env, model, aggressiveness),
 				additionalModelRequestFields: buildAdditionalModelRequestFields(model, options),
 				...(options.requestMetadata !== undefined && { requestMetadata: options.requestMetadata }),
 			};
@@ -603,6 +605,22 @@ function resolveCacheRetention(cacheRetention?: CacheRetention, env?: ProviderEn
 	return "short";
 }
 
+function resolveCacheAggressiveness(value?: CacheAggressiveness): CacheAggressiveness {
+	return value ?? "standard";
+}
+
+/**
+ * Returns true when prompt caching is active (not disabled by retention or aggressiveness).
+ */
+function cachingEnabled(
+	cacheRetention: CacheRetention,
+	aggressiveness: CacheAggressiveness,
+	model: Model<"bedrock-converse-stream">,
+	env?: ProviderEnv,
+): boolean {
+	return cacheRetention !== "none" && aggressiveness !== "off" && supportsPromptCaching(model, env);
+}
+
 /**
  * Check if the model is an Anthropic Claude model on Bedrock.
  * Checks both model ID and model name to support application inference profiles
@@ -668,13 +686,14 @@ function buildSystemPrompt(
 	model: Model<"bedrock-converse-stream">,
 	cacheRetention: CacheRetention,
 	env?: ProviderEnv,
+	aggressiveness: CacheAggressiveness = "standard",
 ): SystemContentBlock[] | undefined {
 	if (!systemPrompt) return undefined;
 
 	const blocks: SystemContentBlock[] = [{ text: sanitizeSurrogates(systemPrompt) }];
 
 	// Add cache point for supported Claude models when caching is enabled
-	if (cacheRetention !== "none" && supportsPromptCaching(model, env)) {
+	if (cachingEnabled(cacheRetention, aggressiveness, model, env)) {
 		blocks.push({
 			cachePoint: { type: CachePointType.DEFAULT, ...(cacheRetention === "long" ? { ttl: CacheTTL.ONE_HOUR } : {}) },
 		});
@@ -716,6 +735,7 @@ function convertMessages(
 	model: Model<"bedrock-converse-stream">,
 	cacheRetention: CacheRetention,
 	env?: ProviderEnv,
+	aggressiveness: CacheAggressiveness = "standard",
 ): Message[] {
 	const result: Message[] = [];
 	const transformedMessages = transformMessages(context.messages, model, normalizeToolCallId);
@@ -860,16 +880,42 @@ function convertMessages(
 		}
 	}
 
-	// Add cache point to the last user message for supported Claude models when caching is enabled
-	if (cacheRetention !== "none" && supportsPromptCaching(model, env) && result.length > 0) {
-		const lastMessage = result[result.length - 1];
-		if (lastMessage.role === ConversationRole.USER && lastMessage.content) {
-			(lastMessage.content as ContentBlock[]).push({
-				cachePoint: {
-					type: CachePointType.DEFAULT,
-					...(cacheRetention === "long" ? { ttl: CacheTTL.ONE_HOUR } : {}),
-				},
-			});
+	// Add cache points to user messages for supported Claude models when
+	// caching is enabled. Bedrock allows up to 2 cache points in messages.
+	// Standard: cache point on the last user message (caches prefix for next turn).
+	// Aggressive: also cache point on the second-to-last user message (caches
+	// the prefix up to the previous user turn, so the next turn hits cache
+	// earlier in the conversation).
+	if (cachingEnabled(cacheRetention, aggressiveness, model, env) && result.length > 0) {
+		const userIndices: number[] = [];
+		for (let idx = 0; idx < result.length; idx++) {
+			if (result[idx].role === ConversationRole.USER) userIndices.push(idx);
+		}
+
+		const makeCachePoint = (): ContentBlock => ({
+			cachePoint: {
+				type: CachePointType.DEFAULT,
+				...(cacheRetention === "long" ? { ttl: CacheTTL.ONE_HOUR } : {}),
+			},
+		});
+
+		// Last user message
+		if (userIndices.length >= 1) {
+			const lastUser = result[userIndices[userIndices.length - 1]];
+			if (lastUser.content) {
+				(lastUser.content as ContentBlock[]).push(makeCachePoint());
+			}
+		}
+
+		// Second-to-last user message (aggressive only)
+		if (aggressiveness === "aggressive" && userIndices.length >= 2) {
+			const prevUser = result[userIndices[userIndices.length - 2]];
+			if (prevUser.content) {
+				const lastBlock = (prevUser.content as ContentBlock[])[prevUser.content.length - 1];
+				if (!lastBlock || !("cachePoint" in lastBlock)) {
+					(prevUser.content as ContentBlock[]).push(makeCachePoint());
+				}
+			}
 		}
 	}
 
@@ -879,6 +925,10 @@ function convertMessages(
 function convertToolConfig(
 	tools: Tool[] | undefined,
 	toolChoice: BedrockOptions["toolChoice"],
+	cacheRetention: CacheRetention = "short",
+	env?: ProviderEnv,
+	model?: Model<"bedrock-converse-stream">,
+	aggressiveness: CacheAggressiveness = "standard",
 ): ToolConfiguration | undefined {
 	if (!tools?.length || toolChoice === "none") return undefined;
 
@@ -889,6 +939,17 @@ function convertToolConfig(
 			inputSchema: { json: tool.parameters as unknown as DocumentType },
 		},
 	}));
+
+	// Add a cache point after the last tool definition for supported Claude models.
+	// Tool schemas are often the largest cacheable block, so caching them is high value.
+	if (model && cachingEnabled(cacheRetention, aggressiveness, model, env)) {
+		bedrockTools.push({
+			cachePoint: {
+				type: CachePointType.DEFAULT,
+				...(cacheRetention === "long" ? { ttl: CacheTTL.ONE_HOUR } : {}),
+			},
+		} as BedrockTool);
+	}
 
 	let bedrockToolChoice: ToolChoice | undefined;
 	switch (toolChoice) {

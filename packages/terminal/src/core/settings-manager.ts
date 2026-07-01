@@ -58,6 +58,8 @@ export interface WarningSettings {
 	anthropicExtraUsage?: boolean; // default: true
 }
 
+export type CacheAggressivenessSetting = "off" | "standard" | "aggressive";
+
 export type DefaultProjectTrust = "ask" | "always" | "never";
 
 export type TransportSetting = Transport;
@@ -121,6 +123,9 @@ export interface Settings {
 	httpIdleTimeoutMs?: number; // HTTP header/body idle timeout in milliseconds; 0 disables it
 	websocketConnectTimeoutMs?: number; // WebSocket connect/open handshake timeout in milliseconds; 0 disables it
 	assistantPrefill?: string; // Text prepended to assistant responses (honest prefill); empty string disables
+	cacheAggressiveness?: CacheAggressivenessSetting; // default: "standard"
+	soloMode?: boolean; // default: false - disable subagent spawning entirely
+	autoReviewSubagents?: boolean; // default: false - run autoreview after work subagents
 }
 
 /** Deep merge settings: project/overrides take precedence, nested objects merge recursively */
@@ -833,6 +838,36 @@ export class SettingsManager {
 
 	getAssistantPrefill(): string | undefined {
 		return this.settings.assistantPrefill;
+	}
+
+	getCacheAggressiveness(): CacheAggressivenessSetting {
+		return this.settings.cacheAggressiveness ?? "standard";
+	}
+
+	setCacheAggressiveness(value: CacheAggressivenessSetting): void {
+		this.globalSettings.cacheAggressiveness = value;
+		this.markModified("cacheAggressiveness");
+		this.save();
+	}
+
+	getSoloMode(): boolean {
+		return this.settings.soloMode ?? false;
+	}
+
+	setSoloMode(value: boolean): void {
+		this.globalSettings.soloMode = value;
+		this.markModified("soloMode");
+		this.save();
+	}
+
+	getAutoReviewSubagents(): boolean {
+		return this.settings.autoReviewSubagents ?? false;
+	}
+
+	setAutoReviewSubagents(value: boolean): void {
+		this.globalSettings.autoReviewSubagents = value;
+		this.markModified("autoReviewSubagents");
+		this.save();
 	}
 
 	getHideThinkingBlock(): boolean {

@@ -1,12 +1,19 @@
 import type { AssistantMessage } from "@misul/ai";
-import { Container, Markdown, type MarkdownTheme, Spacer, Text } from "@misul/tui";
-import { CenteredContainer } from "./centered-container.ts";
+import { Container, type DefaultTextStyle, type MarkdownTheme, Spacer, Text } from "@misul/tui";
+import { CenteredBlock } from "./centered-block.ts";
 import { CollapsibleHeader } from "./collapsible-header.ts";
+import { StreamingMarkdown } from "./streaming-markdown.ts";
 import { getMarkdownTheme, theme } from "../theme/theme.ts";
 
 const OSC133_ZONE_START = "\x1b]133;A\x07";
 const OSC133_ZONE_END = "\x1b]133;B\x07";
 const OSC133_ZONE_FINAL = "\x1b]133;C\x07";
+
+// theme.fg reads the current global theme, so this stays correct across theme switches.
+const THINKING_STYLE: DefaultTextStyle = {
+	color: (text: string) => theme.fg("thinkingText", text),
+	italic: true,
+};
 
 /**
  * Interface for a single collapsible block within the chat. The cursor
@@ -44,6 +51,8 @@ export function collectCollapsibleItems(children: unknown[]): CollapsibleItem[] 
 	for (const child of children) {
 		if (isCollapsibleContainer(child)) {
 			items.push(...child.getCollapsibleItems());
+		} else if (child && typeof child === "object" && "children" in child && Array.isArray((child as { children: unknown[] }).children)) {
+			items.push(...collectCollapsibleItems((child as { children: unknown[] }).children));
 		}
 	}
 	return items;
@@ -66,6 +75,9 @@ export class AssistantMessageComponent extends Container implements CollapsibleC
 	private thinkingHeaders: Map<number, CollapsibleHeader> = new Map();
 	private thinkingExpanded: Map<number, boolean> = new Map();
 	private thinkingSelected: Set<number> = new Set();
+	// One incremental markdown renderer per content index, reused across rebuilds
+	// so each block's parse cache survives streaming (only the changed block re-parses).
+	private streams: Map<number, StreamingMarkdown> = new Map();
 
 	constructor(
 		message?: AssistantMessage,
@@ -153,6 +165,19 @@ export class AssistantMessageComponent extends Container implements CollapsibleC
 		].join("|");
 	}
 
+	// Reuse one StreamingMarkdown per content index so its per-block parse caches
+	// survive the contentContainer.clear() in updateContent; only the changed block
+	// re-parses on the next render.
+	private getStream(idx: number, text: string, style?: DefaultTextStyle): StreamingMarkdown {
+		let stream = this.streams.get(idx);
+		if (!stream) {
+			stream = new StreamingMarkdown(1, 0, this.markdownTheme, style);
+			this.streams.set(idx, stream);
+		}
+		stream.setText(text);
+		return stream;
+	}
+
 	updateContent(message: AssistantMessage): void {
 		this.lastMessage = message;
 
@@ -175,8 +200,8 @@ export class AssistantMessageComponent extends Container implements CollapsibleC
 		for (let i = 0; i < message.content.length; i++) {
 			const content = message.content[i];
 			if (content.type === "text" && content.text.trim()) {
-				const centered = new CenteredContainer(80);
-				centered.addChild(new Markdown(content.text.trim(), 1, 0, this.markdownTheme));
+				const centered = new CenteredBlock(80);
+				centered.addChild(this.getStream(i, content.text.trim()));
 				this.contentContainer.addChild(centered);
 			} else if (content.type === "thinking" && content.thinking.trim()) {
 				const idx = thinkingIndex++;
@@ -188,13 +213,8 @@ export class AssistantMessageComponent extends Container implements CollapsibleC
 				this.contentContainer.addChild(header);
 
 				if (isExpanded) {
-					const centered = new CenteredContainer(80);
-					centered.addChild(
-						new Markdown(content.thinking.trim(), 1, 0, this.markdownTheme, {
-							color: (text: string) => theme.fg("thinkingText", text),
-							italic: true,
-						}),
-					);
+					const centered = new CenteredBlock(80);
+					centered.addChild(this.getStream(i, content.thinking.trim(), THINKING_STYLE));
 					this.contentContainer.addChild(centered);
 				}
 
@@ -216,11 +236,15 @@ export class AssistantMessageComponent extends Container implements CollapsibleC
 						? message.errorMessage
 						: "Operation aborted";
 				this.contentContainer.addChild(new Spacer(1));
-				this.contentContainer.addChild(new Text(theme.fg("error", abortMessage), 1, 0));
+				const centered = new CenteredBlock(80);
+				centered.addChild(new Text(theme.fg("error", abortMessage), 1, 0));
+				this.contentContainer.addChild(centered);
 			} else if (message.stopReason === "error") {
 				const errorMsg = message.errorMessage || "Unknown error";
 				this.contentContainer.addChild(new Spacer(1));
-				this.contentContainer.addChild(new Text(theme.fg("error", `Error: ${errorMsg}`), 1, 0));
+				const centered = new CenteredBlock(80);
+				centered.addChild(new Text(theme.fg("error", `Error: ${errorMsg}`), 1, 0));
+				this.contentContainer.addChild(centered);
 			}
 		}
 	}

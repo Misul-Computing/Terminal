@@ -467,11 +467,15 @@ export function renderImage(
  * In terminals that do not support OSC 8, the escape sequences are ignored
  * and only the plain text is displayed.
  *
+ * Uses BEL (\x07) as the OSC terminator instead of ST (ESC \) because many
+ * terminals only recognize BEL-terminated links for cmd+click. ST-terminated
+ * links render as plain text with no clickable target in those terminals.
+ *
  * @param text - The visible text to display
  * @param url - The URL to link to
  */
 export function hyperlink(text: string, url: string): string {
-	return `\x1b]8;;${url}\x1b\\${text}\x1b]8;;\x1b\\`;
+	return `\x1b]8;;${url}\x07${text}\x1b]8;;\x07`;
 }
 
 export function imageFallback(mimeType: string, dimensions?: ImageDimensions, filename?: string): string {

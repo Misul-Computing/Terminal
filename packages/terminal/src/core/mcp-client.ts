@@ -226,27 +226,35 @@ export class McpManager {
 	/** Get all tools from all running MCP servers, as agent tool definitions. */
 	getToolDefinitions(): ToolDefinition[] {
 		const tools: ToolDefinition[] = [];
-		for (const [serverName, instance] of this.servers) {
+		const sortedServers = [...this.servers.entries()].sort(([a], [b]) => a.localeCompare(b));
+		for (const [serverName, instance] of sortedServers) {
 			if (!instance.isRunning()) continue;
-			for (const mcpTool of instance.getTools()) {
+			const sortedMcpTools = [...instance.getTools()].sort((a, b) => a.name.localeCompare(b.name));
+			for (const mcpTool of sortedMcpTools) {
 				const toolName = `mcp__${serverName}__${mcpTool.name}`;
+				const rawDesc = mcpTool.description ?? `MCP tool: ${mcpTool.name} from ${serverName}`;
+				const cleanDesc = sanitizeMcpDescription(rawDesc);
 				// MCP tools have arbitrary JSON schemas. Use a permissive TypeBox schema
 				// that accepts any object so the agent can pass through whatever the server expects.
+				// Property keys are sorted for deterministic serialization (cache stability).
+				// Descriptions are sanitized to strip runtime paths/ports/tokens.
 				const schema = Type.Object(
 					Object.fromEntries(
-						Object.entries(mcpTool.inputSchema?.properties ?? {}).map(([key, val]) => {
-							const v = val as { type?: string; description?: string };
-							return [key, Type.Any({ description: v?.description ?? "" })];
-						}),
+						Object.entries(mcpTool.inputSchema?.properties ?? {})
+							.sort(([a], [b]) => a.localeCompare(b))
+							.map(([key, val]) => {
+								const v = val as { type?: string; description?: string };
+								return [key, Type.Any({ description: sanitizeMcpDescription(v?.description ?? "") })];
+							}),
 					),
-					{ description: mcpTool.description ?? `MCP tool: ${mcpTool.name} from ${serverName}` },
+					{ description: cleanDesc },
 				);
 				const capName = mcpTool.name.charAt(0).toUpperCase() + mcpTool.name.slice(1);
 				tools.push(
 					defineTool({
 						name: toolName,
 						label: `${serverName}: ${capName}`,
-						description: mcpTool.description ?? `MCP tool: ${mcpTool.name} from ${serverName}`,
+						description: cleanDesc,
 						parameters: schema,
 						execute: async (_id, params): Promise<AgentToolResult<undefined>> => {
 							const result = await instance.callTool(mcpTool.name, params as Record<string, unknown>);
@@ -271,6 +279,26 @@ export class McpManager {
 	getServerNames(): string[] {
 		return Array.from(this.servers.keys()).filter((name) => this.servers.get(name)?.isRunning());
 	}
+}
+
+/**
+ * Strip non-deterministic content from MCP tool descriptions so the tool
+ * schema block stays byte-identical across restarts/reconnects.
+ *
+ * Removes: absolute paths, port numbers in URLs, query-string tokens/keys.
+ * See docs/cache-aware-design.md: "strip runtime paths/ports/tokens from
+ * descriptions."
+ */
+export function sanitizeMcpDescription(desc: string): string {
+	return desc
+		// Strip absolute POSIX paths (/tmp/..., /home/..., /var/...).
+		.replace(/(?:^|\s)((?:\/[\w.-]+)+)/g, " <path>")
+		// Strip absolute Windows paths (C:\Users\...).
+		.replace(/[A-Za-z]:\\[\w\\.-]+/g, "<path>")
+		// Strip port numbers in URLs (http://host:8080 -> http://host).
+		.replace(/(https?:\/\/[^\s/:]+):\d+/g, "$1")
+		// Strip query-string tokens and API keys.
+		.replace(/[?&](?:token|key|api_key|apikey|secret)=[^\s&]+/gi, "");
 }
 
 /** Format an MCP tool call result into a string for the agent. */

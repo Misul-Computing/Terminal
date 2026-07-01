@@ -95,10 +95,10 @@ import { hasTrustRequiringProjectResources, ProjectTrustStore } from "../../core
 import { getChangelogPath, getNewEntries, normalizeChangelogLinks, parseChangelog } from "../../utils/changelog.ts";
 import { MISUL_LOGO_LINES } from "./misul-logo.ts";
 import { CenteredText } from "./components/centered-text.ts";
+import { CenteredBlock } from "./components/centered-block.ts";
 import { copyToClipboard } from "../../utils/clipboard.ts";
 import { extensionForImageMimeType, readClipboardImage } from "../../utils/clipboard-image.ts";
 import { parseGitUrl } from "../../utils/git.ts";
-import { getCwdRelativePath } from "../../utils/paths.ts";
 import { killTrackedDetachedChildren } from "../../utils/shell.ts";
 import { ensureTool } from "../../utils/tools-manager.ts";
 import { checkForNewVersion, type LatestRelease } from "../../utils/version-check.ts";
@@ -702,12 +702,18 @@ export class InteractiveMode {
 			// Centered startup: the Misul wordmark, the product name, and a concise
 			// tagline — everything horizontally centered, no keybinding hints or
 			// loaded-resources list.
-			const wordmark = theme.fg("accent", MISUL_LOGO_LINES.join("\n"));
-			const title = `${theme.bold(theme.fg("accent", APP_TITLE))} ${theme.fg("dim", `v${this.version}`)}`;
-			const tagline = theme.fg("dim", "The coding harness by Misul Computing");
-			const hint = theme.fg("dim", "Type / for commands, or just ask.");
-			const headerText = `${wordmark}\n\n${title}\n\n${tagline}\n${hint}`;
-			this.builtInHeader = new CenteredText(() => headerText);
+			// Build the colored text inside the closure so it is recomputed on every
+			// render. theme.fg bakes ANSI codes at call time, so computing it once
+			// would freeze the header at the startup theme; a /theme switch fires
+			// onThemeChange -> requestRender, which re-runs this and recolors it.
+			const buildHeaderText = (): string => {
+				const wordmark = theme.fg("accent", MISUL_LOGO_LINES.join("\n"));
+				const title = `${theme.bold(theme.fg("accent", APP_TITLE))} ${theme.fg("dim", `v${this.version}`)}`;
+				const tagline = theme.fg("dim", "The coding harness by Misul Computing");
+				const hint = theme.fg("dim", "Type / for commands, or just ask.");
+				return `${wordmark}\n\n${title}\n\n${tagline}\n${hint}`;
+			};
+			this.builtInHeader = new CenteredText(buildHeaderText);
 
 			// Setup UI layout
 			this.headerContainer.addChild(new Spacer(1));
@@ -946,17 +952,6 @@ export class InteractiveMode {
 		let result = this.formatDisplayPath(path);
 		result = result.replace(/\/index\.ts$/, "").replace(/\/index\.js$/, "");
 		return result;
-	}
-
-	private formatContextPath(p: string): string {
-		const cwd = path.resolve(this.sessionManager.getCwd());
-		const absolutePath = path.isAbsolute(p) ? path.resolve(p) : path.resolve(cwd, p);
-		const relativePath = getCwdRelativePath(absolutePath, cwd);
-		if (relativePath !== undefined) {
-			return relativePath;
-		}
-
-		return this.formatDisplayPath(absolutePath);
 	}
 
 	private getStartupExpansionState(): boolean {
@@ -1363,18 +1358,8 @@ export class InteractiveMode {
 		}
 
 		if (showListing) {
-			const contextFiles = this.session.resourceLoader.getAgentsFiles().agentsFiles;
-			if (contextFiles.length > 0) {
-				this.chatContainer.addChild(new Spacer(1));
-				const contextList = contextFiles
-					.map((f) => theme.fg("dim", `  ${this.formatDisplayPath(f.path)}`))
-					.join("\n");
-				const contextCompactList = formatCompactList(
-					contextFiles.map((contextFile) => this.formatContextPath(contextFile.path)),
-					{ sort: false },
-				);
-				addLoadedSection("Context", contextCompactList, contextList);
-			}
+			// Context files (MISUL.md, AGENTS.md, etc.) are loaded silently;
+			// they don't need a startup section since they're already in the system prompt.
 
 			// Skills are intentionally NOT listed at startup; they are available via the /skills menu.
 
@@ -2693,6 +2678,11 @@ export class InteractiveMode {
 				this.editor.setText("");
 				return;
 			}
+			if (text === "/cache") {
+				this.handleCacheCommand();
+				this.editor.setText("");
+				return;
+			}
 			if (text === "/changelog") {
 				this.handleChangelogCommand();
 				this.editor.setText("");
@@ -2944,7 +2934,9 @@ export class InteractiveMode {
 								);
 								// Expand during streaming so users see live execution; auto-collapse on turn end
 								component.setExpanded(true);
-								this.chatContainer.addChild(component);
+								const centered = new CenteredBlock(80);
+								centered.addChild(component);
+								this.chatContainer.addChild(centered);
 								this.pendingTools.set(content.id, component);
 							} else {
 								const component = this.pendingTools.get(content.id);
@@ -3020,7 +3012,9 @@ export class InteractiveMode {
 						this.sessionManager.getCwd(),
 					);
 					component.setExpanded(this.toolOutputExpanded);
-					this.chatContainer.addChild(component);
+					const centered = new CenteredBlock(80);
+					centered.addChild(component);
+					this.chatContainer.addChild(centered);
 					this.pendingTools.set(event.toolCallId, component);
 				}
 				component.markExecutionStarted();
@@ -3248,7 +3242,9 @@ export class InteractiveMode {
 					message.truncated ? ({ truncated: true } as TruncationResult) : undefined,
 					message.fullOutputPath,
 				);
-				this.chatContainer.addChild(component);
+				const centered = new CenteredBlock(80);
+				centered.addChild(component);
+				this.chatContainer.addChild(centered);
 				break;
 			}
 			case "custom": {
@@ -3256,7 +3252,9 @@ export class InteractiveMode {
 					const renderer = this.session.extensionRunner.getMessageRenderer(message.customType);
 					const component = new CustomMessageComponent(message, renderer, this.getMarkdownThemeWithSettings());
 					component.setExpanded(this.toolOutputExpanded);
-					this.chatContainer.addChild(component);
+					const centered = new CenteredBlock(80);
+					centered.addChild(component);
+					this.chatContainer.addChild(centered);
 				}
 				break;
 			}
@@ -3264,14 +3262,18 @@ export class InteractiveMode {
 				this.chatContainer.addChild(new Spacer(1));
 				const component = new CompactionSummaryMessageComponent(message, this.getMarkdownThemeWithSettings());
 				component.setExpanded(this.toolOutputExpanded);
-				this.chatContainer.addChild(component);
+				const centered = new CenteredBlock(80);
+				centered.addChild(component);
+				this.chatContainer.addChild(centered);
 				break;
 			}
 			case "branchSummary": {
 				this.chatContainer.addChild(new Spacer(1));
 				const component = new BranchSummaryMessageComponent(message, this.getMarkdownThemeWithSettings());
 				component.setExpanded(this.toolOutputExpanded);
-				this.chatContainer.addChild(component);
+				const centered = new CenteredBlock(80);
+				centered.addChild(component);
+				this.chatContainer.addChild(centered);
 				break;
 			}
 			case "user": {
@@ -3288,7 +3290,9 @@ export class InteractiveMode {
 							this.getMarkdownThemeWithSettings(),
 						);
 						component.setExpanded(this.toolOutputExpanded);
-						this.chatContainer.addChild(component);
+						const centered = new CenteredBlock(80);
+					centered.addChild(component);
+					this.chatContainer.addChild(centered);
 						// Render user message separately if present
 						if (skillBlock.userMessage) {
 							this.chatContainer.addChild(new Spacer(1));
@@ -3365,7 +3369,9 @@ export class InteractiveMode {
 							this.sessionManager.getCwd(),
 						);
 						component.setExpanded(this.toolOutputExpanded);
-						this.chatContainer.addChild(component);
+						const centered = new CenteredBlock(80);
+						centered.addChild(component);
+						this.chatContainer.addChild(centered);
 
 						if (message.stopReason === "aborted" || message.stopReason === "error") {
 							let errorMessage: string;
@@ -4055,7 +4061,9 @@ export class InteractiveMode {
 	private flushPendingBashComponents(): void {
 		for (const component of this.pendingBashComponents) {
 			this.pendingMessagesContainer.removeChild(component);
-			this.chatContainer.addChild(component);
+			const centered = new CenteredBlock(80);
+			centered.addChild(component);
+			this.chatContainer.addChild(centered);
 		}
 		this.pendingBashComponents = [];
 	}
@@ -4112,6 +4120,9 @@ export class InteractiveMode {
 					clearOnShrink: this.settingsManager.getClearOnShrink(),
 					showTerminalProgress: this.settingsManager.getShowTerminalProgress(),
 					warnings: this.settingsManager.getWarnings(),
+					cacheAggressiveness: this.settingsManager.getCacheAggressiveness(),
+					soloMode: this.settingsManager.getSoloMode(),
+					autoReviewSubagents: this.settingsManager.getAutoReviewSubagents(),
 				},
 				{
 					onAutoCompactChange: (enabled) => {
@@ -4235,6 +4246,18 @@ export class InteractiveMode {
 					},
 					onWarningsChange: (warnings) => {
 						this.settingsManager.setWarnings(warnings);
+					},
+					onCacheAggressivenessChange: (value) => {
+						this.settingsManager.setCacheAggressiveness(value);
+						this.showStatus("Cache aggressiveness: " + value);
+					},
+					onSoloModeChange: (enabled) => {
+						this.settingsManager.setSoloMode(enabled);
+						this.showStatus("Solo mode: " + (enabled ? "on" : "off"));
+					},
+					onAutoReviewSubagentsChange: (enabled) => {
+						this.settingsManager.setAutoReviewSubagents(enabled);
+						this.showStatus("Autoreview subagents: " + (enabled ? "on" : "off"));
 					},
 					onCancel: () => {
 						done();
@@ -5617,6 +5640,51 @@ export class InteractiveMode {
 		this.ui.requestRender();
 	}
 
+	private handleCacheCommand(): void {
+		const stats = this.session.getCacheStats();
+
+		let info = `${theme.bold("Cache Statistics")}\n\n`;
+
+		info += `${theme.bold("Session Totals")}\n`;
+		info += `${theme.fg("dim", "Calls:")} ${stats.callCount}\n`;
+		info += `${theme.fg("dim", "Input (uncached):")} ${stats.totalInput.toLocaleString()}\n`;
+		info += `${theme.fg("dim", "Cache Read:")} ${stats.totalCacheRead.toLocaleString()}\n`;
+		info += `${theme.fg("dim", "Cache Write:")} ${stats.totalCacheWrite.toLocaleString()}\n`;
+		info += `${theme.fg("dim", "Output:")} ${stats.totalOutput.toLocaleString()}\n`;
+
+		const hitRateStr = stats.callCount > 0 ? `${stats.hitRate.toFixed(1)}%` : "n/a";
+		const hitRateColor = stats.hitRate < 70 && stats.callCount > 0 ? "error" : "success";
+		info += `${theme.fg("dim", "Hit Rate:")} ${theme.fg(hitRateColor, hitRateStr)}\n`;
+
+		info += `\n${theme.bold("Cost")}\n`;
+		info += `${theme.fg("dim", "Estimated (no cache):")} $${stats.estimatedNoCacheCost.toFixed(4)}\n`;
+		info += `${theme.fg("dim", "Actual (with cache):")} $${stats.actualCacheCost.toFixed(4)}\n`;
+		const savingsColor = stats.savings >= 0 ? "success" : "error";
+		const savingsSign = stats.savings >= 0 ? "+" : "";
+		info += `${theme.fg("dim", "Savings:")} ${theme.fg(savingsColor, `${savingsSign}$${stats.savings.toFixed(4)}`)}\n`;
+
+		info += `\n${theme.bold("Prefix")}\n`;
+		info += `${theme.fg("dim", "Hash:")} ${stats.prefixHash || "n/a"}\n`;
+		info += `${theme.fg("dim", "Epoch:")} ${stats.epochId ?? "none"}`;
+
+		// Show per-call breakdown for the last 10 calls
+		if (stats.calls.length > 0) {
+			const recent = stats.calls.slice(-10);
+			info += `\n\n${theme.bold("Recent Calls (last " + recent.length + ")")}\n`;
+			for (let i = 0; i < recent.length; i++) {
+				const c = recent[i];
+				const callNum = stats.calls.length - recent.length + i + 1;
+				const hitColor = c.hitRate < 70 ? "error" : "success";
+				info += `${theme.fg("dim", `#${callNum}`)} in=${c.input.toLocaleString()} read=${c.cacheRead.toLocaleString()} write=${c.cacheWrite.toLocaleString()} ${theme.fg(hitColor, `hit=${c.hitRate.toFixed(0)}%`)} $${c.cost.toFixed(4)}\n`;
+			}
+			info = info.trimEnd();
+		}
+
+		this.chatContainer.addChild(new Spacer(1));
+		this.chatContainer.addChild(new Text(info, 1, 0));
+		this.ui.requestRender();
+	}
+
 	private handleChangelogCommand(): void {
 		const changelogPath = getChangelogPath();
 		const allEntries = parseChangelog(changelogPath);
@@ -5839,7 +5907,9 @@ export class InteractiveMode {
 				this.pendingMessagesContainer.addChild(this.bashComponent);
 				this.pendingBashComponents.push(this.bashComponent);
 			} else {
-				this.chatContainer.addChild(this.bashComponent);
+				const centered = new CenteredBlock(80);
+				centered.addChild(this.bashComponent);
+				this.chatContainer.addChild(centered);
 			}
 
 			// Show output and complete
@@ -5870,7 +5940,9 @@ export class InteractiveMode {
 			this.pendingBashComponents.push(this.bashComponent);
 		} else {
 			// Show in chat immediately when agent is idle
-			this.chatContainer.addChild(this.bashComponent);
+			const centered = new CenteredBlock(80);
+			centered.addChild(this.bashComponent);
+			this.chatContainer.addChild(centered);
 		}
 		this.ui.requestRender();
 

@@ -128,6 +128,41 @@ describe("agentLoop with AgentMessage", () => {
 		expect(eventTypes).toContain("agent_end");
 	});
 
+	it("strips the assistant prefill from the final message on the done path", async () => {
+		const context: AgentContext = { systemPrompt: "You are helpful.", messages: [], tools: [] };
+		const config: AgentLoopConfig = {
+			model: createModel(),
+			convertToLlm: identityConverter,
+			assistantPrefill: "I will be honest.",
+		};
+		// Simulate a provider that echoes the prefill: the model continues from it,
+		// so its final text starts with the prefill string. Providers end with a
+		// "done" event, so this exercises the branch that actually runs.
+		const streamFn = () => {
+			const stream = new MockAssistantStream();
+			queueMicrotask(() => {
+				const message = createAssistantMessage([{ type: "text", text: "I will be honest. The file exists." }]);
+				stream.push({ type: "done", reason: "stop", message });
+			});
+			return stream;
+		};
+
+		const events: AgentEvent[] = [];
+		const stream = agentLoop([createUserMessage("Does the file exist?")], context, config, undefined, streamFn);
+		for await (const event of stream) {
+			events.push(event);
+		}
+		const messages = await stream.result();
+		const assistant = messages.find((m) => m.role === "assistant") as AssistantMessage;
+		const textBlock = assistant.content.find((b) => b.type === "text");
+		const text = textBlock && "text" in textBlock ? textBlock.text : "";
+		expect(text).toBe("The file exists.");
+
+		// The prefill must not leak into the streamed end event the UI renders either.
+		const endEvent = events.find((e) => e.type === "message_end");
+		expect(JSON.stringify(endEvent)).not.toContain("I will be honest.");
+	});
+
 	it("should handle custom message types via convertToLlm", async () => {
 		// Create a custom message type
 		interface CustomNotification {

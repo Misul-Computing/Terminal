@@ -82,6 +82,24 @@ function loadContextFileFromDir(dir: string): { path: string; content: string } 
 	return null;
 }
 
+function loadGlobalSystemPromptFile(dir: string): { path: string; content: string } | null {
+	const candidates = ["MISUL.md", "MISUL.MD", "AGENTS.md", "AGENTS.MD", "CLAUDE.md", "CLAUDE.MD"];
+	for (const filename of candidates) {
+		const filePath = join(dir, filename);
+		if (existsSync(filePath)) {
+			try {
+				return {
+					path: filePath,
+					content: readFileSync(filePath, "utf-8"),
+				};
+			} catch (error) {
+				console.error(chalk.yellow(`Warning: Could not read ${filePath}: ${error}`));
+			}
+		}
+	}
+	return null;
+}
+
 export function loadProjectContextFiles(options: {
 	cwd: string;
 	agentDir: string;
@@ -92,7 +110,7 @@ export function loadProjectContextFiles(options: {
 	const contextFiles: Array<{ path: string; content: string }> = [];
 	const seenPaths = new Set<string>();
 
-	const globalContext = loadContextFileFromDir(resolvedAgentDir);
+	const globalContext = loadGlobalSystemPromptFile(resolvedAgentDir);
 	if (globalContext) {
 		contextFiles.push(globalContext);
 		seenPaths.add(globalContext.path);

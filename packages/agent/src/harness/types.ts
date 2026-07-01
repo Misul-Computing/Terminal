@@ -93,6 +93,8 @@ export interface AgentHarnessStreamOptions {
 	metadata?: SimpleStreamOptions["metadata"];
 	/** Provider cache retention hint. */
 	cacheRetention?: SimpleStreamOptions["cacheRetention"];
+	/** Cache breakpoint aggressiveness for providers with explicit breakpoints. */
+	cacheAggressiveness?: SimpleStreamOptions["cacheAggressiveness"];
 }
 
 /** Per-request stream option patch returned by provider hooks. */

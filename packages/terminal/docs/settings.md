@@ -159,6 +159,9 @@ Keep `retry.provider.maxRetries` at `0` unless provider-level retries are explic
 | `transport` | string | `"auto"` | Preferred transport for providers that support multiple transports: `"sse"`, `"websocket"`, `"websocket-cached"`, or `"auto"` |
 | `httpIdleTimeoutMs` | number | `300000` | HTTP header/body idle timeout in milliseconds, also used by providers with explicit stream idle timeouts. Set to `0` to disable. |
 | `websocketConnectTimeoutMs` | number | `15000` | WebSocket connect/open handshake timeout in milliseconds for providers that support WebSocket transports. Set to `0` to disable. |
+| `cacheAggressiveness` | string | `"standard"` | Prompt cache breakpoint placement for Anthropic: `"off"` (no markers), `"standard"` (3 breakpoints: system, tools, last message), `"aggressive"` (4 breakpoints: adds second-to-last message). See `docs/cache-aware-design.md`. |
+| `soloMode` | boolean | `false` | Disable subagent spawning entirely. The main agent handles all work directly without delegating to `spawn_agent`. Overrides `--agent`. Also settable via `--solo` CLI flag. |
+| `autoReviewSubagents` | boolean | `false` | Run a ruthless read-only review agent after work subagents (simple, deep-work) complete. Checks git diff, build, tests, and AI tells. Emits `AUTOREVIEW: PASS` or `AUTOREVIEW: FAIL`. Also settable via `--autoreview` CLI flag. |
 
 ### Terminal & Images
 

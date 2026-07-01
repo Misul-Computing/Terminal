@@ -158,15 +158,23 @@ export class ProcessTerminal implements Terminal {
 		process.stdin.setEncoding("utf8");
 		process.stdin.resume();
 
+		// Switch to the alternate screen. This TUI repaints its whole UI every
+		// frame; on the main screen each full redraw (\x1b[2J\x1b[H + re-emit all
+		// lines) re-stamps the UI into the terminal's native scrollback, so once
+		// content scrolls past the top, scrolling back shows the app duplicated
+		// many times. The alternate screen has no scrollback to pollute; the in-app
+		// wheel scroll (TUI.scroll over lineHistory) provides history instead.
+		process.stdout.write("\x1b[?1049h");
+
 		// Enable bracketed paste mode - terminal will wrap pastes in \x1b[200~ ... \x1b[201~
 		process.stdout.write("\x1b[?2004h");
 
-		// Enable SGR mouse mode (1006) + click tracking (1000).
-		// Mode 1000 reports button press/release only, NOT drag motion.
-		// This preserves native text selection (drag is not captured).
-		// Wheel events (button 64/65) are captured and handled in-app
-		// for internal scrolling. Shift+wheel bypasses mouse tracking for
-		// native terminal scrollback in most terminals.
+		// Enable SGR mouse (1006) + click tracking (1000) so the wheel drives the
+		// in-app scroll (a clean history view that avoids polluting native
+		// scrollback) and clicks reach the UI. Because the app holds the mouse, the
+		// terminal routes plain drags to it, so native highlight-to-copy needs the
+		// terminal's selection modifier: Shift-drag, or Option/Cmd-drag on some
+		// macOS terminals. Wheel events arrive as button 64/65 (see handleMouse).
 		process.stdout.write("\x1b[?1006h\x1b[?1000h");
 
 		// Set up resize handler immediately
@@ -469,6 +477,9 @@ export class ProcessTerminal implements Terminal {
 
 		// Disable mouse tracking
 		process.stdout.write("\x1b[?1000l\x1b[?1006l");
+
+		// Leave the alternate screen, restoring the user's pre-launch terminal.
+		process.stdout.write("\x1b[?1049l");
 
 		const shouldDisableKittyProtocol = this.keyboardProtocolPushed || this._kittyProtocolActive;
 		this.clearKeyboardProtocolNegotiationBuffer();

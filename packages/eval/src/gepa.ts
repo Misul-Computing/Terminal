@@ -197,7 +197,7 @@ async function captureTrace(
 
 	// Capture trace from session messages (the runner doesn't expose messages,
 	// so we reconstruct from the run result + grade output).
-	// ponytail: trace is the fixture prompt + grade output. Full conversation
+	// Tradeoff: trace is the fixture prompt + grade output. Full conversation
 	// capture would require patching the runner; this is sufficient for
 	// reflection since the grade output tells the LM what went wrong.
 	const trace = `Fixture: ${fixture.id}\nPrompt: ${fixture.prompt}\n\nResult: ${grade.score >= 1 ? "PASS" : "FAIL"}\n${grade.stdout.slice(0, MAX_TRACE_CHARS)}`;

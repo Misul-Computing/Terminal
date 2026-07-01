@@ -43,6 +43,7 @@ export async function runSubagent(options: RunSubagentOptions): Promise<Subagent
 			tools,
 			enableSubagents: false,
 			sessionManager: SessionManager.inMemory(cwd),
+			appendSystemPrompt: preset.systemPrompt,
 			...(options.authStorage ? { authStorage: options.authStorage } : {}),
 			...(options.modelRegistry ? { modelRegistry: options.modelRegistry } : {}),
 			...(options.agentDir ? { agentDir: options.agentDir } : {}),
@@ -84,7 +85,7 @@ export async function runSubagent(options: RunSubagentOptions): Promise<Subagent
 				}, timeoutMs);
 			});
 			try {
-				await Promise.race([session.prompt(`${preset.systemPrompt}\n\n${task}`), timeout]);
+				await Promise.race([session.prompt(task), timeout]);
 			} finally {
 				if (timer) clearTimeout(timer);
 			}

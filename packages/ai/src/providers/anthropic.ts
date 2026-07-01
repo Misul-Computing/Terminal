@@ -12,6 +12,7 @@ import type {
 	AnthropicMessagesCompat,
 	Api,
 	AssistantMessage,
+	CacheAggressiveness,
 	CacheRetention,
 	Context,
 	ImageContent,
@@ -51,6 +52,10 @@ function resolveCacheRetention(cacheRetention?: CacheRetention, env?: ProviderEn
 		return "long";
 	}
 	return "short";
+}
+
+function resolveCacheAggressiveness(value?: CacheAggressiveness): CacheAggressiveness {
+	return value ?? "standard";
 }
 
 function getCacheControl(
@@ -908,10 +913,22 @@ function buildParams(
 	options?: AnthropicOptions,
 ): MessageCreateParamsStreaming {
 	const { cacheControl } = getCacheControl(model, options?.cacheRetention, options?.env);
+	const aggressiveness = resolveCacheAggressiveness(options?.cacheAggressiveness);
+	// "off" disables all cache_control markers. "standard" uses 3 breakpoints.
+	// "aggressive" uses 4 (adds second-to-last message).
+	const effectiveCacheControl = aggressiveness === "off" ? undefined : cacheControl;
+	const aggressive = aggressiveness === "aggressive";
 	const compat = getAnthropicCompat(model);
 	const params: MessageCreateParamsStreaming = {
 		model: model.id,
-		messages: convertMessages(context.messages, model, isOAuthToken, cacheControl, compat.allowEmptySignature),
+		messages: convertMessages(
+			context.messages,
+			model,
+			isOAuthToken,
+			effectiveCacheControl,
+			compat.allowEmptySignature,
+			aggressive,
+		),
 		max_tokens: options?.maxTokens ?? model.maxTokens,
 		stream: true,
 	};
@@ -922,14 +939,14 @@ function buildParams(
 			{
 				type: "text",
 				text: "You are Claude Code, Anthropic's official CLI for Claude.",
-				...(cacheControl ? { cache_control: cacheControl } : {}),
+				...(effectiveCacheControl ? { cache_control: effectiveCacheControl } : {}),
 			},
 		];
 		if (context.systemPrompt) {
 			params.system.push({
 				type: "text",
 				text: sanitizeSurrogates(context.systemPrompt),
-				...(cacheControl ? { cache_control: cacheControl } : {}),
+				...(effectiveCacheControl ? { cache_control: effectiveCacheControl } : {}),
 			});
 		}
 	} else if (context.systemPrompt) {
@@ -938,7 +955,7 @@ function buildParams(
 			{
 				type: "text",
 				text: sanitizeSurrogates(context.systemPrompt),
-				...(cacheControl ? { cache_control: cacheControl } : {}),
+				...(effectiveCacheControl ? { cache_control: effectiveCacheControl } : {}),
 			},
 		];
 	}
@@ -953,7 +970,7 @@ function buildParams(
 			context.tools,
 			isOAuthToken,
 			compat.supportsEagerToolInputStreaming,
-			compat.supportsCacheControlOnTools ? cacheControl : undefined,
+			compat.supportsCacheControlOnTools ? effectiveCacheControl : undefined,
 		);
 	}
 
@@ -1017,6 +1034,7 @@ function convertMessages(
 	isOAuthToken: boolean,
 	cacheControl?: CacheControlEphemeral,
 	allowEmptySignature = false,
+	aggressive = false,
 ): MessageParam[] {
 	const params: MessageParam[] = [];
 
@@ -1178,6 +1196,38 @@ function convertMessages(
 					},
 				] as any;
 			}
+		}
+	}
+
+	// 4th cache breakpoint: second-to-last message, caching the conversation
+	// up to the end of the previous turn. On the next turn this message becomes
+	// the third-to-last, and the breakpoint here lets the prefix hit cache.
+	// Only for non-OAuth (OAuth uses 2 system breakpoints, leaving no room).
+	// Only when cacheAggressiveness is "aggressive" (default is "standard" = 3 bps).
+	if (cacheControl && aggressive && !isOAuthToken && params.length >= 2) {
+		const prevMessage = params[params.length - 2];
+		if (Array.isArray(prevMessage.content)) {
+			const prevLastBlock = prevMessage.content[prevMessage.content.length - 1] as any;
+			// Only add cache_control to cacheable block types (matching the
+			// last-message breakpoint logic). Thinking blocks are not cacheable.
+			if (
+				prevLastBlock &&
+				!prevLastBlock.cache_control &&
+				(prevLastBlock.type === "text" ||
+					prevLastBlock.type === "image" ||
+					prevLastBlock.type === "tool_result" ||
+					prevLastBlock.type === "tool_use")
+			) {
+				prevLastBlock.cache_control = cacheControl;
+			}
+		} else if (typeof prevMessage.content === "string") {
+			prevMessage.content = [
+				{
+					type: "text",
+					text: prevMessage.content,
+					cache_control: cacheControl,
+				},
+			] as any;
 		}
 	}
 

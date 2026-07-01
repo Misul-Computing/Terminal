@@ -33,7 +33,7 @@ const MAX_THINKING_ROUNDS = 3;
 export interface GoalLoopOptions {
 	/** The user's goal description. */
 	goal: string;
-	/** Original guidelines/constraints (from system prompt, AGENTS.md, etc). */
+	/** Original guidelines/constraints (from system prompt, MISUL.md, AGENTS.md, etc). */
 	guidelines?: string;
 	/** Model for the main agent (inherited from session). */
 	model: Model<any>;

@@ -32,7 +32,6 @@ describe("bundled skills", () => {
 	it("loads the bundled skills when defaults are included", () => {
 		const { skills } = loadSkills({ agentDir, cwd, skillPaths: [], includeDefaults: true });
 		const names = skills.map((s) => s.name);
-		expect(names).toContain("ponytail");
 		expect(names).toContain("system-prompts");
 		expect(names).toContain("semantic-compression");
 		expect(names).toContain("frontend-design");
@@ -40,27 +39,27 @@ describe("bundled skills", () => {
 		expect(names).toContain("secure-coding");
 
 		// Bundled skills carry the "bundled" source label.
-		const ponytail = skills.find((s) => s.name === "ponytail");
-		expect(ponytail?.sourceInfo.source).toBe("bundled");
+		const frontend = skills.find((s) => s.name === "frontend-design");
+		expect(frontend?.sourceInfo.source).toBe("bundled");
 	});
 
 	it("lets a user skill override a bundled skill of the same name", () => {
-		const userSkillDir = join(agentDir, "skills", "ponytail");
+		const userSkillDir = join(agentDir, "skills", "frontend-design");
 		mkdirSync(userSkillDir, { recursive: true });
 		const userSkillPath = join(userSkillDir, "SKILL.md");
 		writeFileSync(
 			userSkillPath,
-			["---", "name: ponytail", "description: User override of the bundled ponytail skill.", "---", "", "user body"].join(
+			["---", "name: frontend-design", "description: User override of the bundled frontend-design skill.", "---", "", "user body"].join(
 				"\n",
 			),
 		);
 
 		const { skills } = loadSkills({ agentDir, cwd, skillPaths: [], includeDefaults: true });
-		const ponytail = skills.find((s) => s.name === "ponytail");
-		expect(ponytail).toBeDefined();
+		const frontend = skills.find((s) => s.name === "frontend-design");
+		expect(frontend).toBeDefined();
 		// The user file wins the name collision over the bundled one.
-		expect(ponytail?.filePath).toBe(userSkillPath);
-		expect(ponytail?.sourceInfo.scope).toBe("user");
+		expect(frontend?.filePath).toBe(userSkillPath);
+		expect(frontend?.sourceInfo.scope).toBe("user");
 	});
 
 	it("lets a project skill override a bundled skill of the same name", () => {

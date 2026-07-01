@@ -12,6 +12,7 @@ import type { Model } from "@misul/ai";
 import { type Static, Type } from "typebox";
 import { defineTool, type ToolDefinition } from "../extensions/types.ts";
 import { allToolNames, type ToolName } from "../tools/index.ts";
+import { runAutoReview } from "./autoreview.ts";
 import { runDeepWork } from "./deep-work.ts";
 import { getPreset, PRESET_NAMES } from "./presets.ts";
 import { runSubagent } from "./runner.ts";
@@ -44,6 +45,8 @@ export interface CreateSpawnAgentToolOptions {
 	runner?: SubagentRunner;
 	/** Fallback model accessor when ctx.model is undefined (wired in sdk.ts to agent.state.model). */
 	getParentModel?: () => Model<any> | undefined;
+	/** Run autoreview after work subagents (simple, deep-work). Default: false. */
+	autoReview?: boolean;
 }
 
 const spawnAgentParameters = Type.Object({
@@ -93,11 +96,26 @@ export function createSpawnAgentTool(options: CreateSpawnAgentToolOptions = {}):
 					? await runDeepWork({ task: params.task, model, cwd, preset, runner, tools, signal: signal ?? undefined })
 					: await runner({ preset, task: params.task, model, cwd, tools, signal: signal ?? undefined });
 
-			const cost = Number.isFinite(result.costUsd) ? `$${result.costUsd.toFixed(6)}` : "n/a";
-			const summary = result.errored
-				? `Subagent "${result.agent}" failed: ${result.errorMessage ?? "unknown error"}`
-				: `Subagent "${result.agent}" finished (phases: ${result.phases.join(", ")}, cost: ${cost}).\n\n${result.output}`;
-			return textResult(summary, result);
+			if (options.autoReview && !result.errored && (params.agent === "simple" || params.agent === "deep-work")) {
+				const reviewed = await runAutoReview({
+					task: params.task,
+					workResult: result,
+					model,
+					cwd,
+					runner,
+					signal: signal ?? undefined,
+				});
+				return textResult(formatResult(reviewed), reviewed);
+			}
+
+			return textResult(formatResult(result), result);
 		},
 	});
+}
+
+function formatResult(result: SubagentRunResult): string {
+	const cost = Number.isFinite(result.costUsd) ? `$${result.costUsd.toFixed(6)}` : "n/a";
+	return result.errored
+		? `Subagent "${result.agent}" failed: ${result.errorMessage ?? "unknown error"}`
+		: `Subagent "${result.agent}" finished (phases: ${result.phases.join(", ")}, cost: ${cost}).\n\n${result.output}`;
 }

@@ -6,7 +6,18 @@
  */
 
 import { createInterface } from "node:readline";
-import { type ImageContent, modelsAreEqual } from "@misul/ai";
+import {
+	type ImageContent,
+	LAPLACE_API,
+	LAPLACE_DEFAULT_CONTEXT_WINDOW,
+	LAPLACE_DEFAULT_MAX_TOKENS,
+	LAPLACE_MODEL_ID,
+	LAPLACE_PROVIDER,
+	createLaplaceStreamSimple,
+	modelsAreEqual,
+	resolveLaplaceBinaryPath,
+	resolveLaplaceModelPath,
+} from "@misul/ai";
 import chalk from "chalk";
 import { type Args, type Mode, parseArgs, printHelp } from "./cli/args.ts";
 import { processFileArguments } from "./cli/file-processor.ts";
@@ -442,8 +453,13 @@ export function buildSessionOptions(
 	// --agent <name>: run this session WITH the chosen agent persona and enable
 	// subagent delegation (the spawn_agent tool). The persona system prompt is
 	// appended via resourceLoaderOptions.appendSystemPrompt (see createRuntime).
-	if (parsed.agent && getPreset(parsed.agent)) {
+	// --solo or soloMode setting overrides this and disables subagent spawning.
+	const soloMode = parsed.solo || settingsManager.getSoloMode();
+	if (soloMode) {
+		options.enableSubagents = false;
+	} else if (parsed.agent && getPreset(parsed.agent)) {
 		options.enableSubagents = true;
+		options.autoReviewSubagents = parsed.autoreview || settingsManager.getAutoReviewSubagents();
 	}
 
 	if (parsed.assistantPrefill !== undefined) {
@@ -716,6 +732,43 @@ export async function main(args: string[], options?: MainOptions) {
 			})),
 		];
 
+		if (parsed.laplace) {
+			const modelPath = parsed.laplaceModel ?? resolveLaplaceModelPath();
+			if (!modelPath) {
+				diagnostics.push({
+					type: "error" as const,
+					message: "--laplace requires a model path. Use --laplace-model <path>, set MISUL_LAPLACE_MODEL, or place a .gguf file in ~/Projects/Laplace/models/.",
+				});
+			} else {
+				const binaryPath = resolveLaplaceBinaryPath();
+				const maxTokens = process.env.MISUL_LAPLACE_MAX_TOKENS
+					? parseInt(process.env.MISUL_LAPLACE_MAX_TOKENS, 10)
+					: LAPLACE_DEFAULT_MAX_TOKENS;
+				const extraArgs = process.env.MISUL_LAPLACE_EXTRA_ARGS
+					? process.env.MISUL_LAPLACE_EXTRA_ARGS.split(" ").filter(Boolean)
+					: [];
+				modelRegistry.registerProvider(LAPLACE_PROVIDER, {
+					baseUrl: "http://localhost:0",
+					apiKey: "local",
+					api: LAPLACE_API,
+					streamSimple: createLaplaceStreamSimple({ binaryPath, modelPath, maxTokens, extraArgs }),
+					models: [
+						{
+							id: LAPLACE_MODEL_ID,
+							name: "Laplace Local",
+							reasoning: false,
+							input: ["text"],
+							cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+							contextWindow: LAPLACE_DEFAULT_CONTEXT_WINDOW,
+							maxTokens,
+						},
+					],
+				});
+				parsed.provider = LAPLACE_PROVIDER;
+				parsed.model = LAPLACE_MODEL_ID;
+			}
+		}
+
 		const modelPatterns = parsed.models ?? settingsManager.getEnabledModels();
 		const scopedModels =
 			modelPatterns && modelPatterns.length > 0 ? await resolveModelScope(modelPatterns, modelRegistry) : [];
@@ -755,6 +808,7 @@ export async function main(args: string[], options?: MainOptions) {
 			noTools: sessionOptions.noTools,
 			customTools: sessionOptions.customTools,
 			enableSubagents: sessionOptions.enableSubagents,
+			autoReviewSubagents: sessionOptions.autoReviewSubagents,
 		});
 		const cliThinkingOverride = parsed.thinking !== undefined || cliThinkingFromModel;
 		if (created.session.model && cliThinkingOverride) {

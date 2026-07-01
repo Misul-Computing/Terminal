@@ -51,10 +51,16 @@ export interface Args {
 	offline?: boolean;
 	verbose?: boolean;
 	projectTrustOverride?: boolean;
+	laplace?: boolean;
+	laplaceModel?: string;
 	/** Run non-interactively in autonomous goal mode until the goal is achieved. */
 	goal?: string;
 	/** Override the assistant prefill text. Empty string disables prefill. */
 	assistantPrefill?: string;
+	/** Disable subagent spawning entirely, overriding --agent and the soloMode setting. */
+	solo?: boolean;
+	/** Run autoreview after work subagents complete. */
+	autoreview?: boolean;
 	messages: string[];
 	fileArgs: string[];
 	/** Unknown flags (potentially extension flags) - map of flag name to value */
@@ -208,6 +214,14 @@ export function parseArgs(args: string[]): Args {
 			result.projectTrustOverride = false;
 		} else if (arg === "--offline") {
 			result.offline = true;
+		} else if (arg === "--laplace") {
+			result.laplace = true;
+		} else if (arg === "--laplace-model" && i + 1 < args.length) {
+			result.laplaceModel = args[++i];
+		} else if (arg === "--solo") {
+			result.solo = true;
+		} else if (arg === "--autoreview") {
+			result.autoreview = true;
 		} else if (arg.startsWith("@")) {
 			result.fileArgs.push(arg.slice(1)); // Remove @ prefix
 		} else if (arg.startsWith("--")) {
@@ -287,6 +301,8 @@ ${chalk.bold("Options:")}
                                  Applies to built-in, extension, and custom tools
   --agent <name>                 Enable the chosen agent persona (simple or deep-work)
                                  and subagent delegation (the spawn_agent tool)
+  --solo                         Disable subagent spawning entirely (overrides --agent)
+  --autoreview                   Run autoreview after work subagents complete
   --thinking <level>             Set thinking level: off, minimal, low, medium, high, xhigh, max
   --extension, -e <path>         Load an extension file (can be used multiple times)
   --no-extensions, -ne           Disable extension discovery (explicit -e paths still work)
@@ -297,7 +313,7 @@ ${chalk.bold("Options:")}
   --no-prompt-templates, -np     Disable prompt template discovery and loading
   --theme <path>                 Load a theme file or directory (can be used multiple times)
   --no-themes                    Disable theme discovery and loading
-  --no-context-files, -nc        Disable AGENTS.md and CLAUDE.md discovery and loading
+  --no-context-files, -nc        Disable MISUL.md, AGENTS.md and CLAUDE.md discovery and loading
   --export <file>                Export session file to HTML and exit
   --list-models [search]         List available models (with optional fuzzy search)
   --verbose                      Force verbose startup (overrides quietStartup setting)

@@ -165,6 +165,8 @@ export interface SessionContext {
 	messages: AgentMessage[];
 	thinkingLevel: string;
 	model: { provider: string; modelId: string } | null;
+	/** ID of the current compaction epoch, or null if no compaction has occurred. */
+	compactionEpochId?: string | null;
 }
 
 export interface SessionInfo {
@@ -441,7 +443,7 @@ export function buildSessionContext(
 		}
 	}
 
-	return { messages, thinkingLevel, model };
+	return { messages, thinkingLevel, model, compactionEpochId: compaction?.id ?? null };
 }
 
 /**

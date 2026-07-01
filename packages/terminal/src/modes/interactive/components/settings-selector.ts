@@ -12,7 +12,7 @@ import {
 	Text,
 } from "@misul/tui";
 import { formatHttpIdleTimeoutMs, HTTP_IDLE_TIMEOUT_CHOICES } from "../../../core/http-dispatcher.ts";
-import type { DefaultProjectTrust, WarningSettings } from "../../../core/settings-manager.ts";
+import type { CacheAggressivenessSetting, DefaultProjectTrust, WarningSettings } from "../../../core/settings-manager.ts";
 import { getSelectListTheme, getSettingsListTheme, theme } from "../theme/theme.ts";
 import { DynamicBorder } from "./dynamic-border.ts";
 import { keyDisplayText } from "./keybinding-hints.ts";
@@ -70,6 +70,9 @@ export interface SettingsConfig {
 	clearOnShrink: boolean;
 	showTerminalProgress: boolean;
 	warnings: WarningSettings;
+	cacheAggressiveness: CacheAggressivenessSetting;
+	soloMode: boolean;
+	autoReviewSubagents: boolean;
 }
 
 export interface SettingsCallbacks {
@@ -99,6 +102,9 @@ export interface SettingsCallbacks {
 	onClearOnShrinkChange: (enabled: boolean) => void;
 	onShowTerminalProgressChange: (enabled: boolean) => void;
 	onWarningsChange: (warnings: WarningSettings) => void;
+	onCacheAggressivenessChange: (value: CacheAggressivenessSetting) => void;
+	onSoloModeChange: (enabled: boolean) => void;
+	onAutoReviewSubagentsChange: (enabled: boolean) => void;
 	onCancel: () => void;
 }
 
@@ -147,8 +153,15 @@ class WarningSettingsSubmenu extends Container {
 	}
 }
 
+const SUBMENU_HINT = "  Enter to select · Esc to go back";
+
 class SelectSubmenu extends Container {
 	private selectList: SelectList;
+	private readonly title: string;
+	private readonly description: string;
+	private titleText: Text;
+	private descText?: Text;
+	private hintText: Text;
 
 	constructor(
 		title: string,
@@ -160,14 +173,18 @@ class SelectSubmenu extends Container {
 		onSelectionChange?: (value: string) => void,
 	) {
 		super();
+		this.title = title;
+		this.description = description;
 
 		// Title
-		this.addChild(new Text(theme.bold(theme.fg("accent", title)), 0, 0));
+		this.titleText = new Text(theme.bold(theme.fg("accent", title)), 0, 0);
+		this.addChild(this.titleText);
 
 		// Description
 		if (description) {
 			this.addChild(new Spacer(1));
-			this.addChild(new Text(theme.fg("muted", description), 0, 0));
+			this.descText = new Text(theme.fg("muted", description), 0, 0);
+			this.addChild(this.descText);
 		}
 
 		// Spacer
@@ -203,7 +220,18 @@ class SelectSubmenu extends Container {
 
 		// Hint
 		this.addChild(new Spacer(1));
-		this.addChild(new Text(theme.fg("dim", "  Enter to select · Esc to go back"), 0, 0));
+		this.hintText = new Text(theme.fg("dim", SUBMENU_HINT), 0, 0);
+		this.addChild(this.hintText);
+	}
+
+	// Recolor the static labels on every render so a live /theme preview (Settings
+	// -> Theme) updates the title/description/hint. The SelectList rows already
+	// recolor via getSelectListTheme closures; these baked Texts would not.
+	override render(width: number): string[] {
+		this.titleText.setText(theme.bold(theme.fg("accent", this.title)));
+		this.descText?.setText(theme.fg("muted", this.description));
+		this.hintText.setText(theme.fg("dim", SUBMENU_HINT));
+		return super.render(width);
 	}
 
 	handleInput(data: string): void {
@@ -325,6 +353,28 @@ export class SettingsSelectorComponent extends Container {
 						},
 						() => done(),
 					),
+			},
+			{
+				id: "cache-aggressiveness",
+				label: "Cache aggressiveness",
+				description:
+					"Prompt cache breakpoints for Anthropic. 'standard': system + tools + last message (3). 'aggressive': adds second-to-last message (4). 'off': no cache markers.",
+				currentValue: config.cacheAggressiveness,
+				values: ["off", "standard", "aggressive"],
+			},
+			{
+				id: "solo-mode",
+				label: "Solo mode",
+				description: "Disable subagent spawning entirely (overrides --agent). The main agent handles all work directly.",
+				currentValue: config.soloMode ? "true" : "false",
+				values: ["true", "false"],
+			},
+			{
+				id: "autoreview-subagents",
+				label: "Autoreview subagents",
+				description: "Run a ruthless read-only review agent after work subagents complete. Checks build, tests, diff, and AI tells.",
+				currentValue: config.autoReviewSubagents ? "true" : "false",
+				values: ["true", "false"],
 			},
 			{
 				id: "thinking",
@@ -561,6 +611,15 @@ export class SettingsSelectorComponent extends Container {
 						break;
 					case "terminal-progress":
 						callbacks.onShowTerminalProgressChange(newValue === "true");
+						break;
+					case "cache-aggressiveness":
+						callbacks.onCacheAggressivenessChange(newValue as CacheAggressivenessSetting);
+						break;
+					case "solo-mode":
+						callbacks.onSoloModeChange(newValue === "true");
+						break;
+					case "autoreview-subagents":
+						callbacks.onAutoReviewSubagentsChange(newValue === "true");
 						break;
 				}
 			},

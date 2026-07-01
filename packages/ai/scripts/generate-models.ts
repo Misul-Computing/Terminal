@@ -1904,6 +1904,65 @@ async function generateModels() {
 		});
 	}
 
+	// ClinePass: Cline's $9.99/mo subscription provider for open coding models.
+	// Curated static catalog (not in models.dev). Cost is flat-rate subscription,
+	// so per-token cost is 0. OpenAI-compatible /chat/completions endpoint.
+	// Metadata (reasoning, context, thinking maps) mirrored from native providers.
+	const CLINE_PASS_BASE_URL = "https://api.cline.bot/api/v1";
+	const clinePassCompat: OpenAICompletionsCompat = {
+		supportsReasoningEffort: false,
+		maxTokensField: "max_tokens",
+	};
+	type ClinePassModelDef = {
+		id: string;
+		name: string;
+		reasoning: boolean;
+		input: string[];
+		contextWindow: number;
+		maxTokens: number;
+		thinkingFormat?: "deepseek" | "qwen";
+		requiresReasoningContent?: boolean;
+		thinkingMap: Record<string, string | null>;
+	};
+	const clinePassModels: ClinePassModelDef[] = [
+		{ id: "deepseek-v4-flash", name: "DeepSeek V4 Flash", reasoning: true, input: ["text"], contextWindow: 1000000, maxTokens: 384000, thinkingFormat: "deepseek", requiresReasoningContent: true, thinkingMap: { off: "off", high: "high", max: "max" } },
+		{ id: "deepseek-v4-pro", name: "DeepSeek V4 Pro", reasoning: true, input: ["text"], contextWindow: 1000000, maxTokens: 384000, thinkingFormat: "deepseek", requiresReasoningContent: true, thinkingMap: { off: "off", high: "high", max: "max" } },
+		{ id: "glm-5.2", name: "GLM-5.2", reasoning: true, input: ["text"], contextWindow: 1000000, maxTokens: 131072, thinkingMap: { off: "off", high: "high", max: "max" } },
+		{ id: "kimi-k2.6", name: "Kimi K2.6", reasoning: true, input: ["text", "image"], contextWindow: 262144, maxTokens: 262144, thinkingFormat: "deepseek", thinkingMap: { off: "off", high: "high" } },
+		{ id: "kimi-k2.7-code", name: "Kimi K2.7 Code", reasoning: true, input: ["text", "image"], contextWindow: 262144, maxTokens: 262144, thinkingFormat: "deepseek", thinkingMap: { off: null, high: "high", max: null } },
+		{ id: "mimo-v2.5", name: "MiMo V2.5", reasoning: true, input: ["text", "image"], contextWindow: 1000000, maxTokens: 128000, thinkingMap: { off: "off", low: "low", medium: "medium", high: "high" } },
+		{ id: "mimo-v2.5-pro", name: "MiMo V2.5 Pro", reasoning: true, input: ["text"], contextWindow: 1048576, maxTokens: 128000, thinkingMap: { off: "off", low: "low", medium: "medium", high: "high" } },
+		{ id: "minimax-m3", name: "MiniMax M3", reasoning: true, input: ["text", "image"], contextWindow: 512000, maxTokens: 131072, thinkingMap: { off: "off", high: "high" } },
+		{ id: "qwen3.7-max", name: "Qwen3.7 Max", reasoning: true, input: ["text"], contextWindow: 1000000, maxTokens: 65536, thinkingFormat: "qwen", thinkingMap: { off: "off", high: "high" } },
+		{ id: "qwen3.7-plus", name: "Qwen3.7 Plus", reasoning: true, input: ["text", "image"], contextWindow: 1000000, maxTokens: 65536, thinkingFormat: "qwen", thinkingMap: { off: "off", high: "high" } },
+	];
+	for (const m of clinePassModels) {
+		const compat: OpenAICompletionsCompat = {
+			...clinePassCompat,
+			...(m.thinkingFormat ? { thinkingFormat: m.thinkingFormat } : {}),
+			...(m.requiresReasoningContent ? { requiresReasoningContentOnAssistantMessages: true } : {}),
+			...(m.id === "kimi-k2.6" || m.id === "kimi-k2.7-code" ? { supportsLongCacheRetention: false } : {}),
+		};
+		const thinkingLevelMap: NonNullable<Model<any>["thinkingLevelMap"]> = {
+			minimal: null, low: null, medium: null, xhigh: null,
+			...m.thinkingMap,
+		};
+		allModels.push({
+			id: m.id,
+			name: m.name,
+			api: "openai-completions",
+			provider: "cline-pass",
+			baseUrl: CLINE_PASS_BASE_URL,
+			reasoning: m.reasoning,
+			input: m.input as ("text" | "image")[],
+			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+			contextWindow: m.contextWindow,
+			maxTokens: m.maxTokens,
+			compat,
+			thinkingLevelMap,
+		});
+	}
+
 	// Add "auto" alias for openrouter/auto
 	if (!allModels.some(m => m.provider === "openrouter" && m.id === "auto")) {
 		allModels.push({

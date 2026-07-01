@@ -351,7 +351,9 @@ function loadSkillFromFile(
  * (they can only be invoked explicitly via /skill:name commands).
  */
 export function formatSkillsForPrompt(skills: Skill[]): string {
-	const visibleSkills = skills.filter((s) => !s.disableModelInvocation);
+	const visibleSkills = skills
+		.filter((s) => !s.disableModelInvocation)
+		.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
 
 	if (visibleSkills.length === 0) {
 		return "";
@@ -359,7 +361,7 @@ export function formatSkillsForPrompt(skills: Skill[]): string {
 
 	const lines = [
 		"\n\nThe following skills provide specialized instructions for specific tasks.",
-		"Use the read tool to load a skill's file when the task matches its description.",
+		"Use the /skill:<name> command to load a skill when the task matches its description.",
 		"When a skill file references a relative path, resolve it against the skill directory (parent of SKILL.md / dirname of the path) and use that absolute path in tool commands.",
 		"",
 		"<available_skills>",
@@ -369,7 +371,6 @@ export function formatSkillsForPrompt(skills: Skill[]): string {
 		lines.push("  <skill>");
 		lines.push(`    <name>${escapeXml(skill.name)}</name>`);
 		lines.push(`    <description>${escapeXml(skill.description)}</description>`);
-		lines.push(`    <location>${escapeXml(skill.filePath)}</location>`);
 		lines.push("  </skill>");
 	}
 

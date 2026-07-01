@@ -65,6 +65,7 @@ export interface CreateAgentSessionFromServicesOptions {
 	customTools?: ToolDefinition[];
 	/** Opt-in to the `spawn_agent` subagent tool (default off). */
 	enableSubagents?: boolean;
+	autoReviewSubagents?: boolean;
 }
 
 /**
@@ -205,6 +206,7 @@ export async function createAgentSessionFromServices(
 		noTools: options.noTools,
 		customTools: options.customTools,
 		enableSubagents: options.enableSubagents,
+		autoReviewSubagents: options.autoReviewSubagents,
 		sessionStartEvent: options.sessionStartEvent,
 	});
 }

@@ -934,7 +934,7 @@ describe("InteractiveMode.showLoadedResources", () => {
     /tmp/temp/cli-extension.ts"`);
 	});
 
-	test("shows context paths relative to cwd while preserving full external paths", () => {
+	test("does not show context section at startup (loaded silently)", () => {
 		const home = homedir();
 		const cwd = path.join(home, "Development", "Terminal");
 		const fakeThis = createShowLoadedResourcesThis({
@@ -948,12 +948,10 @@ describe("InteractiveMode.showLoadedResources", () => {
 		});
 
 		const output = renderAll(fakeThis.chatContainer).replace(/\\/g, "/");
-		expect(output).toContain("[Context]");
-		expect(output).toContain("~/.misul/agent/AGENTS.md, AGENTS.md");
-		expect(output).not.toContain(`${cwd.replace(/\\/g, "/")}/AGENTS.md`);
+		expect(output).not.toContain("[Context]");
 	});
 
-	test("shows full context paths when expanded", () => {
+	test("does not show context paths even when expanded", () => {
 		const home = homedir();
 		const cwd = path.join(home, "Development", "Terminal");
 		const fakeThis = createShowLoadedResourcesThis({
@@ -968,10 +966,7 @@ describe("InteractiveMode.showLoadedResources", () => {
 		});
 
 		const output = renderAll(fakeThis.chatContainer).replace(/\\/g, "/");
-		expect(output).toContain("[Context]");
-		expect(output).toContain("~/.misul/agent/AGENTS.md");
-		expect(output).toContain("~/Development/Terminal/AGENTS.md");
-		expect(output).not.toContain("~/.misul/agent/AGENTS.md, AGENTS.md");
+		expect(output).not.toContain("[Context]");
 	});
 
 	test("does not show verbose listing on quiet startup during reload", () => {

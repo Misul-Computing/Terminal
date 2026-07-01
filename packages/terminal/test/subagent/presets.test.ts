@@ -2,11 +2,12 @@ import { describe, expect, it } from "vitest";
 import { DEEP_WORK, getPreset, listPresets, REVIEW, SIMPLE } from "../../src/core/subagent/presets.ts";
 
 describe("subagent presets", () => {
-	it("SIMPLE is a single-pass preset with write-capable tools and references ponytail", () => {
+	it("SIMPLE is a single-pass preset with write-capable tools and simplicity principles", () => {
 		expect(SIMPLE.name).toBe("simple");
 		expect(SIMPLE.strategy).toBe("single");
 		expect(SIMPLE.tools).toEqual(expect.arrayContaining(["read", "bash", "edit", "write"]));
-		expect(SIMPLE.systemPrompt.toLowerCase()).toContain("ponytail");
+		expect(SIMPLE.systemPrompt.toLowerCase()).toContain("least code that works");
+		expect(SIMPLE.systemPrompt.toLowerCase()).toContain("no unrequested abstractions");
 	});
 
 	it("DEEP_WORK is a deep-work preset that adds search tools and names the phases", () => {
@@ -18,8 +19,7 @@ describe("subagent presets", () => {
 		expect(prompt).toContain("plan");
 		expect(prompt).toContain("execute");
 		expect(prompt).toContain("review");
-		expect(prompt).toContain("system-prompts");
-		expect(prompt).toContain("ponytail");
+		expect(prompt).toContain("simplest solution that works");
 	});
 
 	it("getPreset resolves known names and rejects unknown ones", () => {

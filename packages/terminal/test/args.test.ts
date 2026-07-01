@@ -329,6 +329,24 @@ describe("parseArgs", () => {
 		});
 	});
 
+	describe("--solo flag", () => {
+		test("parses --solo flag", () => {
+			const result = parseArgs(["--solo"]);
+			expect(result.solo).toBe(true);
+		});
+
+		test("defaults to false when not provided", () => {
+			const result = parseArgs([]);
+			expect(result.solo).toBeUndefined();
+		});
+
+		test("coexists with --agent", () => {
+			const result = parseArgs(["--solo", "--agent", "simple"]);
+			expect(result.solo).toBe(true);
+			expect(result.agent).toBe("simple");
+		});
+	});
+
 	describe("tool flags", () => {
 		test("parses --no-tools flag", () => {
 			const result = parseArgs(["--no-tools"]);

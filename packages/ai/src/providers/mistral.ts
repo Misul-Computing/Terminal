@@ -9,9 +9,11 @@ import type {
 import { calculateCost, clampThinkingLevel } from "../models.ts";
 import type {
 	AssistantMessage,
+	CacheRetention,
 	Context,
 	Message,
 	Model,
+	ProviderEnv,
 	SimpleStreamOptions,
 	StopReason,
 	StreamFunction,
@@ -24,12 +26,23 @@ import type {
 import { AssistantMessageEventStream } from "../utils/event-stream.ts";
 import { shortHash } from "../utils/hash.ts";
 import { parseStreamingJson } from "../utils/json-parse.ts";
+import { getProviderEnvValue } from "../utils/provider-env.ts";
 import { sanitizeSurrogates } from "../utils/sanitize-unicode.ts";
 import { buildBaseOptions } from "./simple-options.ts";
 import { transformMessages } from "./transform-messages.ts";
 
 const MISTRAL_TOOL_CALL_ID_LENGTH = 9;
 const MAX_MISTRAL_ERROR_BODY_CHARS = 4000;
+
+function resolveCacheRetention(cacheRetention?: CacheRetention, env?: ProviderEnv): CacheRetention {
+	if (cacheRetention) {
+		return cacheRetention;
+	}
+	if (getProviderEnvValue("MISUL_CACHE_RETENTION", env) === "long") {
+		return "long";
+	}
+	return "short";
+}
 
 /**
  * Provider-specific options for the Mistral API.
@@ -225,8 +238,10 @@ function buildRequestOptions(model: Model<"mistral-conversations">, options?: Mi
 	if (options?.headers) Object.assign(headers, options.headers);
 
 	// Mistral infrastructure uses `x-affinity` for KV-cache reuse (prefix caching).
+	// Skip when cacheRetention is "none" to match other providers' behavior.
 	// Respect explicit caller-provided header values.
-	if (options?.sessionId && !headers["x-affinity"]) {
+	const cacheRetention = resolveCacheRetention(options?.cacheRetention, options?.env);
+	if (cacheRetention !== "none" && options?.sessionId && !headers["x-affinity"]) {
 		headers["x-affinity"] = options.sessionId;
 	}
 

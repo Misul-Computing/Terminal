@@ -139,7 +139,9 @@ describe("FooterComponent width handling", () => {
 		const footer = new FooterComponent(session, createFooterData(1));
 
 		const statsLine = stripAnsi(footer.render(120)[1]);
-		expect(statsLine).toContain("▰");
+		// Thin-line gauge: heavy rule = filled, light rule = empty track.
+		expect(statsLine).toContain("━");
+		expect(statsLine).toContain("─");
 		expect(statsLine).toContain("$0.001");
 	});
 });

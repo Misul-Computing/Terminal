@@ -29,7 +29,7 @@ async function renameWithRetry(tmp: string, target: string): Promise<void> {
  * existing file's mode (e.g. an executable bit) is preserved across the rename. Rename is retried a
  * few times on transient lock errors (common on Windows).
  *
- * ponytail: hardlinked targets diverge after a write (rename gives the path a fresh inode) — the
+ * Tradeoff: hardlinked targets diverge after a write (rename gives the path a fresh inode) — the
  * standard, accepted cost of atomic writes; vanishingly rare in source trees.
  */
 export async function writeFileAtomic(path: string, content: string): Promise<void> {

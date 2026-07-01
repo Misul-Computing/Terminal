@@ -322,9 +322,8 @@ export class TUI extends Container {
 	private pendingOsc11BackgroundQueries: PendingOsc11BackgroundQuery[] = [];
 
 	// Internal scroll: when > 0, the viewport is shifted up by this many lines
-	// into the line history. Reset to 0 on any new render (new content arrives).
+	// into the current rendered UI. Reset to 0 on any new render.
 	private scrollOffset = 0;
-	private lineHistory: string[] = [];
 
 	// Overlay stack for modal components rendered on top of base content
 	private focusOrderCounter = 0;
@@ -722,7 +721,7 @@ export class TUI extends Container {
 	/** Scroll the internal viewport up or down by one row. */
 	scroll(direction: "up" | "down"): void {
 		if (direction === "up") {
-			const maxOffset = Math.max(0, this.lineHistory.length - this.terminal.rows);
+			const maxOffset = Math.max(0, this.previousLines.length - this.terminal.rows);
 			if (this.scrollOffset < maxOffset) {
 				this.scrollOffset = Math.min(this.scrollOffset + 3, maxOffset);
 				this.renderScrolled();
@@ -739,16 +738,20 @@ export class TUI extends Container {
 		}
 	}
 
-	/** Render the viewport from line history at the current scroll offset. */
+	/**
+	 * Show a window into the current rendered UI at the active scroll offset.
+	 * previousLines already holds the entire UI (the whole conversation) rendered
+	 * once, so scrolling is a slice of it, not a replay of past frames.
+	 */
 	private renderScrolled(): void {
-		if (this.scrollOffset === 0 || this.lineHistory.length === 0) {
+		if (this.scrollOffset === 0 || this.previousLines.length === 0) {
 			this.requestRender();
 			return;
 		}
 		const height = this.terminal.rows;
-		const end = this.lineHistory.length - this.scrollOffset;
+		const end = this.previousLines.length - this.scrollOffset;
 		const start = Math.max(0, end - height);
-		const lines = this.lineHistory.slice(start, end);
+		const lines = this.previousLines.slice(start, end);
 
 		let buffer = "\x1b[?2026h\x1b[2J\x1b[H";
 		for (let i = 0; i < lines.length; i++) {
@@ -1326,16 +1329,6 @@ export class TUI extends Container {
 	private doRender(): void {
 		if (this.stopped) return;
 		const wasScrolled = this.scrollOffset > 0;
-		// Save current lines to history before rendering new content.
-		// Don't push when we were scrolled (previousLines is stale, the
-		// terminal was showing history lines from renderScrolled).
-		if (this.previousLines.length > 0 && !wasScrolled) {
-			this.lineHistory.push(...this.previousLines);
-			// Cap history to avoid unbounded memory growth.
-			if (this.lineHistory.length > 10000) {
-				this.lineHistory = this.lineHistory.slice(-10000);
-			}
-		}
 		// New content arrives: reset scroll to bottom.
 		this.scrollOffset = 0;
 		const width = this.terminal.columns;

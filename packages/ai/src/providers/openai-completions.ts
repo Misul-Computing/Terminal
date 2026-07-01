@@ -13,6 +13,7 @@ import type {
 import { calculateCost, clampThinkingLevel, getSupportedThinkingLevels } from "../models.ts";
 import type {
 	AssistantMessage,
+	CacheAggressiveness,
 	CacheRetention,
 	Context,
 	ImageContent,
@@ -108,6 +109,10 @@ function resolveCacheRetention(cacheRetention?: CacheRetention, env?: ProviderEn
 		return "long";
 	}
 	return "short";
+}
+
+function resolveCacheAggressiveness(value?: CacheAggressiveness): CacheAggressiveness {
+	return value ?? "standard";
 }
 
 export const streamOpenAICompletions: StreamFunction<"openai-completions", OpenAICompletionsOptions> = (
@@ -514,7 +519,8 @@ function buildParams(
 	cacheRetention: CacheRetention = resolveCacheRetention(options?.cacheRetention, options?.env),
 ) {
 	const messages = convertMessages(model, context, compat);
-	const cacheControl = getCompatCacheControl(compat, cacheRetention);
+	const aggressiveness = resolveCacheAggressiveness(options?.cacheAggressiveness);
+	const cacheControl = getCompatCacheControl(compat, cacheRetention, aggressiveness);
 
 	const params: OpenAI.Chat.Completions.ChatCompletionCreateParamsStreaming = {
 		model: model.id,
@@ -559,7 +565,7 @@ function buildParams(
 	}
 
 	if (cacheControl) {
-		applyAnthropicCacheControl(messages, params.tools, cacheControl);
+		applyAnthropicCacheControl(messages, params.tools, cacheControl, aggressiveness === "aggressive");
 	}
 
 	if (options?.toolChoice) {
@@ -659,8 +665,9 @@ function buildParams(
 function getCompatCacheControl(
 	compat: ResolvedOpenAICompletionsCompat,
 	cacheRetention: CacheRetention,
+	aggressiveness: CacheAggressiveness,
 ): OpenAICompatCacheControl | undefined {
-	if (compat.cacheControlFormat !== "anthropic" || cacheRetention === "none") {
+	if (compat.cacheControlFormat !== "anthropic" || cacheRetention === "none" || aggressiveness === "off") {
 		return undefined;
 	}
 
@@ -672,10 +679,14 @@ function applyAnthropicCacheControl(
 	messages: ChatCompletionMessageParam[],
 	tools: OpenAI.Chat.Completions.ChatCompletionTool[] | undefined,
 	cacheControl: OpenAICompatCacheControl,
+	aggressive: boolean,
 ): void {
 	addCacheControlToSystemPrompt(messages, cacheControl);
 	addCacheControlToLastTool(tools, cacheControl);
 	addCacheControlToLastConversationMessage(messages, cacheControl);
+	if (aggressive) {
+		addCacheControlToSecondLastConversationMessage(messages, cacheControl);
+	}
 }
 
 function addCacheControlToSystemPrompt(
@@ -701,6 +712,30 @@ function addCacheControlToLastConversationMessage(
 				return;
 			}
 		}
+	}
+}
+
+// 4th cache breakpoint: the message before the last conversation message.
+// On the next turn this message shifts one position back, and the breakpoint
+// here lets the prefix up to the previous turn hit cache. Only used when
+// cacheAggressiveness is "aggressive". Mirrors the Anthropic provider's
+// second-to-last message breakpoint.
+function addCacheControlToSecondLastConversationMessage(
+	messages: ChatCompletionMessageParam[],
+	cacheControl: OpenAICompatCacheControl,
+): void {
+	let marked = false;
+	for (let i = messages.length - 1; i >= 0; i--) {
+		const message = messages[i];
+		if (message.role !== "user" && message.role !== "assistant") {
+			continue;
+		}
+		if (!marked) {
+			marked = true;
+			continue;
+		}
+		addCacheControlToMessage(message, cacheControl);
+		return;
 	}
 }
 

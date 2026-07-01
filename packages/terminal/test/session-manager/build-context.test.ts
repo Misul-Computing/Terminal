@@ -169,6 +169,40 @@ describe("buildSessionContext", () => {
 			expect(ctx.messages).toHaveLength(4);
 			expect((ctx.messages[0] as any).summary).toContain("Second summary");
 		});
+
+		it("exposes compaction epoch ID", () => {
+			const entries: SessionEntry[] = [
+				msg("1", null, "user", "first"),
+				msg("2", "1", "assistant", "response1"),
+				compaction("5", "2", "Summary", "2"),
+				msg("6", "5", "user", "third"),
+			];
+			const ctx = buildSessionContext(entries);
+			expect(ctx.compactionEpochId).toBe("5");
+		});
+
+		it("compaction epoch ID is null without compaction", () => {
+			const entries: SessionEntry[] = [
+				msg("1", null, "user", "first"),
+				msg("2", "1", "assistant", "response1"),
+			];
+			const ctx = buildSessionContext(entries);
+			expect(ctx.compactionEpochId).toBeNull();
+		});
+
+		it("compaction epoch ID is the latest compaction", () => {
+			const entries: SessionEntry[] = [
+				msg("1", null, "user", "a"),
+				msg("2", "1", "assistant", "b"),
+				compaction("3", "2", "First summary", "1"),
+				msg("4", "3", "user", "c"),
+				msg("5", "4", "assistant", "d"),
+				compaction("6", "5", "Second summary", "4"),
+				msg("7", "6", "user", "e"),
+			];
+			const ctx = buildSessionContext(entries);
+			expect(ctx.compactionEpochId).toBe("6");
+		});
 	});
 
 	describe("with branches", () => {
