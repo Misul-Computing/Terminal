@@ -126,6 +126,8 @@ export interface Settings {
 	cacheAggressiveness?: CacheAggressivenessSetting; // default: "standard"
 	soloMode?: boolean; // default: false - disable subagent spawning entirely
 	autoReviewSubagents?: boolean; // default: false - run autoreview after work subagents
+	addons?: string[]; // Array of addon source strings (git/npm/local) for persistent install tracking
+	addonStoreUrl?: string; // URL of the addon registry JSON; falls back to DEFAULT_ADDON_STORE_URL
 }
 
 /** Deep merge settings: project/overrides take precedence, nested objects merge recursively */
@@ -988,6 +990,26 @@ export class SettingsManager {
 		});
 	}
 
+	getAddons(): string[] {
+		return [...(this.settings.addons ?? [])];
+	}
+
+	setAddons(addons: string[]): void {
+		this.globalSettings.addons = addons;
+		this.markModified("addons");
+		this.save();
+	}
+
+	setProjectAddons(addons: string[]): void {
+		this.updateProjectSettings("addons", (settings) => {
+			settings.addons = addons;
+		});
+	}
+
+	getAddonStoreUrl(): string | undefined {
+		return this.settings.addonStoreUrl;
+	}
+
 	getExtensionPaths(): string[] {
 		return [...(this.settings.extensions ?? [])];
 	}
@@ -1225,6 +1247,12 @@ export class SettingsManager {
 	setWarnings(warnings: WarningSettings): void {
 		this.globalSettings.warnings = { ...warnings };
 		this.markModified("warnings");
+		this.save();
+	}
+
+	setAddonStoreUrl(url: string | undefined): void {
+		this.globalSettings.addonStoreUrl = url;
+		this.markModified("addonStoreUrl");
 		this.save();
 	}
 }

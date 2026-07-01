@@ -63,6 +63,7 @@ import { runMigrations, showDeprecationWarnings } from "./migrations.ts";
 import { InteractiveMode, runPrintMode, runRpcMode } from "./modes/index.ts";
 import { initTheme, stopThemeWatcher } from "./modes/interactive/theme/theme.ts";
 import { handleConfigCommand, handlePackageCommand } from "./package-manager-cli.ts";
+import { handleAddonCommand } from "./addon-cli.ts";
 import { isLocalPath, normalizePath, resolvePath } from "./utils/paths.ts";
 import { cleanupWindowsSelfUpdateQuarantine } from "./utils/windows-self-update.ts";
 
@@ -504,6 +505,12 @@ export async function main(args: string[], options?: MainOptions) {
 	const bootstrapSettingsManager = SettingsManager.create(cwd, agentDir, { projectTrusted: false });
 	applyHttpProxySettings(bootstrapSettingsManager.getGlobalSettings().httpProxy);
 	configureHttpDispatcher(DEFAULT_HTTP_IDLE_TIMEOUT_MS, offlineMode ? { connectTimeoutMs: OFFLINE_CONNECT_TIMEOUT_MS } : undefined);
+
+	if (await handleAddonCommand(args)) {
+		const exitCode = process.exitCode ?? 0;
+		process.exit(exitCode);
+		return;
+	}
 
 	if (await handlePackageCommand(args, { extensionFactories: options?.extensionFactories })) {
 		const exitCode = process.exitCode ?? 0;

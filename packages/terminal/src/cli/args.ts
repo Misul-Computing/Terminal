@@ -271,6 +271,11 @@ ${chalk.bold("Commands:")}
   ${APP_NAME} update [source|self|misul]   Update misul and installed extensions
   ${APP_NAME} list                      List installed extensions from settings
   ${APP_NAME} config                    Open TUI to enable/disable package resources
+  ${APP_NAME} addon install <source>    Install an addon (git/npm/local)
+  ${APP_NAME} addon remove <name>       Remove an installed addon
+  ${APP_NAME} addon list                List installed addons
+  ${APP_NAME} addon search [query]      Search the addon store
+  ${APP_NAME} addon store               List all addons in the store
   ${APP_NAME} <command> --help          Show help for install/remove/uninstall/update/list
 
 ${chalk.bold("Options:")}

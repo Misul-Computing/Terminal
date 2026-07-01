@@ -4,6 +4,21 @@ Misul Terminal — a coding agent by Misul Computing.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-07-01
+
+### Added
+
+- Addon install/remove/list/search/store CLI commands. Addons can be
+  installed from git, npm, or local sources and are tracked in settings.
+- Addon store registry with configurable URL. Search and browse
+  available addons from a remote JSON registry.
+- Addon installer module with git clone (shallow), npm pack+extract,
+  and local symlink/copy strategies. Verifies installed addons contain
+  at least one valid component.
+- Settings persistence for installed addons (addons[] array in global
+  and project settings).
+- Documentation for addon commands, install sources, and store format.
+
 ## [0.4.0] - 2026-07-01
 
 ### Added

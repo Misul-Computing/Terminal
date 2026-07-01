@@ -145,6 +145,77 @@ misul --addon ./my-addon --addon ./another-addon
 # Addons in ~/.misul/agent/addons/ and .misul/addons/ are loaded automatically
 ```
 
+## Addon commands
+
+Addons can be installed, removed, listed, and searched from the CLI:
+
+```bash
+# Install from git
+misul addon install git:github.com/user/my-addon
+
+# Install from npm
+misul addon install npm:@scope/misul-tools
+
+# Install from a local path
+misul addon install ./my-local-addon
+
+# Install project-locally (into .misul/addons/)
+misul addon install git:github.com/user/my-addon -l
+
+# Remove an installed addon
+misul addon remove my-addon
+
+# List installed addons
+misul addon list
+
+# Search the addon store
+misul addon search python
+misul addon search "code review"
+
+# Browse all addons in the store
+misul addon store
+```
+
+### Install sources
+
+| Source format | Example |
+|---|---|
+| `git:<url>` | `git:github.com/user/repo` |
+| SSH git URL | `git@github.com:user/repo` |
+| HTTPS URL | `https://github.com/user/repo` |
+| `npm:<spec>` | `npm:@scope/package` |
+| Local path | `./my-addon` |
+
+Git sources are cloned with `--depth 1` for speed. npm sources are packed and extracted. Local sources are symlinked (or copied on Windows).
+
+### Addon store
+
+The addon store is a JSON registry of available addons. The default store URL is `https://raw.githubusercontent.com/misul-computing/misul-addon-store/main/registry.json`. Override it in settings:
+
+```json
+{
+  "addonStoreUrl": "https://your-registry.example.com/addons.json"
+}
+```
+
+The registry format:
+
+```json
+{
+  "addons": [
+    {
+      "name": "python-tools",
+      "description": "Python linting and formatting tools",
+      "source": "git:github.com/misul-computing/python-tools",
+      "tags": ["python", "linting"],
+      "homepage": "https://github.com/misul-computing/python-tools",
+      "author": "Misul Computing",
+      "version": "1.0.0"
+    }
+  ]
+}
+```
+
 ## Combining components
 
 An addon that combines all three component types:
