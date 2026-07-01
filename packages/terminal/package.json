@@ -39,6 +39,7 @@
 		"@misul/agent-core": "^0.79.5",
 		"@misul/ai": "^0.79.5",
 		"@misul/tui": "^0.79.5",
+		"@libsql/client": "^0.6.0",
 		"@silvia-odwyer/photon-node": "0.3.4",
 		"chalk": "5.6.2",
 		"cross-spawn": "7.0.6",

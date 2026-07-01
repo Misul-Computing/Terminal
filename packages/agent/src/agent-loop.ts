@@ -11,6 +11,7 @@ import {
 	type ToolResultMessage,
 	validateToolArguments,
 } from "@misul/ai";
+import { computePrefixHash, injectPrefixHash } from "@misul/ai";
 import type {
 	AgentContext,
 	AgentEvent,
@@ -22,6 +23,7 @@ import type {
 	StreamFn,
 } from "./types.ts";
 import { classifyThinkingLevel } from "./auto-thinking.ts";
+import { redactMessages } from "./secret-redactor.ts";
 
 export type AgentEventSink = (event: AgentEvent) => Promise<void> | void;
 
@@ -340,7 +342,7 @@ async function streamAssistantResponse(
 	}
 
 	// Convert to LLM-compatible messages (AgentMessage[] → Message[])
-	const llmMessages = await config.convertToLlm(messages);
+	const llmMessages = redactMessages(await config.convertToLlm(messages));
 
 	// Apply honest prefill: inject a partial assistant message so the model
 	// continues from honesty-framing text. Only when the last message is a
@@ -366,6 +368,11 @@ async function streamAssistantResponse(
 		tools: context.tools ? [...context.tools].sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0)) : undefined,
 	};
 
+	// Compute prefix hash for local provider cache hits. The stable prefix
+	// is system prompt + tools + all messages except the last. If the hash
+	// matches the previous call, local providers can reuse their KV-cache.
+	const { hash: prefixHash, length: prefixLength } = computePrefixHash(llmContext);
+
 	const streamFunction = streamFn || streamSimple;
 
 	// Resolve API key (important for expiring tokens)
@@ -376,6 +383,7 @@ async function streamAssistantResponse(
 		...config,
 		apiKey: resolvedApiKey,
 		signal,
+		env: injectPrefixHash(config.env, prefixHash, prefixLength),
 	});
 
 	let partialMessage: AssistantMessage | null = null;

@@ -8,6 +8,7 @@
 
 import { createHash } from "node:crypto";
 import type { LoadedMemory } from "./memory.ts";
+import type { MemoryEntry } from "./memory/index.ts";
 import { MISUL_CONSTITUTION } from "./misul-system-prompt.ts";
 
 import { formatSkillsForPrompt, type Skill } from "./skills.ts";
@@ -31,6 +32,8 @@ export interface BuildSystemPromptOptions {
 	skills?: Skill[];
 	/** Persistent agent memory, injected at session start (see core/memory.ts). */
 	memory?: LoadedMemory;
+	/** Per-project structured memories from the SQLite/JSON memory store. */
+	projectMemory?: MemoryEntry[];
 }
 
 /** A single content-addressed block of the system prompt. */
@@ -57,6 +60,17 @@ function sha256(text: string): string {
 
 function makeBlock(id: string, text: string): PromptBlock {
 	return { id, text, hash: sha256(text) };
+}
+
+function formatProjectMemory(entries: MemoryEntry[]): string {
+	let text = "\n\n## Project Memory\n\n";
+	text += "Facts, decisions, and lessons learned from previous sessions in this project.\n";
+	text += "Apply them silently — do not announce that you are using memory.\n\n";
+	for (const entry of entries) {
+		const tags = entry.tags ? ` [${entry.tags}]` : "";
+		text += `- (${entry.kind}) ${entry.content}${tags}\n`;
+	}
+	return text;
 }
 
 /**
@@ -110,6 +124,9 @@ export function buildSystemPromptWithBlocks(options: BuildSystemPromptOptions): 
 		}
 		if (options.memory) {
 			blocks.push(makeBlock("memory", `\n\n<memory path="${options.memory.path}">\nPersistent memory from earlier sessions. Apply it silently — do not announce that you are using memory — and keep it accurate by editing this file when durable facts change.\n\n${options.memory.content}\n</memory>\n`));
+		}
+		if (options.projectMemory && options.projectMemory.length > 0) {
+			blocks.push(makeBlock("project_memory", formatProjectMemory(options.projectMemory)));
 		}
 		if (contextFiles.length > 0) {
 			const sorted = [...contextFiles].sort((a, b) => a.path < b.path ? -1 : a.path > b.path ? 1 : 0);
@@ -184,6 +201,11 @@ export function buildSystemPromptWithBlocks(options: BuildSystemPromptOptions): 
 	// Block 5: Memory (persistent, durable)
 	if (options.memory) {
 		blocks.push(makeBlock("memory", `\n\n<memory path="${options.memory.path}">\nPersistent memory from earlier sessions. Apply it silently — do not announce that you are using memory — and keep it accurate by editing this file when durable facts change.\n\n${options.memory.content}\n</memory>\n`));
+	}
+
+	// Block 5b: Project memory (per-project structured memories)
+	if (options.projectMemory && options.projectMemory.length > 0) {
+		blocks.push(makeBlock("project_memory", formatProjectMemory(options.projectMemory)));
 	}
 
 	// Block 6: Project context (MISUL.md global, AGENTS.md per-project, etc.)

@@ -120,8 +120,8 @@ function messageToText(msg: AgentMessage): string {
 
 function buildReviewTask(conversation: string, agentDir: string): string {
 	return (
-		`Review the following conversation. You have two jobs.\n\n` +
-		`## JOB 1: HONESTY CHECK\n` +
+		`Review the following conversation. You have one job.\n\n` +
+		`## HONESTY CHECK\n` +
 		`Read the assistant's responses carefully and check for:\n` +
 		`- Sycophancy: did the assistant agree with the user when it should have pushed back?\n` +
 		`- Unverified claims: did the assistant state things about the codebase, libraries, or APIs ` +
@@ -130,12 +130,10 @@ function buildReviewTask(conversation: string, agentDir: string): string {
 		`- Missed errors: did the assistant make factual claims that are wrong?\n\n` +
 		`If you find problems, add them to MEMORY.md under a "## honesty_flags" section with the ` +
 		`specific claim and why it's wrong or unverified. This helps the agent calibrate future responses.\n\n` +
-		`## JOB 2: KNOWLEDGE CAPTURE\n` +
-		`Memory file: ${agentDir}/memory/MEMORY.md\n` +
-		`Skills directory: ${agentDir}/skills/ (create subdirectories with SKILL.md)\n\n` +
-		`Decide:\n` +
-		`1. Should any facts, conventions, or lessons be added to or updated in MEMORY.md?\n` +
-		`2. Did the conversation demonstrate a reusable procedure worth saving as a skill?\n\n` +
+		`## KNOWLEDGE CAPTURE\n` +
+		`Memory file: ${agentDir}/memory/MEMORY.md\n\n` +
+		`Decide: should any facts, conventions, or lessons be added to or updated in MEMORY.md?\n` +
+		`Keep MEMORY.md under 2200 characters. Replace outdated entries, don't just append.\n\n` +
 		`Conversation:\n${conversation}\n\n` +
 		`Make the edits if needed. If nothing is worth saving and no honesty issues found, ` +
 		`respond with "Nothing to save."`

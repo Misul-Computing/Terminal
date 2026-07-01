@@ -671,6 +671,13 @@ misul --thinking high "Solve this complex problem"
 
 ---
 
+## Roadmap
+
+- **Autoresearch**: Deep research mode integrated with `/goal`. The agent
+  will decompose a research question into subqueries, spawn parallel
+  research subagents, synthesize findings, and produce a cited report.
+  Built on the existing goal mode and subagent infrastructure.
+
 ## Contributing & Development
 
 See [CONTRIBUTING.md](../../CONTRIBUTING.md) for guidelines and [docs/development.md](docs/development.md) for setup, forking, and debugging.

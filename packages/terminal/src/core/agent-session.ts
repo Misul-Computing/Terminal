@@ -94,7 +94,11 @@ import type { SettingsManager } from "./settings-manager.ts";
 import type { SlashCommandInfo } from "./slash-commands.ts";
 import { createSyntheticSourceInfo, type SourceInfo } from "./source-info.ts";
 import { type BuildSystemPromptOptions, type PromptBlock, buildSystemPromptWithBlocks } from "./system-prompt.ts";
+import { MemoryStore, type MemoryEntry } from "./memory/index.ts";
+import { RunTelemetry, type TelemetryStats } from "./telemetry/index.ts";
 import { BackgroundReviewLoop } from "./background-review.ts";
+import { AdvisorLoop } from "./advisor.ts";
+import { JobManager } from "./jobs/index.ts";
 import { type BashOperations, createLocalBashOperations } from "./tools/bash.ts";
 import { createAllToolDefinitions } from "./tools/index.ts";
 import { createToolDefinitionFromAgentTool } from "./tools/tool-definition-wrapper.ts";
@@ -167,6 +171,8 @@ export interface AgentSessionConfig {
 	sessionManager: SessionManager;
 	settingsManager: SettingsManager;
 	cwd: string;
+	/** Agent config directory (e.g. ~/.misul/agent). Used for per-project memory store. */
+	agentDir?: string;
 	/** Models to cycle through with Ctrl+P (from --models flag) */
 	scopedModels?: Array<{ model: Model<any>; thinkingLevel?: ThinkingLevel }>;
 	/** Resource loader for skills, prompts, themes, context files, system prompt */
@@ -378,6 +384,19 @@ export class AgentSession {
 	// Background review loop (memory + skill nudges)
 	private _backgroundReview = new BackgroundReviewLoop();
 
+	// Advisor: strategy reviewer on the main agent, triggered by session hardness
+	private _advisor = new AdvisorLoop();
+
+	// Per-project long-term memory store (initialized lazily)
+	private _memoryStore: MemoryStore | undefined;
+	private _memoryStoreInit: Promise<MemoryStore | undefined> | undefined;
+
+	// Per-run telemetry with cache-aware token accounting
+	private _telemetry = new RunTelemetry();
+
+	// Background job manager (scoped to this session)
+	private _jobManager = new JobManager();
+
 	constructor(config: AgentSessionConfig) {
 		this.agent = config.agent;
 		this.sessionManager = config.sessionManager;
@@ -393,6 +412,10 @@ export class AgentSession {
 		this._excludedToolNames = config.excludedToolNames ? new Set(config.excludedToolNames) : undefined;
 		this._baseToolsOverride = config.baseToolsOverride;
 		this._sessionStartEvent = config.sessionStartEvent ?? { type: "session_start", reason: "startup" };
+
+		this._memoryStoreInit = MemoryStore.create({ cwd: this._cwd, agentDir: config.agentDir })
+			.then((store) => { this._memoryStore = store; return store; })
+			.catch(() => { this._memoryStore = undefined; return undefined; });
 
 		// Always subscribe to agent events for internal handling
 		// (session persistence, extensions, auto-compaction, retry logic)
@@ -628,6 +651,11 @@ export class AgentSession {
 			this._checkToolLoop(event);
 		}
 
+		// Telemetry: track tool calls and assistant turns with cache-aware accounting.
+		if (event.type === "tool_execution_end") {
+			this._telemetry.recordToolCall(event.toolName);
+		}
+
 		// Handle session persistence
 		if (event.type === "message_end") {
 			// Check if this is a custom message from extensions
@@ -657,6 +685,10 @@ export class AgentSession {
 				if (assistantMsg.stopReason !== "error") {
 					this._overflowRecoveryAttempted = false;
 				}
+
+				// Telemetry: record token usage with cache-aware cost accounting.
+				this._telemetry.setModel(this.model);
+				this._telemetry.recordTurn(assistantMsg.usage);
 
 				// Cache telemetry: log per-call cache stats when MISUL_CACHE_DEBUG is set.
 				// Also logs to a file when MISUL_CACHE_LOG_FILE is set (append mode).
@@ -869,6 +901,9 @@ export class AgentSession {
 			this.abortBranchSummary();
 			this.abortBash();
 			this._backgroundReview.dispose();
+			this._advisor.dispose();
+			this._jobManager.dispose();
+			this._memoryStore?.close().catch(() => {});
 			this.agent.abort();
 		} catch {
 			// Dispose must succeed even if an abort hook throws.
@@ -1001,7 +1036,7 @@ export class AgentSession {
 	 * Also rebuilds the system prompt to reflect the new tool set.
 	 * Changes take effect on the next agent turn.
 	 */
-	setActiveToolsByName(toolNames: string[]): void {
+	async setActiveToolsByName(toolNames: string[]): Promise<void> {
 		const tools: AgentTool[] = [];
 		const validToolNames: string[] = [];
 		for (const name of toolNames) {
@@ -1014,7 +1049,7 @@ export class AgentSession {
 		this.agent.state.tools = tools;
 
 		// Rebuild base system prompt with new tool set
-		this._baseSystemPrompt = this._rebuildSystemPrompt(validToolNames);
+		this._baseSystemPrompt = await this._rebuildSystemPrompt(validToolNames);
 		this.agent.state.systemPrompt = this._baseSystemPrompt;
 	}
 
@@ -1050,6 +1085,11 @@ export class AgentSession {
 	/** Current session ID */
 	get sessionId(): string {
 		return this.sessionManager.getSessionId();
+	}
+
+	/** Background job manager scoped to this session (owner = sessionId) */
+	get jobManager(): JobManager {
+		return this._jobManager;
 	}
 
 	/** Current session display name, if set */
@@ -1096,7 +1136,7 @@ export class AgentSession {
 		return Array.from(unique);
 	}
 
-	private _rebuildSystemPrompt(toolNames: string[]): string {
+	private async _rebuildSystemPrompt(toolNames: string[]): Promise<string> {
 		const validToolNames = toolNames.filter((name) => this._toolRegistry.has(name));
 		const toolSnippets: Record<string, string> = {};
 		const promptGuidelines: string[] = [];
@@ -1119,11 +1159,23 @@ export class AgentSession {
 		const loadedSkills = this._resourceLoader.getSkills().skills;
 		const loadedContextFiles = this._resourceLoader.getAgentsFiles().agentsFiles;
 
+		let projectMemory: MemoryEntry[] | undefined;
+		const store = this._memoryStore ?? (await this._memoryStoreInit);
+		if (store) {
+			try {
+				projectMemory = await store.top(10);
+				if (projectMemory.length === 0) projectMemory = undefined;
+			} catch {
+				projectMemory = undefined;
+			}
+		}
+
 		this._baseSystemPromptOptions = {
 			cwd: this._cwd,
 			skills: loadedSkills,
 			contextFiles: loadedContextFiles,
 			memory: this._resourceLoader.getMemory(),
+			projectMemory,
 			customPrompt: loaderSystemPrompt,
 			appendSystemPrompt,
 			selectedTools: validToolNames,
@@ -1349,6 +1401,14 @@ export class AgentSession {
 				this.agent.state.messages,
 				currentModel,
 				this._cwd,
+			);
+			this._advisor.maybeAdvise(
+				this.agent.state.messages,
+				currentModel,
+				this._cwd,
+				(advice) => {
+					this._queueSteer(`[advisor] ${advice}`).catch(() => {});
+				},
 			);
 		}
 	}
@@ -1622,6 +1682,14 @@ export class AgentSession {
 
 	get resourceLoader(): ResourceLoader {
 		return this._resourceLoader;
+	}
+
+	get memoryStore(): MemoryStore | undefined {
+		return this._memoryStore;
+	}
+
+	get memoryStoreReady(): Promise<MemoryStore | undefined> {
+		return this._memoryStoreInit ?? Promise.resolve(undefined);
 	}
 
 	/**
@@ -2358,7 +2426,7 @@ export class AgentSession {
 		};
 
 		this._resourceLoader.extendResources(extensionPaths);
-		this._baseSystemPrompt = this._rebuildSystemPrompt(this.getActiveToolNames());
+		this._baseSystemPrompt = await this._rebuildSystemPrompt(this.getActiveToolNames());
 		this.agent.state.systemPrompt = this._baseSystemPrompt;
 	}
 
@@ -2619,7 +2687,7 @@ export class AgentSession {
 			}
 		}
 
-		this.setActiveToolsByName([...new Set(nextActiveToolNames)]);
+		void this.setActiveToolsByName([...new Set(nextActiveToolNames)]);
 	}
 
 	private _buildRuntime(options: {
@@ -2714,7 +2782,7 @@ export class AgentSession {
 	async liveReload(): Promise<void> {
 		if (this.isStreaming || this.isCompacting) return;
 		await this._resourceLoader.reload();
-		this._baseSystemPrompt = this._rebuildSystemPrompt(this.getActiveToolNames());
+		this._baseSystemPrompt = await this._rebuildSystemPrompt(this.getActiveToolNames());
 		this.agent.state.systemPrompt = this._baseSystemPrompt;
 	}
 
@@ -3300,6 +3368,21 @@ export class AgentSession {
 			epochId: this.compactionEpochId,
 			calls,
 		};
+	}
+
+	/**
+	 * Get per-run telemetry stats with cache-aware token accounting.
+	 */
+	getTelemetryStats(): TelemetryStats {
+		this._telemetry.setModel(this.model);
+		return this._telemetry.getStats();
+	}
+
+	/**
+	 * Reset per-run telemetry (e.g. when starting a new session run).
+	 */
+	resetTelemetry(): void {
+		this._telemetry.reset();
 	}
 
 	getContextUsage(): ContextUsage | undefined {

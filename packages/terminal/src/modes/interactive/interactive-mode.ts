@@ -2701,6 +2701,11 @@ export class InteractiveMode {
 				this.editor.setText("");
 				return;
 			}
+			if (text === "/stats") {
+				this.handleStatsCommand();
+				this.editor.setText("");
+				return;
+			}
 			if (text === "/cache") {
 				this.handleCacheCommand();
 				this.editor.setText("");
@@ -5656,6 +5661,53 @@ export class InteractiveMode {
 		if (stats.cost > 0) {
 			info += `\n${theme.bold("Cost")}\n`;
 			info += `${theme.fg("dim", "Total:")} ${stats.cost.toFixed(4)}`;
+		}
+
+		this.chatContainer.addChild(new Spacer(1));
+		this.chatContainer.addChild(new Text(info, 1, 0));
+		this.ui.requestRender();
+	}
+
+	private handleStatsCommand(): void {
+		const t = this.session.getTelemetryStats();
+		const durationSec = t.durationMs / 1000;
+
+		let info = `${theme.bold("Run Telemetry")}\n\n`;
+
+		info += `${theme.bold("Overview")}\n`;
+		info += `${theme.fg("dim", "Turns:")} ${t.turns}\n`;
+		info += `${theme.fg("dim", "Duration:")} ${durationSec.toFixed(1)}s\n`;
+		info += `${theme.fg("dim", "Avg tokens/turn:")} ${t.averageTokensPerTurn.toFixed(0)}\n`;
+		info += `${theme.fg("dim", "Tool calls:")} ${t.toolCalls}\n`;
+
+		info += `\n${theme.bold("Tokens")}\n`;
+		info += `${theme.fg("dim", "Input:")} ${t.tokens.input.toLocaleString()}\n`;
+		info += `${theme.fg("dim", "Output:")} ${t.tokens.output.toLocaleString()}\n`;
+		info += `${theme.fg("dim", "Cache Read:")} ${t.tokens.cacheRead.toLocaleString()}\n`;
+		info += `${theme.fg("dim", "Cache Write:")} ${t.tokens.cacheWrite.toLocaleString()}\n`;
+		info += `${theme.fg("dim", "Total:")} ${t.tokens.total.toLocaleString()}\n`;
+
+		const hitColor = t.cacheHitRate < 70 && t.turns > 0 ? "error" : "success";
+		info += `${theme.fg("dim", "Cache Hit Rate:")} ${theme.fg(hitColor, `${t.cacheHitRate.toFixed(1)}%`)}\n`;
+
+		info += `\n${theme.bold("Cost")}\n`;
+		info += `${theme.fg("dim", "Input:")} $${t.cost.input.toFixed(4)}\n`;
+		info += `${theme.fg("dim", "Output:")} $${t.cost.output.toFixed(4)}\n`;
+		info += `${theme.fg("dim", "Cache Read:")} $${t.cost.cacheRead.toFixed(4)}\n`;
+		info += `${theme.fg("dim", "Cache Write:")} $${t.cost.cacheWrite.toFixed(4)}\n`;
+		info += `${theme.fg("dim", "Total:")} $${t.cost.total.toFixed(4)}\n`;
+		info += `${theme.fg("dim", "Est. no-cache:")} $${t.estimatedNoCacheCost.toFixed(4)}\n`;
+		const savingsColor = t.savings >= 0 ? "success" : "error";
+		const savingsSign = t.savings >= 0 ? "+" : "";
+		info += `${theme.fg("dim", "Savings:")} ${theme.fg(savingsColor, `${savingsSign}$${t.savings.toFixed(4)}`)}\n`;
+
+		const toolEntries = Object.entries(t.toolDistribution).sort((a, b) => b[1] - a[1]);
+		if (toolEntries.length > 0) {
+			info += `\n${theme.bold("Tool Distribution")}\n`;
+			for (const [name, count] of toolEntries) {
+				info += `${theme.fg("dim", name)}: ${count}\n`;
+			}
+			info = info.trimEnd();
 		}
 
 		this.chatContainer.addChild(new Spacer(1));

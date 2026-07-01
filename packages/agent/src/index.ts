@@ -40,5 +40,9 @@ export * from "./harness/utils/shell-output.ts";
 export * from "./harness/utils/truncate.ts";
 // Proxy utilities
 export * from "./proxy.ts";
+// Secret redaction
+export * from "./secret-redactor.ts";
+// Auto-thinking
+export * from "./auto-thinking.ts";
 // Types
 export * from "./types.ts";
