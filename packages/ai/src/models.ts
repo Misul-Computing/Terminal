@@ -48,9 +48,12 @@ export function calculateCost<TApi extends Api>(model: Model<TApi>, usage: Usage
 	return usage.cost;
 }
 
-const EXTENDED_THINKING_LEVELS: ModelThinkingLevel[] = ["off", "minimal", "low", "medium", "high", "xhigh", "max"];
+/** Concrete thinking levels excluding meta-levels like "auto". */
+type ConcreteThinkingLevel = Exclude<ModelThinkingLevel, "auto">;
 
-export function getSupportedThinkingLevels<TApi extends Api>(model: Model<TApi>): ModelThinkingLevel[] {
+const EXTENDED_THINKING_LEVELS: ConcreteThinkingLevel[] = ["off", "minimal", "low", "medium", "high", "xhigh", "max"];
+
+export function getSupportedThinkingLevels<TApi extends Api>(model: Model<TApi>): ConcreteThinkingLevel[] {
 	if (!model.reasoning) return ["off"];
 
 	return EXTENDED_THINKING_LEVELS.filter((level) => {
@@ -94,11 +97,11 @@ export function thinkingLevelLabel<TApi extends Api>(
 export function clampThinkingLevel<TApi extends Api>(
 	model: Model<TApi>,
 	level: ModelThinkingLevel,
-): ModelThinkingLevel {
+): ConcreteThinkingLevel {
 	const availableLevels = getSupportedThinkingLevels(model);
-	if (availableLevels.includes(level)) return level;
+	if (availableLevels.includes(level as ConcreteThinkingLevel)) return level as ConcreteThinkingLevel;
 
-	const requestedIndex = EXTENDED_THINKING_LEVELS.indexOf(level);
+	const requestedIndex = EXTENDED_THINKING_LEVELS.indexOf(level as ConcreteThinkingLevel);
 	if (requestedIndex === -1) return availableLevels[0] ?? "off";
 
 	for (let i = requestedIndex; i < EXTENDED_THINKING_LEVELS.length; i++) {

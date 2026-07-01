@@ -21,6 +21,7 @@ import type {
 	AgentToolResult,
 	StreamFn,
 } from "./types.ts";
+import { classifyThinkingLevel } from "./auto-thinking.ts";
 
 export type AgentEventSink = (event: AgentEvent) => Promise<void> | void;
 
@@ -191,6 +192,19 @@ async function runLoop(
 
 	// Outer loop: continues when queued follow-up messages arrive after agent would stop
 	while (true) {
+		// Resolve auto-thinking: classify the latest user message once per
+		// outer-loop iteration, then keep that level for all tool-call turns.
+		if (config.autoThinking) {
+			const streamFunction = streamFn || streamSimple;
+			const resolved = await classifyThinkingLevel(
+				config.model,
+				currentContext.messages as { role: string; content: unknown }[],
+				streamFunction,
+				signal,
+			);
+			config = { ...config, reasoning: resolved, autoThinking: false };
+		}
+
 		let hasMoreToolCalls = true;
 
 		// Inner loop: process tool calls and steering messages
@@ -253,7 +267,7 @@ async function runLoop(
 					...config,
 					model: nextTurnSnapshot.model ?? config.model,
 					reasoning:
-						nextTurnSnapshot.thinkingLevel === undefined
+						nextTurnSnapshot.thinkingLevel === undefined || nextTurnSnapshot.thinkingLevel === "auto"
 							? config.reasoning
 							: nextTurnSnapshot.thinkingLevel === "off"
 								? undefined

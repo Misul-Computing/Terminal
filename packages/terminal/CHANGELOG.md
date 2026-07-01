@@ -4,6 +4,15 @@ Misul Terminal — a coding agent by Misul Computing.
 
 ## [Unreleased]
 
+### Added
+
+- Auto-thinking: new "auto" thinking level (now the default). Before each
+  prompt, a lightweight model call classifies the reasoning effort needed
+  (minimal, low, medium, high) and sets the thinking level for that turn.
+  Trivial prompts skip the call entirely. Technical users can set a concrete
+  level via --thinking, the settings menu, or the thinking selector to
+  disable auto-classification.
+
 ## [0.5.0] - 2026-07-01
 
 ### Added

@@ -259,10 +259,10 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 		thinkingLevel = settingsManager.getDefaultThinkingLevel() ?? DEFAULT_THINKING_LEVEL;
 	}
 
-	// Clamp to model capabilities
+	// Clamp to model capabilities (skip "auto" - it's a meta-level resolved at runtime)
 	if (!model) {
 		thinkingLevel = "off";
-	} else {
+	} else if (thinkingLevel !== "auto") {
 		thinkingLevel = clampThinkingLevel(model, thinkingLevel) as ThinkingLevel;
 	}
 

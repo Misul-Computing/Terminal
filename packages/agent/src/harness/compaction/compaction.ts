@@ -499,7 +499,7 @@ export async function generateSummary(
 	];
 
 	const completionOptions =
-		model.reasoning && thinkingLevel && thinkingLevel !== "off"
+		model.reasoning && thinkingLevel && thinkingLevel !== "off" && thinkingLevel !== "auto"
 			? { maxTokens, signal, apiKey, headers, reasoning: thinkingLevel }
 			: { maxTokens, signal, apiKey, headers };
 
@@ -743,7 +743,7 @@ async function generateTurnPrefixSummary(
 	const response = await completeSimple(
 		model,
 		{ systemPrompt: SUMMARIZATION_SYSTEM_PROMPT, messages: summarizationMessages },
-		model.reasoning && thinkingLevel && thinkingLevel !== "off"
+		model.reasoning && thinkingLevel && thinkingLevel !== "off" && thinkingLevel !== "auto"
 			? { maxTokens, signal, apiKey, headers, reasoning: thinkingLevel }
 			: { maxTokens, signal, apiKey, headers },
 	);

@@ -6,6 +6,7 @@ import {
 	streamSimple,
 	type TextContent,
 	type ThinkingBudgets,
+	type ThinkingLevel as AiThinkingLevel,
 	type Transport,
 } from "@misul/ai";
 import { runAgentLoop, runAgentLoopContinue } from "./agent-loop.ts";
@@ -426,9 +427,12 @@ export class Agent {
 
 	private createLoopConfig(options: { skipInitialSteeringPoll?: boolean } = {}): AgentLoopConfig {
 		let skipInitialSteeringPoll = options.skipInitialSteeringPoll === true;
+		const isAuto = this._state.thinkingLevel === "auto";
+		const concreteLevel = this._state.thinkingLevel === "off" || isAuto ? undefined : this._state.thinkingLevel;
 		return {
 			model: this._state.model,
-			reasoning: this._state.thinkingLevel === "off" ? undefined : this._state.thinkingLevel,
+			reasoning: concreteLevel as AiThinkingLevel | undefined,
+			autoThinking: isAuto,
 			sessionId: this.sessionId,
 			onPayload: this.onPayload,
 			onResponse: this.onResponse,

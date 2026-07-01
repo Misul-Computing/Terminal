@@ -7,6 +7,7 @@ import type {
 	SimpleStreamOptions,
 	streamSimple,
 	TextContent,
+	ThinkingLevel as AiThinkingLevel,
 	Tool,
 	ToolResultMessage,
 } from "@misul/ai";
@@ -134,6 +135,9 @@ export interface PrepareNextTurnContext extends ShouldStopAfterTurnContext {}
 
 export interface AgentLoopConfig extends SimpleStreamOptions {
 	model: Model<any>;
+
+	/** When true, reasoning is auto-classified per prompt and overrides `reasoning`. */
+	autoThinking?: boolean;
 
 	/**
 	 * Converts AgentMessage[] to LLM-compatible Message[] before each LLM call.
@@ -289,7 +293,7 @@ export interface AgentLoopConfig extends SimpleStreamOptions {
  * Note: "xhigh" is only supported by selected model families. Use model thinking-level metadata
  * from @misul/ai to detect support for a concrete model.
  */
-export type ThinkingLevel = "off" | "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+export type ThinkingLevel = "off" | "auto" | "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
 
 /**
  * Extensible interface for custom app messages.

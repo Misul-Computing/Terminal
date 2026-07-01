@@ -293,7 +293,7 @@ interface ToolDefinitionEntry {
 // ============================================================================
 
 /** Standard thinking levels */
-const THINKING_LEVELS: ThinkingLevel[] = ["off", "minimal", "low", "medium", "high"];
+const THINKING_LEVELS: ThinkingLevel[] = ["off", "auto", "minimal", "low", "medium", "high"];
 
 // ============================================================================
 // AgentSession Class
@@ -1752,7 +1752,8 @@ export class AgentSession {
 	 */
 	setThinkingLevel(level: ThinkingLevel): void {
 		const availableLevels = this.getAvailableThinkingLevels();
-		const effectiveLevel = availableLevels.includes(level) ? level : this._clampThinkingLevel(level, availableLevels);
+		// "auto" is a meta-level; don't clamp it to model capabilities.
+		const effectiveLevel = level === "auto" ? "auto" : availableLevels.includes(level) ? level : this._clampThinkingLevel(level, availableLevels);
 
 		// Only persist if actually changing
 		const previousLevel = this.agent.state.thinkingLevel;
@@ -1798,8 +1799,9 @@ export class AgentSession {
 		if (!this.model) return THINKING_LEVELS;
 		// Runtime probe results override the build-time heuristic map.
 		const probed = getProbedThinkingLevels(this.model);
-		if (probed) return probed;
-		return getSupportedThinkingLevels(this.model) as ThinkingLevel[];
+		if (probed) return ["auto", ...probed.filter((l) => l !== "off")] as ThinkingLevel[];
+		const supported = getSupportedThinkingLevels(this.model) as ThinkingLevel[];
+		return ["auto", ...supported.filter((l) => l !== "off")] as ThinkingLevel[];
 	}
 
 	/**
@@ -1820,6 +1822,7 @@ export class AgentSession {
 	}
 
 	private _clampThinkingLevel(level: ThinkingLevel, _availableLevels: ThinkingLevel[]): ThinkingLevel {
+		if (level === "auto") return "auto";
 		return this.model ? (clampThinkingLevel(this.model, level) as ThinkingLevel) : "off";
 	}
 

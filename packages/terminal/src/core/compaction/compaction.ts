@@ -542,7 +542,7 @@ function createSummarizationOptions(
 	thinkingLevel: ThinkingLevel | undefined,
 ): SimpleStreamOptions {
 	const options: SimpleStreamOptions = { maxTokens, signal, apiKey, headers, env };
-	if (model.reasoning && thinkingLevel && thinkingLevel !== "off") {
+	if (model.reasoning && thinkingLevel && thinkingLevel !== "off" && thinkingLevel !== "auto") {
 		options.reasoning = thinkingLevel;
 	}
 	return options;

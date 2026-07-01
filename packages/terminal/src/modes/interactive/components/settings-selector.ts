@@ -24,6 +24,7 @@ const SETTINGS_SUBMENU_SELECT_LIST_LAYOUT: SelectListLayoutOptions = {
 
 const THINKING_DESCRIPTIONS: Record<ThinkingLevel, string> = {
 	off: "No reasoning",
+	auto: "Auto-classify reasoning effort per prompt",
 	minimal: "Minimal reasoning effort",
 	low: "Low reasoning effort",
 	medium: "Medium reasoning effort",

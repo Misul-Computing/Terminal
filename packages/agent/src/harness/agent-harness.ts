@@ -3,6 +3,7 @@ import {
 	type ImageContent,
 	type Model,
 	streamSimple,
+	type ThinkingLevel as AiThinkingLevel,
 	type UserMessage,
 } from "@misul/ai";
 import { runAgentLoop } from "../agent-loop.ts";
@@ -429,7 +430,8 @@ export class AgentHarness<
 		const turnState = getTurnState();
 		return {
 			model: turnState.model,
-			reasoning: turnState.thinkingLevel === "off" ? undefined : turnState.thinkingLevel,
+			reasoning: (turnState.thinkingLevel === "off" || turnState.thinkingLevel === "auto" ? undefined : turnState.thinkingLevel) as AiThinkingLevel | undefined,
+			autoThinking: turnState.thinkingLevel === "auto",
 			convertToLlm,
 			transformContext: async (messages) => {
 				const result = await this.emitHook({ type: "context", messages: [...messages] });
