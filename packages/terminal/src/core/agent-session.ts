@@ -2683,6 +2683,24 @@ export class AgentSession {
 		}
 	}
 
+	/**
+	 * Lightweight live reload triggered by file watchers.
+	 *
+	 * Unlike reload(), this does NOT rebind extensions or reset tools.
+	 * It reloads the resource loader (picks up new/changed skills, prompts,
+	 * themes from disk) and rebuilds the system prompt. The cache prefix
+	 * (constitution + tools + guidelines) stays stable when only skills
+	 * change, so the prompt cache remains warm.
+	 *
+	 * Safe to call while idle. No-op if streaming or compacting.
+	 */
+	async liveReload(): Promise<void> {
+		if (this.isStreaming || this.isCompacting) return;
+		await this._resourceLoader.reload();
+		this._baseSystemPrompt = this._rebuildSystemPrompt(this.getActiveToolNames());
+		this.agent.state.systemPrompt = this._baseSystemPrompt;
+	}
+
 	// =========================================================================
 	// Auto-Retry
 	// =========================================================================
