@@ -1,25 +1,21 @@
 /**
- * Automode permission gate.
+ * Permission gate.
  *
- * Classifies tool calls by risk level using rules first (zero tokens),
- * then a lightweight model call for ambiguous cases. When a tool call
- * needs user confirmation, the agent asks in natural language in the
- * chat. The user's reply is interpreted by a lightweight model call.
+ * Read-only tools run automatically. Everything else: one lightweight
+ * model call with conversation context decides whether to ask or just
+ * run it. No hardcoded dangerous patterns. The model sees what the user
+ * asked for and what the agent is about to do, then decides.
  */
 
 import type { Model } from "@misul/ai";
 import { completeSimple, type Context, type SimpleStreamOptions } from "@misul/ai";
 
-/** Risk level for a tool call. */
-export type RiskLevel = "safe" | "moderate" | "dangerous";
-
 /** Result of risk assessment. */
 export interface RiskAssessment {
-	level: RiskLevel;
-	/** Human-readable summary of what the tool call does, for the model prompt. */
+	/** Whether to ask the user before running. */
+	ask: boolean;
+	/** Human-readable summary of what the tool call does. */
 	summary: string;
-	/** Why this risk level was chosen. */
-	reason: string;
 }
 
 /** Result of interpreting a user's natural language response. */
@@ -31,7 +27,7 @@ export interface PermissionResponse {
 
 /** Configuration for the permission gate. */
 export interface PermissionGateConfig {
-	/** Whether automode is enabled. When false, all tool calls are allowed. */
+	/** Whether the gate is enabled. When false, all tool calls are allowed. */
 	enabled: boolean;
 	/** Model to use for risk assessment and response interpretation. */
 	model?: Model<any>;
@@ -42,205 +38,111 @@ export interface PermissionGateConfig {
 	maxTokens?: number;
 	/** Timeout for model calls in ms. Default: 10000. */
 	timeoutMs?: number;
+	/** Recent conversation context for context-aware risk assessment. */
+	context?: string;
 }
 
 /**
- * Assess the risk of a tool call using rules.
- *
- * Rules (zero tokens):
- * - read, ls, cat, grep, glob, find, search -> safe
- * - edit, write, notebook_edit -> moderate
- * - bash with safe commands (ls, cat, echo, git status, npm test) -> safe
- * - bash with mutations (rm, git push, npm install, sudo, chmod) -> dangerous
- * - bash with other commands -> moderate
- * - mcp_* tools -> moderate (unknown external tools)
+ * Read-only tools that never need permission. This is an optimization,
+ * not a safety gate. No point calling the model to ask "should I read
+ * a file?"
  */
-export function assessRisk(
+const SAFE_TOOLS = new Set([
+	"read", "ls", "cat", "grep", "glob", "find", "search",
+	"read_file", "read_subagent", "web_search", "webfetch",
+	"notebook_read", "mcp_list_servers", "mcp_list_tools", "mcp_read_resource",
+	"todo_write", "ask_user_question", "skill",
+]);
+
+/**
+ * Check if a tool call needs user permission.
+ *
+ * Read-only tools: no, always auto-run.
+ * Everything else: ask the model with conversation context.
+ */
+export async function needsPermission(
 	toolName: string,
 	args: Record<string, unknown>,
-): RiskAssessment {
-	// Read-only tools are always safe
-	const safeTools = new Set([
-		"read", "ls", "cat", "grep", "glob", "find", "search",
-		"read_file", "read_subagent", "web_search", "webfetch",
-		"notebook_read", "mcp_list_servers", "mcp_list_tools", "mcp_read_resource",
-		"todo_write", "ask_user_question", "skill",
-	]);
-	if (safeTools.has(toolName)) {
-		return {
-			level: "safe",
-			summary: `${toolName}`,
-			reason: "Read-only tool",
-		};
+	config: PermissionGateConfig,
+): Promise<{ ask: boolean; assessment: RiskAssessment }> {
+	if (!config.enabled) {
+		return { ask: false, assessment: { ask: false, summary: "" } };
 	}
 
-	// Edit/write tools are moderate
-	const editTools = new Set(["edit", "write", "notebook_edit", "edit_file"]);
-	if (editTools.has(toolName)) {
-		const path = String(args.file_path ?? args.path ?? args.notebook_path ?? "<unknown>");
-		return {
-			level: "moderate",
-			summary: `${toolName} ${path}`,
-			reason: "File modification",
-		};
+	if (SAFE_TOOLS.has(toolName)) {
+		return { ask: false, assessment: { ask: false, summary: toolName } };
 	}
 
-	// Bash: classify by command content
-	if (toolName === "bash" || toolName === "exec" || toolName === "execute_command") {
-		const command = String(args.command ?? "");
-		return assessBashRisk(command);
+	const summary = buildSummary(toolName, args);
+
+	// No model configured: default to asking for anything non-safe.
+	// This is the conservative fallback.
+	if (!config.model) {
+		return { ask: true, assessment: { ask: true, summary } };
 	}
 
-	// MCP tools are moderate (unknown external effects)
-	if (toolName.startsWith("mcp_") || toolName.startsWith("mcpCallTool")) {
-		return {
-			level: "moderate",
-			summary: `${toolName} ${JSON.stringify(args).slice(0, 100)}`,
-			reason: "External MCP tool with unknown effects",
-		};
-	}
-
-	// Unknown tools default to moderate
-	return {
-		level: "moderate",
-		summary: `${toolName} ${JSON.stringify(args).slice(0, 100)}`,
-		reason: "Unknown tool, defaulting to moderate",
-	};
+	const ask = await modelDecide(toolName, summary, config);
+	return { ask, assessment: { ask, summary } };
 }
 
-/** Dangerous bash command patterns. */
-const DANGEROUS_PATTERNS: Array<{ pattern: RegExp; reason: string }> = [
-	{ pattern: /\brm\s+-rf?\b/i, reason: "Recursive delete" },
-	{ pattern: /\brm\b/i, reason: "File deletion" },
-	{ pattern: /\bgit\s+push\b/i, reason: "Git push to remote" },
-	{ pattern: /\bgit\s+reset\s+--hard\b/i, reason: "Hard git reset" },
-	{ pattern: /\bgit\s+clean\s+-[a-z]*f/i, reason: "Git clean force" },
-	{ pattern: /\bsudo\b/i, reason: "Sudo command" },
-	{ pattern: /\bchmod\b/i, reason: "Permission change" },
-	{ pattern: /\bchown\b/i, reason: "Ownership change" },
-	{ pattern: /\bkill\b/i, reason: "Process kill" },
-	{ pattern: /\bpkill\b/i, reason: "Process kill" },
-	{ pattern: /\bshutdown\b/i, reason: "System shutdown" },
-	{ pattern: /\breboot\b/i, reason: "System reboot" },
-	{ pattern: /\bdd\b/i, reason: "Disk operations" },
-	{ pattern: /\bmkfs\b/i, reason: "Filesystem format" },
-	{ pattern: /\b>\s*\/dev\//i, reason: "Write to device" },
-	{ pattern: /\bcurl\b.*\|\s*(sh|bash|zsh)\b/i, reason: "Pipe to shell" },
-	{ pattern: /\bwget\b.*\|\s*(sh|bash|zsh)\b/i, reason: "Pipe to shell" },
-	{ pattern: /\bnpm\s+publish\b/i, reason: "Npm publish" },
-	{ pattern: /\bdocker\s+(rm|rmi|prune)\b/i, reason: "Docker removal" },
-	{ pattern: /\bdrop\s+(table|database|schema)\b/i, reason: "Database drop" },
-	{ pattern: /\btruncate\b/i, reason: "Table truncate" },
-	{ pattern: /\bDROP\s+/i, reason: "SQL DROP" },
-	{ pattern: /\bforce\s+push\b/i, reason: "Force push" },
-];
-
-/** Safe bash command patterns (checked first). */
-const SAFE_PATTERNS: Array<{ pattern: RegExp; reason: string }> = [
-	{ pattern: /^ls\b/i, reason: "List files" },
-	{ pattern: /^cat\b/i, reason: "Read file" },
-	{ pattern: /^echo\b/i, reason: "Echo" },
-	{ pattern: /^pwd\b/i, reason: "Print directory" },
-	{ pattern: /^whoami\b/i, reason: "User info" },
-	{ pattern: /^date\b/i, reason: "Date" },
-	{ pattern: /^git\s+status\b/i, reason: "Git status" },
-	{ pattern: /^git\s+diff\b/i, reason: "Git diff" },
-	{ pattern: /^git\s+log\b/i, reason: "Git log" },
-	{ pattern: /^git\s+branch\b/i, reason: "Git branch" },
-	{ pattern: /^npm\s+test\b/i, reason: "Run tests" },
-	{ pattern: /^npm\s+run\b/i, reason: "Run npm script" },
-	{ pattern: /^npx\s+tsc\b/i, reason: "Type check" },
-	{ pattern: /^npx\s+tsgo\b/i, reason: "Type check" },
-	{ pattern: /^node\s+--version\b/i, reason: "Check version" },
-	{ pattern: /^npm\s+--version\b/i, reason: "Check version" },
-	{ pattern: /^head\b/i, reason: "Read file head" },
-	{ pattern: /^tail\b/i, reason: "Read file tail" },
-	{ pattern: /^wc\b/i, reason: "Word count" },
-	{ pattern: /^which\b/i, reason: "Find command" },
-	{ pattern: /^env\b/i, reason: "Environment" },
-	{ pattern: /^printenv\b/i, reason: "Print env" },
-	{ pattern: /^true\b/i, reason: "No-op" },
-	{ pattern: /^false\b/i, reason: "No-op" },
-	{ pattern: /^test\b/i, reason: "Test condition" },
-	{ pattern: /^\[\b/, reason: "Test condition" },
-];
-
-function assessBashRisk(command: string): RiskAssessment {
-	const trimmed = command.trim();
-
-	// Check safe patterns first
-	for (const { pattern, reason } of SAFE_PATTERNS) {
-		if (pattern.test(trimmed)) {
-			return {
-				level: "safe",
-				summary: `$ ${trimmed.slice(0, 120)}`,
-				reason,
-			};
-		}
+function buildSummary(toolName: string, args: Record<string, unknown>): string {
+	if (toolName === "bash" || toolName === "exec" || toolName === "execute_command") {
+		return `$ ${String(args.command ?? "").slice(0, 200)}`;
 	}
-
-	// Check dangerous patterns
-	for (const { pattern, reason } of DANGEROUS_PATTERNS) {
-		if (pattern.test(trimmed)) {
-			return {
-				level: "dangerous",
-				summary: `$ ${trimmed.slice(0, 120)}`,
-				reason,
-			};
-		}
+	const path = args.file_path ?? args.path ?? args.notebook_path;
+	if (path) {
+		return `${toolName} ${String(path)}`;
 	}
-
-	// Default: moderate
-	return {
-		level: "moderate",
-		summary: `$ ${trimmed.slice(0, 120)}`,
-		reason: "Unknown bash command",
-	};
+	return `${toolName} ${JSON.stringify(args).slice(0, 150)}`;
 }
 
 /**
- * Use a lightweight model call to assess ambiguous risk.
- * Called only for "moderate" risk tool calls where rules are uncertain.
- *
- * Returns true if the model says the call is safe to auto-approve,
- * false if it needs user confirmation.
+ * Ask the model whether to run the tool call automatically or ask the user.
+ * The model sees the conversation context, so "git push" after the user
+ * said "fix and push" will auto-run, while "git push" out of nowhere will
+ * ask.
  */
-export async function modelAssessSafety(
+async function modelDecide(
 	toolName: string,
 	summary: string,
-	reason: string,
 	config: PermissionGateConfig,
 ): Promise<boolean> {
-	if (!config.model) return false;
+	const context = config.context?.slice(-2000) ?? "";
 
-	const prompt = `Is this tool call safe to run automatically without asking the user?
+	const prompt = `You are deciding whether an AI coding agent should run a tool call automatically or ask the user first.
 
-Tool: ${toolName}
-Action: ${summary}
-Reason for uncertainty: ${reason}
+Recent conversation:
+${context}
 
-Reply with only "safe" or "ask".`;
+The agent is about to run:
+${summary}
+
+Should the agent just run this, or ask the user first?
+
+Run it automatically when:
+- The user clearly asked for this action or something that requires it
+- It's a normal part of the task the user described
+- It's reversible or low-impact (editing a file the user asked you to edit, running a build, running tests)
+
+Ask the user first when:
+- The action is destructive and wasn't clearly requested (deleting files, force pushing, dropping tables)
+- It has side effects outside the repo (publishing, deploying, sending emails, payments)
+- You're not sure what the user wants
+
+Reply with only "run" or "ask".`;
 
 	try {
 		const result = await callModel(prompt, config);
 		const text = result.trim().toLowerCase();
-		return text.startsWith("safe");
+		return text.startsWith("ask");
 	} catch {
-		// On any error, default to asking
-		return false;
+		// On any error, ask. Don't auto-run when uncertain.
+		return true;
 	}
 }
 
 /**
  * Interpret a user's natural language response to a permission request.
- * Uses a lightweight model call.
- *
- * Examples:
- *   "yeah go ahead" -> approve
- *   "no, just delete the .o files" -> modify
- *   "nope" -> deny
- *   "sure" -> approve
- *   "use a different path" -> modify
  */
 export async function interpretPermissionResponse(
 	userReply: string,
@@ -258,14 +160,6 @@ export async function interpretPermissionResponse(
 		}
 	}
 	for (const w of denyWords) {
-		if (lower === w || lower.startsWith(w + " ") || lower.startsWith(w + ".")) {
-			// Check if there's a modification suggestion after the denial
-			break;
-		}
-	}
-
-	// Check for pure deny
-	for (const w of denyWords) {
 		if (lower === w) {
 			return { decision: "deny" };
 		}
@@ -273,7 +167,6 @@ export async function interpretPermissionResponse(
 
 	// Model call for ambiguous responses
 	if (!config.model) {
-		// No model: default to approve if it looks positive, deny otherwise
 		for (const w of approveWords) {
 			if (lower.includes(w)) return { decision: "approve" };
 		}
@@ -294,7 +187,6 @@ Reply in JSON: {"decision":"approve"} or {"decision":"deny"} or {"decision":"mod
 	try {
 		const result = await callModel(prompt, config);
 		const text = result.trim();
-		// Try to parse JSON
 		const jsonMatch = text.match(/\{[^}]+\}/);
 		if (jsonMatch) {
 			const parsed = JSON.parse(jsonMatch[0]);
@@ -307,12 +199,10 @@ Reply in JSON: {"decision":"approve"} or {"decision":"deny"} or {"decision":"mod
 				};
 			}
 		}
-		// Fallback: check for keywords
 		if (/approve|yes|sure|go|proceed/i.test(text)) return { decision: "approve" };
 		if (/deny|no|stop|cancel/i.test(text)) return { decision: "deny" };
 		return { decision: "modify", modifiedInstruction: userReply };
 	} catch {
-		// On error, treat as modify with the raw reply
 		return { decision: "modify", modifiedInstruction: userReply };
 	}
 }
@@ -340,14 +230,12 @@ async function callModel(prompt: string, config: PermissionGateConfig): Promise<
 		maxTokens: config.maxTokens ?? 256,
 	};
 
-	// Add timeout via AbortController
 	const controller = new AbortController();
 	const timeout = setTimeout(() => controller.abort(), config.timeoutMs ?? 10000);
 	options.signal = controller.signal;
 
 	try {
 		const result = await completeSimple(config.model, context, options);
-		// Extract text from the response
 		const textParts: string[] = [];
 		for (const block of result.content) {
 			if (block.type === "text") {
@@ -358,43 +246,4 @@ async function callModel(prompt: string, config: PermissionGateConfig): Promise<
 	} finally {
 		clearTimeout(timeout);
 	}
-}
-
-/**
- * Check if a tool call needs user permission.
- *
- * Returns true if the call should be blocked and the user should be asked.
- * Returns false if the call is safe to auto-approve.
- *
- * Flow:
- * 1. If automode is disabled, return false (everything allowed)
- * 2. Assess risk using rules (zero tokens)
- * 3. If safe, return false
- * 4. If dangerous, return true (always ask)
- * 5. If moderate, use model to assess (lightweight call)
- * 6. If model says safe, return false
- * 7. Otherwise, return true (ask user)
- */
-export async function needsPermission(
-	toolName: string,
-	args: Record<string, unknown>,
-	config: PermissionGateConfig,
-): Promise<{ ask: boolean; assessment: RiskAssessment }> {
-	if (!config.enabled) {
-		return { ask: false, assessment: { level: "safe", summary: "", reason: "Automode disabled" } };
-	}
-
-	const assessment = assessRisk(toolName, args);
-
-	if (assessment.level === "safe") {
-		return { ask: false, assessment };
-	}
-
-	if (assessment.level === "dangerous") {
-		return { ask: true, assessment };
-	}
-
-	// Moderate: use model to decide
-	const modelSaysSafe = await modelAssessSafety(toolName, assessment.summary, assessment.reason, config);
-	return { ask: !modelSaysSafe, assessment };
 }

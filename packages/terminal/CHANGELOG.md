@@ -14,13 +14,12 @@ Misul Terminal — a coding agent by Misul Computing.
   background watcher). If so, a lightweight reload picks up the changes
   without restart. The prompt cache prefix stays stable when only skills
   change. No-op while streaming or compacting.
-- Permission gate is always on. Safe operations run automatically; risky
-  actions (edits, deletes, pushes) ask the user in chat first. No flag,
-  no setting, no opt-in. Risk is assessed by rules first (zero tokens):
-  reads are safe, edits are moderate, rm/git push/sudo are dangerous.
-  Ambiguous cases use a lightweight model call (256 max tokens). The user
-  replies in natural language; responses are interpreted by keyword
-  matching first, then a lightweight model call for complex replies.
+- Permission gate is always on and context-aware. Read-only tools run
+  automatically. Everything else: one lightweight model call with recent
+  conversation context decides whether to ask or just run. If the user
+  asked for it, it runs. If it's destructive and wasn't requested, the
+  agent asks in chat. No hardcoded dangerous patterns. No flag, no
+  setting, no opt-in.
 - System prompt now tells the agent about the permission gate, addons,
   and live reload. The agent knows about `misul addon` CLI commands and
   can install addons for the user.

@@ -915,7 +915,24 @@ export class AgentSession {
 			headers,
 			maxTokens: 256,
 			timeoutMs: 10000,
+			context: this._buildPermissionContext(),
 		};
+	}
+
+	/** Build a compact context string from recent conversation for the permission gate. */
+	private _buildPermissionContext(): string {
+		const messages = this.agent.state.messages;
+		const lines: string[] = [];
+		const start = Math.max(0, messages.length - 10);
+		for (let i = start; i < messages.length; i++) {
+			const msg = messages[i];
+			if (msg.role !== "user" && msg.role !== "assistant") continue;
+			const text = typeof msg.content === "string"
+				? msg.content
+				: msg.content.filter((b: any) => b.type === "text").map((b: any) => b.text).join(" ");
+			if (text) lines.push(`${msg.role === "user" ? "User" : "Agent"}: ${text.slice(0, 300)}`);
+		}
+		return lines.join("\n");
 	}
 
 	/** Current thinking level */

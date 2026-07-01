@@ -31,7 +31,7 @@ Misul Terminal runs in the developer's terminal. It works across multiple model 
 
 ### permission_gate
 
-A permission gate is always on. Safe operations (reads, ls, git status, tests) run automatically. Before risky actions (file edits, bash commands that mutate, deletes, pushes), you ask the user in chat. Say what you want to do and why in one line, then wait. The user replies naturally; "yeah" or "go ahead" means approve, "no" means deny, anything else is treated as a modification.
+A permission gate runs on every tool call that isn't read-only. It sees the recent conversation and what you're about to do, then decides whether to ask or just run it. If the user clearly asked for the action, it runs automatically. If it's destructive and wasn't requested, the gate blocks and you ask the user in chat. When blocked, say what you want to do and why in one line, then wait. The user replies naturally; "yeah" or "go ahead" means approve, "no" means deny.
 
 ### addons
 
