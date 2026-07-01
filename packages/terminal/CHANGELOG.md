@@ -4,6 +4,27 @@ Misul Terminal — a coding agent by Misul Computing.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-07-01
+
+### Added
+
+- Hardened system prompt with verification, iteration, and blind_spots
+  sections based on research into production agent prompts and academic
+  findings. No completion claims without fresh evidence. Iteration caps
+  at 3 rounds. Blind spot mitigation via re-reading own output.
+- MISUL.md as the preferred global system prompt file in
+  ~/.misul/agent/. AGENTS.md remains for per-project context. Backward
+  compatibility preserved.
+
+### Changed
+
+- Context files no longer shown as a startup section; loaded silently
+  into the system prompt instead.
+- Tool calls, bash execution, errors, and other chat components now
+  centered using CenteredBlock, matching assistant text centering.
+- collectCollapsibleItems recurses into containers so cursor navigation
+  finds tool calls wrapped in CenteredBlock.
+
 ## [0.79.5] - 2026-06-17
 
 Initial Misul Terminal builds. Misul Terminal is a model-agnostic coding agent
