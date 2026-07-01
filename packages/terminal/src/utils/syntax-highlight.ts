@@ -87,7 +87,19 @@ export function renderHighlightedHtml(html: string, theme: HighlightTheme = {}):
 			return;
 		}
 		const formatter = getActiveFormatter(scopes, theme);
-		output += formatter ? formatter(textBuffer) : textBuffer;
+		if (!formatter) {
+			output += textBuffer;
+		} else {
+			// Apply the formatter per line so multi-line spans (strings,
+			// comments, template literals) get balanced ANSI codes on each
+			// line. Without this, codes opened on one line bleed into the
+			// next and highlighting breaks.
+			const parts = textBuffer.split("\n");
+			for (let i = 0; i < parts.length; i++) {
+				if (i > 0) output += "\n";
+				output += formatter(parts[i]);
+			}
+		}
 		textBuffer = "";
 	};
 

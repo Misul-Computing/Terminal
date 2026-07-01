@@ -3,7 +3,7 @@ import { Agent, type AgentMessage, type ThinkingLevel } from "@misul/agent-core"
 import { clampThinkingLevel, type Message, type Model, streamSimple } from "@misul/ai";
 import { getAgentDir } from "../config.ts";
 import { resolvePath } from "../utils/paths.ts";
-import { AgentSession } from "./agent-session.ts";
+import { AgentSession, type PermissionMode } from "./agent-session.ts";
 import { formatNoModelsAvailableMessage } from "./auth-guidance.ts";
 import { AuthStorage } from "./auth-storage.ts";
 import { DEFAULT_THINKING_LEVEL } from "./defaults.ts";
@@ -98,8 +98,8 @@ export interface CreateAgentSessionOptions {
 	sessionStartEvent?: SessionStartEvent;
 	/** Override the assistant prefill text. Empty string disables prefill. */
 	assistantPrefill?: string;
-	/** Enable automode (conversational permission gate). */
-	autoMode?: boolean;
+	/** Permission mode: "ask" (default), "auto" (allow all), "plan" (read-only) */
+	permissionMode?: PermissionMode;
 }
 
 /** Result from createAgentSession */
@@ -441,7 +441,7 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 		excludedToolNames,
 		extensionRunnerRef,
 		sessionStartEvent: options.sessionStartEvent,
-		autoMode: options.autoMode,
+		permissionMode: options.permissionMode,
 	});
 	const extensionsResult = resourceLoader.getExtensions();
 

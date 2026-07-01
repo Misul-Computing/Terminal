@@ -275,6 +275,14 @@ export class FooterComponent implements Component {
 			statsParts.push(`${theme.fg("dim", "•")} ${theme.bold(theme.fg("warning", "xp"))}`);
 		}
 
+		// Show permission mode when not "ask" (the default)
+		const permMode = this.session.permissionMode;
+		if (permMode === "auto") {
+			statsParts.push(`${theme.fg("dim", "•")} ${theme.fg("warning", "auto")}`);
+		} else if (permMode === "plan") {
+			statsParts.push(`${theme.fg("dim", "•")} ${theme.fg("accent", "plan")}`);
+		}
+
 		let statsLeft = statsParts.join(" ");
 
 		// Add model name on the right side.

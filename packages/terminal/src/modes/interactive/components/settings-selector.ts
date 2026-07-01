@@ -73,7 +73,7 @@ export interface SettingsConfig {
 	cacheAggressiveness: CacheAggressivenessSetting;
 	soloMode: boolean;
 	autoReviewSubagents: boolean;
-	autoMode: boolean;
+	permissionMode: "ask" | "auto" | "plan";
 }
 
 export interface SettingsCallbacks {
@@ -106,7 +106,7 @@ export interface SettingsCallbacks {
 	onCacheAggressivenessChange: (value: CacheAggressivenessSetting) => void;
 	onSoloModeChange: (enabled: boolean) => void;
 	onAutoReviewSubagentsChange: (enabled: boolean) => void;
-	onAutoModeChange: (enabled: boolean) => void;
+	onPermissionModeChange: (mode: "ask" | "auto" | "plan") => void;
 	onCancel: () => void;
 }
 
@@ -379,11 +379,11 @@ export class SettingsSelectorComponent extends Container {
 				values: ["true", "false"],
 			},
 			{
-				id: "auto-mode",
-				label: "Auto mode",
-				description: "Conversational permission gate. The agent asks in chat before risky actions. Safe operations run automatically.",
-				currentValue: config.autoMode ? "true" : "false",
-				values: ["true", "false"],
+				id: "permission-mode",
+				label: "Permission mode",
+				description: "ask: agent asks before risky actions. auto: allow everything. plan: read-only, block all mutations.",
+				currentValue: config.permissionMode,
+				values: ["ask", "auto", "plan"],
 			},
 			{
 				id: "thinking",
@@ -630,8 +630,8 @@ export class SettingsSelectorComponent extends Container {
 					case "autoreview-subagents":
 						callbacks.onAutoReviewSubagentsChange(newValue === "true");
 						break;
-					case "auto-mode":
-						callbacks.onAutoModeChange(newValue === "true");
+					case "permission-mode":
+						callbacks.onPermissionModeChange(newValue as "ask" | "auto" | "plan");
 						break;
 				}
 			},

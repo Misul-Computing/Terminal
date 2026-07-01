@@ -463,11 +463,9 @@ export function buildSessionOptions(
 		options.autoReviewSubagents = parsed.autoreview || settingsManager.getAutoReviewSubagents();
 	}
 
-	// --auto or autoMode setting: enable conversational permission gate
-	const autoMode = parsed.auto || settingsManager.getAutoMode();
-	if (autoMode) {
-		options.autoMode = true;
-	}
+	// Permission mode: --permission flag overrides setting, default is "ask"
+	const permissionMode = parsed.permission ?? settingsManager.getPermissionMode() ?? "ask";
+	options.permissionMode = permissionMode;
 
 	if (parsed.assistantPrefill !== undefined) {
 		options.assistantPrefill = parsed.assistantPrefill;

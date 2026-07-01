@@ -698,9 +698,22 @@ export class TUI extends Container {
 	/**
 	 * Map a 1-based terminal row to a 0-based index into getRenderedLines().
 	 * Returns -1 if the row is outside the rendered content.
+	 *
+	 * When scrolled, the viewport shows a slice of previousLines starting
+	 * at (previousLines.length - scrollOffset - terminal.rows), not at
+	 * previousViewportTop. This must account for the scroll offset or
+	 * clicks land on the wrong line after scrolling.
 	 */
 	terminalRowToLineIndex(row: number): number {
-		const lineIndex = this.previousViewportTop + (row - 1);
+		let lineIndex: number;
+		if (this.scrollOffset > 0) {
+			const height = this.terminal.rows;
+			const end = this.previousLines.length - this.scrollOffset;
+			const start = Math.max(0, end - height);
+			lineIndex = start + (row - 1);
+		} else {
+			lineIndex = this.previousViewportTop + (row - 1);
+		}
 		if (lineIndex < 0 || lineIndex >= this.previousLines.length) return -1;
 		return lineIndex;
 	}

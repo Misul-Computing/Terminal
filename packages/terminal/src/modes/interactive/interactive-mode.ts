@@ -2430,6 +2430,7 @@ export class InteractiveMode {
 		this.defaultEditor.onCtrlD = () => this.handleCtrlD();
 		this.defaultEditor.onAction("app.suspend", () => this.handleCtrlZ());
 		this.defaultEditor.onAction("app.thinking.cycle", () => this.cycleThinkingLevel());
+		this.defaultEditor.onAction("app.permission.cycle", () => this.cyclePermissionMode());
 		this.defaultEditor.onAction("app.model.cycleForward", () => this.cycleModel("forward"));
 		this.defaultEditor.onAction("app.model.cycleBackward", () => this.cycleModel("backward"));
 
@@ -3748,6 +3749,17 @@ export class InteractiveMode {
 		}
 	}
 
+	private cyclePermissionMode(): void {
+		const mode = this.session.cyclePermissionMode();
+		this.footer.invalidate();
+		const labels: Record<string, string> = {
+			ask: "ask (confirm risky actions)",
+			auto: "auto (allow everything)",
+			plan: "plan (read-only)",
+		};
+		this.showStatus(`Permission mode: ${labels[mode]}`);
+	}
+
 	private async cycleModel(direction: "forward" | "backward"): Promise<void> {
 		try {
 			const result = await this.session.cycleModel(direction);
@@ -4146,7 +4158,7 @@ export class InteractiveMode {
 					cacheAggressiveness: this.settingsManager.getCacheAggressiveness(),
 					soloMode: this.settingsManager.getSoloMode(),
 					autoReviewSubagents: this.settingsManager.getAutoReviewSubagents(),
-					autoMode: this.settingsManager.getAutoMode(),
+					permissionMode: this.settingsManager.getPermissionMode() ?? "ask",
 				},
 				{
 					onAutoCompactChange: (enabled) => {
@@ -4283,10 +4295,10 @@ export class InteractiveMode {
 						this.settingsManager.setAutoReviewSubagents(enabled);
 						this.showStatus("Autoreview subagents: " + (enabled ? "on" : "off"));
 					},
-					onAutoModeChange: (enabled) => {
-						this.settingsManager.setAutoMode(enabled);
-						this.session.setAutoMode(enabled);
-						this.showStatus("Auto mode: " + (enabled ? "on" : "off"));
+					onPermissionModeChange: (mode) => {
+						this.settingsManager.setPermissionMode(mode);
+						this.session.setPermissionMode(mode);
+						this.showStatus("Permission mode: " + mode);
 					},
 					onCancel: () => {
 						done();
@@ -5782,6 +5794,7 @@ export class InteractiveMode {
 		const exit = this.getAppKeyDisplay("app.exit");
 		const suspend = this.getAppKeyDisplay("app.suspend");
 		const cycleThinkingLevel = this.getAppKeyDisplay("app.thinking.cycle");
+		const cyclePermissionMode = this.getAppKeyDisplay("app.permission.cycle");
 		const cycleModelForward = this.getAppKeyDisplay("app.model.cycleForward");
 		const selectModel = this.getAppKeyDisplay("app.model.select");
 		const expandTools = this.getAppKeyDisplay("app.tools.expand");
@@ -5825,6 +5838,7 @@ export class InteractiveMode {
 | \`${exit}\` | Exit (when editor is empty) |
 | \`${suspend}\` | Suspend to background |
 | \`${cycleThinkingLevel}\` | Cycle thinking level |
+|| \`${cyclePermissionMode}\` | Cycle permission mode (ask, auto, plan) |
 | \`${cycleModelForward}\` / \`${cycleModelBackward}\` | Cycle models |
 | \`${selectModel}\` | Open model selector |
 | \`${expandTools}\` | Toggle tool output expansion |

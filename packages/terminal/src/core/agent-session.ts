@@ -85,7 +85,7 @@ import type { BashExecutionMessage, CustomMessage } from "./messages.ts";
 import type { ModelRegistry } from "./model-registry.ts";
 import { expandPromptTemplate, type PromptTemplate } from "./prompt-templates.ts";
 import type { ResourceExtensionPaths, ResourceLoader } from "./resource-loader.ts";
-import { needsPermission, type PermissionGateConfig } from "./permission-gate.ts";
+import { assessRisk, needsPermission, type PermissionGateConfig } from "./permission-gate.ts";
 import { ResourceChangeChecker, type ResourceDirs } from "./resource-watcher.ts";
 import type { BranchSummaryEntry, CompactionEntry, SessionManager } from "./session-manager.ts";
 import { CURRENT_SESSION_VERSION, getLatestCompactionEntry, type SessionHeader } from "./session-manager.ts";
@@ -162,6 +162,9 @@ export type AgentSessionEventListener = (event: AgentSessionEvent) => void;
 // Types
 // ============================================================================
 
+/** Permission mode for tool execution. */
+export type PermissionMode = "ask" | "auto" | "plan";
+
 export interface AgentSessionConfig {
 	agent: Agent;
 	sessionManager: SessionManager;
@@ -192,8 +195,8 @@ export interface AgentSessionConfig {
 	extensionRunnerRef?: { current?: ExtensionRunner };
 	/** Session start event metadata emitted when extensions bind to this runtime. */
 	sessionStartEvent?: SessionStartEvent;
-	/** Whether automode (conversational permission gate) is enabled. */
-	autoMode?: boolean;
+	/** Permission mode: "ask" (default), "auto" (allow all), "plan" (read-only) */
+	permissionMode?: PermissionMode;
 }
 
 export interface ExtensionBindings {
@@ -351,7 +354,7 @@ export class AgentSession {
 	private _allowedToolNames?: Set<string>;
 	private _excludedToolNames?: Set<string>;
 	private _baseToolsOverride?: Record<string, AgentTool>;
-	private _autoMode: boolean;
+	private _permissionMode: PermissionMode;
 	private _resourceChecker: ResourceChangeChecker | undefined;
 	private _sessionStartEvent: SessionStartEvent;
 	private _extensionUIContext?: ExtensionUIContext;
@@ -395,7 +398,7 @@ export class AgentSession {
 		this._allowedToolNames = config.allowedToolNames ? new Set(config.allowedToolNames) : undefined;
 		this._excludedToolNames = config.excludedToolNames ? new Set(config.excludedToolNames) : undefined;
 		this._baseToolsOverride = config.baseToolsOverride;
-		this._autoMode = config.autoMode ?? false;
+		this._permissionMode = config.permissionMode ?? "ask";
 		this._sessionStartEvent = config.sessionStartEvent ?? { type: "session_start", reason: "startup" };
 
 		// Always subscribe to agent events for internal handling
@@ -464,8 +467,20 @@ export class AgentSession {
 	 */
 	private _installAgentToolHooks(): void {
 		this.agent.beforeToolCall = async ({ toolCall, args }) => {
-			// Automode permission gate: check risk before extension hooks
-			if (this._autoMode) {
+			// Permission gate: "ask" mode checks risk, "plan" mode blocks
+			// all mutations, "auto" mode allows everything.
+			if (this._permissionMode === "plan") {
+				const assessment = assessRisk(
+					toolCall.name,
+					args as Record<string, unknown>,
+				);
+				if (assessment.level !== "safe") {
+					return {
+						block: true,
+						reason: `Plan mode: mutations are blocked. ${assessment.summary} is ${assessment.level}. Switch to ask or auto mode to run it.`,
+					};
+				}
+			} else if (this._permissionMode === "ask") {
 				const gateConfig = await this._getPermissionGateConfig();
 				const { ask, assessment } = await needsPermission(
 					toolCall.name,
@@ -901,14 +916,22 @@ export class AgentSession {
 		return this.agent.state.model;
 	}
 
-	/** Whether automode (conversational permission gate) is active */
-	get autoMode(): boolean {
-		return this._autoMode;
+	/** Current permission mode */
+	get permissionMode(): PermissionMode {
+		return this._permissionMode;
 	}
 
-	/** Toggle automode at runtime */
-	setAutoMode(enabled: boolean): void {
-		this._autoMode = enabled;
+	/** Set permission mode at runtime */
+	setPermissionMode(mode: PermissionMode): void {
+		this._permissionMode = mode;
+	}
+
+	/** Cycle permission mode: ask -> auto -> plan -> ask */
+	cyclePermissionMode(): PermissionMode {
+		const order: PermissionMode[] = ["ask", "auto", "plan"];
+		const idx = order.indexOf(this._permissionMode);
+		this._permissionMode = order[(idx + 1) % order.length];
+		return this._permissionMode;
 	}
 
 	/** Build the permission gate config from current session state */
@@ -924,7 +947,7 @@ export class AgentSession {
 			}
 		}
 		return {
-			enabled: this._autoMode,
+			enabled: this._permissionMode === "ask",
 			model,
 			apiKey,
 			headers,
