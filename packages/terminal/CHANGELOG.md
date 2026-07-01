@@ -8,12 +8,12 @@ Misul Terminal — a coding agent by Misul Computing.
 
 ### Added
 
-- Live reload: file watchers on skill, extension, prompt, theme, and addon
-  directories. When files change on disk (e.g. a skill is installed mid-
-  session), the session picks up changes instantly without restart. Uses
-  a lightweight reload that preserves the prompt cache prefix (constitution
-  + tools + guidelines stay stable when only skills change). Debounced at
-  300ms. No-op while streaming or compacting.
+- Live reload: on-demand change detection for skill, extension, prompt,
+  theme, and addon directories. After each tool call completes, the agent
+  checks if any resource directory changed (a few statSync calls, no
+  background watcher). If so, a lightweight reload picks up the changes
+  without restart. The prompt cache prefix stays stable when only skills
+  change. No-op while streaming or compacting.
 - Automode: conversational permission gate. When enabled via `--auto` or
   the `autoMode` setting, the agent asks in chat before risky actions.
   Risk is assessed by rules first (zero tokens): reads are safe, edits
