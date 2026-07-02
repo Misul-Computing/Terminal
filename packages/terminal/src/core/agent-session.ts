@@ -103,6 +103,7 @@ import { JobManager } from "./jobs/index.ts";
 import { type BashOperations, createLocalBashOperations } from "./tools/bash.ts";
 import { createAllToolDefinitions } from "./tools/index.ts";
 import { createToolDefinitionFromAgentTool } from "./tools/tool-definition-wrapper.ts";
+import { DebugSessionManager, createDapTools } from "./dap/index.ts";
 
 // ============================================================================
 // Skill Block Parsing
@@ -390,6 +391,9 @@ export class AgentSession {
 
 	// Capability registry: internal spine for tool/action permissions
 	private _capabilities: CapabilityRegistry;
+
+	// DAP session manager for debug tools
+	private _dapManager = new DebugSessionManager();
 
 	// Per-project long-term memory store (initialized lazily)
 	private _memoryStore: MemoryStore | undefined;
@@ -921,6 +925,8 @@ export class AgentSession {
 			this._backgroundReview.dispose();
 			this._advisor.dispose();
 			this._jobManager.dispose();
+			// dispose must not throw on adapter exit
+			this._dapManager.clear().catch(() => {});
 			this._memoryStore?.close().catch(() => {});
 			this.agent.abort();
 		} catch {
@@ -2744,6 +2750,11 @@ export class AgentSession {
 			Object.entries(baseToolDefinitions).map(([name, tool]) => [name, tool as ToolDefinition]),
 		);
 
+		// Register DAP debug tools alongside the base tools.
+		for (const tool of createDapTools(this._dapManager)) {
+			this._baseToolDefinitions.set(tool.name, createToolDefinitionFromAgentTool(tool));
+		}
+
 		const extensionsResult = this._resourceLoader.getExtensions();
 		if (options.flagValues) {
 			for (const [name, value] of options.flagValues) {
@@ -2766,7 +2777,9 @@ export class AgentSession {
 
 		const defaultActiveToolNames = this._baseToolsOverride
 			? Object.keys(this._baseToolsOverride)
-			: ["read", "bash", "edit", "write"];
+			: ["read", "bash", "edit", "write",
+				"debug_launch", "debug_breakpoint", "debug_stack", "debug_variables",
+				"debug_continue", "debug_step", "debug_evaluate", "debug_disconnect"];
 		const baseActiveToolNames = options.activeToolNames ?? defaultActiveToolNames;
 		this._refreshToolRegistry({
 			activeToolNames: baseActiveToolNames,

@@ -143,6 +143,14 @@ export class CapabilityRegistry {
 			ls: "ls",
 			spawn_agent: "spawn_agent",
 			web_search: "web_search",
+			debug_launch: "debug",
+			debug_breakpoint: "debug",
+			debug_stack: "debug",
+			debug_variables: "debug",
+			debug_continue: "debug",
+			debug_step: "debug",
+			debug_evaluate: "debug",
+			debug_disconnect: "debug",
 		};
 		// MCP tools map to the mcp capability.
 		if (toolName.startsWith("mcp__")) return "mcp";
@@ -175,7 +183,7 @@ export class CapabilityRegistry {
 			spawn_agent: "spawn_agent",
 			web_search: "web_search",
 			mcp: undefined,
-			debug: "debug",
+			debug: "debug_launch",
 			goal_mode: undefined,
 			network: undefined,
 			write_outside_repo: undefined,

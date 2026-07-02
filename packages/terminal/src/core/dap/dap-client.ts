@@ -3,8 +3,6 @@
 // process. Launches any DAP-compatible debug adapter (js-debug,
 // debugpy, delve, lldb-mi, etc.) and exposes a small API for the
 // agent to set breakpoints, inspect state, and step through code.
-//
-// The agent gets runtime truth: what code does, not what code says.
 
 import { spawn, type ChildProcess } from "node:child_process";
 
@@ -48,6 +46,12 @@ export interface StackFrame {
 	column: number;
 }
 
+export interface Scope {
+	name: string;
+	variablesReference: number;
+	presentationHint?: string;
+}
+
 export interface Variable {
 	name: string;
 	value: string;
@@ -55,12 +59,15 @@ export interface Variable {
 	variablesReference: number;
 }
 
+type EventHandler = (body: Record<string, unknown>) => void;
+
 export class DapClient {
 	private _proc: ChildProcess | undefined;
 	private _seq = 1;
-	private _buffer = "";
+	private _buffer = Buffer.alloc(0);
+	private _contentLength = -1;
 	private _pending = new Map<number, { resolve: (r: DapResponse) => void; reject: (e: Error) => void }>();
-	private _eventHandlers = new Map<string, (body: Record<string, unknown>) => void>();
+	private _eventHandlers = new Map<string, Set<EventHandler>>();
 	private _stopped = false;
 	private _terminated = false;
 	private _command: string;
@@ -80,8 +87,14 @@ export class DapClient {
 		});
 
 		this._proc.stdout?.on("data", (data: Buffer) => this._onData(data));
-		this._proc.stderr?.on("data", (data: Buffer) => {
-			// Debug adapters write diagnostics to stderr. Ignore unless debugging.
+		this._proc.stderr?.on("data", () => { /* adapter diagnostics, ignore */ });
+
+		this._proc.on("error", (err) => {
+			this._terminated = true;
+			for (const { reject } of this._pending.values()) {
+				reject(err);
+			}
+			this._pending.clear();
 		});
 
 		this._proc.on("exit", () => {
@@ -115,13 +128,16 @@ export class DapClient {
 				line: bp.line,
 				condition: bp.condition,
 			})),
-			lines: breakpoints.map((bp) => bp.line),
 			sourceModified: false,
 		});
 	}
 
 	async stackTrace(threadId: number, maxFrames = 50): Promise<StackFrame[]> {
-		const res = await this.send("stackTrace", { threadId, maxLevels: maxFrames });
+		const res = await this.send("stackTrace", {
+			threadId,
+			startFrame: 0,
+			levels: maxFrames,
+		});
 		const frames = (res.body?.stackFrames ?? []) as Record<string, unknown>[];
 		return frames.map((f) => ({
 			id: Number(f.id),
@@ -132,13 +148,13 @@ export class DapClient {
 		}));
 	}
 
-	async scopes(frameId: number): Promise<Variable[]> {
+	async scopes(frameId: number): Promise<Scope[]> {
 		const res = await this.send("scopes", { frameId });
 		const scopes = (res.body?.scopes ?? []) as Record<string, unknown>[];
 		return scopes.map((s) => ({
 			name: String(s.name),
-			value: String(s.name),
 			variablesReference: Number(s.variablesReference ?? 0),
+			presentationHint: s.presentationHint ? String(s.presentationHint) : undefined,
 		}));
 	}
 
@@ -154,11 +170,15 @@ export class DapClient {
 	}
 
 	async continue(threadId: number): Promise<void> {
-		await this.send("continue", { threadId });
+		// Reset _stopped before sending so a fast stopped event from the
+		// same chunk doesn't get overwritten by this line after the await.
 		this._stopped = false;
+		await this.send("continue", { threadId });
 	}
 
 	async step(threadId: number, direction: "next" | "stepIn" | "stepOut"): Promise<void> {
+		// Reset _stopped before sending, same reason as continue().
+		this._stopped = false;
 		await this.send(direction, { threadId });
 	}
 
@@ -173,8 +193,14 @@ export class DapClient {
 		return threads.map((t) => ({ id: Number(t.id), name: String(t.name) }));
 	}
 
-	onEvent(event: string, handler: (body: Record<string, unknown>) => void): void {
-		this._eventHandlers.set(event, handler);
+	onEvent(event: string, handler: EventHandler): () => void {
+		let set = this._eventHandlers.get(event);
+		if (!set) {
+			set = new Set();
+			this._eventHandlers.set(event, set);
+		}
+		set.add(handler);
+		return () => set.delete(handler);
 	}
 
 	get isStopped(): boolean { return this._stopped; }
@@ -186,10 +212,13 @@ export class DapClient {
 				resolve({ threadId: 0, reason: "already stopped" });
 				return;
 			}
-			const timer = setTimeout(() => reject(new Error("Timeout waiting for stop")), timeoutMs);
-			this._eventHandlers.set("stopped", (body) => {
+			const timer = setTimeout(() => {
+				unsub();
+				reject(new Error("Timeout waiting for stop"));
+			}, timeoutMs);
+			const unsub = this.onEvent("stopped", (body) => {
 				clearTimeout(timer);
-				this._stopped = true;
+				unsub();
 				resolve({ threadId: Number(body.threadId ?? 0), reason: String(body.reason ?? "") });
 			});
 		});
@@ -211,23 +240,29 @@ export class DapClient {
 	}
 
 	private _onData(data: Buffer): void {
-		this._buffer += data.toString("utf8");
+		this._buffer = Buffer.concat([this._buffer, data]);
 		while (true) {
-			const headerEnd = this._buffer.indexOf("\r\n\r\n");
-			if (headerEnd === -1) return;
-			const header = this._buffer.slice(0, headerEnd);
-			const match = header.match(/Content-Length:\s*(\d+)/i);
-			if (!match) {
-				this._buffer = this._buffer.slice(headerEnd + 4);
-				continue;
+			if (this._contentLength < 0) {
+				// Look for header terminator.
+				const idx = this._buffer.indexOf("\r\n\r\n");
+				if (idx === -1) return;
+				const header = this._buffer.subarray(0, idx).toString("ascii");
+				const match = header.match(/Content-Length:\s*(\d+)/i);
+				if (!match) {
+					// Not a valid header, skip past it.
+					this._buffer = this._buffer.subarray(idx + 4);
+					continue;
+				}
+				this._contentLength = parseInt(match[1], 10);
+				this._buffer = this._buffer.subarray(idx + 4);
 			}
-			const len = parseInt(match[1], 10);
-			const bodyStart = headerEnd + 4;
-			if (this._buffer.length < bodyStart + len) return;
-			const json = this._buffer.slice(bodyStart, bodyStart + len);
-			this._buffer = this._buffer.slice(bodyStart + len);
+			// Wait until we have the full body.
+			if (this._buffer.length < this._contentLength) return;
+			const body = this._buffer.subarray(0, this._contentLength);
+			this._buffer = this._buffer.subarray(this._contentLength);
+			this._contentLength = -1;
 			try {
-				const msg = JSON.parse(json) as DapMessage;
+				const msg = JSON.parse(body.toString("utf8")) as DapMessage;
 				this._dispatch(msg);
 			} catch {
 				// Malformed JSON, skip.
@@ -246,8 +281,10 @@ export class DapClient {
 		} else if (msg.type === "event") {
 			if (msg.event === "stopped") this._stopped = true;
 			if (msg.event === "terminated") this._terminated = true;
-			const handler = this._eventHandlers.get(msg.event);
-			if (handler) handler(msg.body ?? {});
+			const handlers = this._eventHandlers.get(msg.event);
+			if (handlers) {
+				for (const h of handlers) h(msg.body ?? {});
+			}
 		}
 	}
 
