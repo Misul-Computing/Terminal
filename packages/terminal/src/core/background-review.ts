@@ -13,6 +13,8 @@ import { getAgentDir } from "../config.ts";
 import { REVIEW } from "./subagent/presets.ts";
 import { runSubagent } from "./subagent/runner.ts";
 import type { RunSubagentOptions } from "./subagent/types.ts";
+import type { AuthStorage } from "./auth-storage.ts";
+import type { ModelRegistry } from "./model-registry.ts";
 
 /** Default: review every 10 user turns. */
 const DEFAULT_NUDGE_INTERVAL = 10;
@@ -25,18 +27,30 @@ export interface BackgroundReviewConfig {
 	nudgeInterval?: number;
 	/** Override the subagent runner (for tests). */
 	runner?: typeof runSubagent;
+	/** Auth storage passed to the review subagent. */
+	authStorage?: AuthStorage;
+	/** Model registry passed to the review subagent. */
+	modelRegistry?: ModelRegistry;
+	/** Agent dir for the review subagent. */
+	agentDir?: string;
 }
 
 export class BackgroundReviewLoop {
 	private _turnCount = 0;
 	private _nudgeInterval: number;
 	private _runner: typeof runSubagent;
+	private _authStorage?: AuthStorage;
+	private _modelRegistry?: ModelRegistry;
+	private _agentDir?: string;
 	private _active: Promise<void> | null = null;
 	private _abortController: AbortController | null = null;
 
 	constructor(config: BackgroundReviewConfig = {}) {
 		this._nudgeInterval = config.nudgeInterval ?? DEFAULT_NUDGE_INTERVAL;
 		this._runner = config.runner ?? runSubagent;
+		this._authStorage = config.authStorage;
+		this._modelRegistry = config.modelRegistry;
+		this._agentDir = config.agentDir;
 	}
 
 	/** Call after each user turn completes. Spawns review if threshold hit. */
@@ -74,6 +88,10 @@ export class BackgroundReviewLoop {
 			cwd,
 			signal: reviewSignal,
 			timeoutMs: 120000,
+			thinkingLevel: "off",
+			...(this._authStorage ? { authStorage: this._authStorage } : {}),
+			...(this._modelRegistry ? { modelRegistry: this._modelRegistry } : {}),
+			...(this._agentDir ? { agentDir: this._agentDir } : {}),
 		};
 
 		this._active = this._runner(opts)

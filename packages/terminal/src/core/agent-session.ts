@@ -432,6 +432,16 @@ export class AgentSession {
 		this._baseToolsOverride = config.baseToolsOverride;
 		this._sessionStartEvent = config.sessionStartEvent ?? { type: "session_start", reason: "startup" };
 		this._permissionGateEnabled = config.permissionGateEnabled ?? true;
+		this._advisor = new AdvisorLoop({
+			authStorage: this._modelRegistry.authStorage,
+			modelRegistry: this._modelRegistry,
+			agentDir: config.agentDir,
+		});
+		this._backgroundReview = new BackgroundReviewLoop({
+			authStorage: this._modelRegistry.authStorage,
+			modelRegistry: this._modelRegistry,
+			agentDir: config.agentDir,
+		});
 
 		this._memoryStoreInit = MemoryStore.create({ cwd: this._cwd, agentDir: config.agentDir })
 			.then((store) => {

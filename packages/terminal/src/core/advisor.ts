@@ -15,6 +15,8 @@ import type { AgentMessage } from "@misul/agent-core";
 import type { Model } from "@misul/ai";
 import { runSubagent } from "./subagent/runner.ts";
 import type { AgentPreset, RunSubagentOptions } from "./subagent/types.ts";
+import type { AuthStorage } from "./auth-storage.ts";
+import type { ModelRegistry } from "./model-registry.ts";
 
 /** Max conversation chars passed to the advisor. */
 const MAX_CONVERSATION_CHARS = 16000;
@@ -57,6 +59,12 @@ export interface AdvisorConfig {
 	runner?: typeof runSubagent;
 	/** Override hardness threshold (0-100). */
 	threshold?: number;
+	/** Auth storage passed to the advisor's subagent session. */
+	authStorage?: AuthStorage;
+	/** Model registry passed to the advisor's subagent session. */
+	modelRegistry?: ModelRegistry;
+	/** Agent dir for the advisor's subagent session. */
+	agentDir?: string;
 }
 
 interface SessionMetrics {
@@ -69,6 +77,9 @@ interface SessionMetrics {
 export class AdvisorLoop {
 	private _runner: typeof runSubagent;
 	private _threshold: number;
+	private _authStorage?: AuthStorage;
+	private _modelRegistry?: ModelRegistry;
+	private _agentDir?: string;
 	private _active: Promise<void> | null = null;
 	private _abortController: AbortController | null = null;
 	private _turnsSinceLastReview = 0;
@@ -77,6 +88,9 @@ export class AdvisorLoop {
 	constructor(config: AdvisorConfig = {}) {
 		this._runner = config.runner ?? runSubagent;
 		this._threshold = config.threshold ?? HARDNESS_THRESHOLD;
+		this._authStorage = config.authStorage;
+		this._modelRegistry = config.modelRegistry;
+		this._agentDir = config.agentDir;
 	}
 
 	/**
@@ -121,6 +135,10 @@ export class AdvisorLoop {
 			cwd,
 			signal: this._abortController.signal,
 			timeoutMs: 90000,
+			thinkingLevel: "off",
+			...(this._authStorage ? { authStorage: this._authStorage } : {}),
+			...(this._modelRegistry ? { modelRegistry: this._modelRegistry } : {}),
+			...(this._agentDir ? { agentDir: this._agentDir } : {}),
 		};
 
 		this._active = this._runner(opts)
@@ -131,6 +149,7 @@ export class AdvisorLoop {
 				}
 				if (result.output && !result.output.trim().startsWith("No advice")) {
 					onAdvice(result.output.trim());
+				} else {
 				}
 			})
 			.catch((err) => {
