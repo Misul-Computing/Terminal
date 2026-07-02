@@ -5,67 +5,27 @@
  * createAgentSession() options. The SDK does the heavy lifting.
  */
 
-import { createInterface } from "node:readline";
-import {
-	type ImageContent,
-	LAPLACE_API,
-	LAPLACE_DEFAULT_CONTEXT_WINDOW,
-	LAPLACE_DEFAULT_MAX_TOKENS,
-	LAPLACE_MODEL_ID,
-	LAPLACE_PROVIDER,
-	createLaplaceStreamSimple,
-	modelsAreEqual,
-	resolveLaplaceBinaryPath,
-	resolveLaplaceModelPath,
-} from "@misul/ai";
 import chalk from "chalk";
 import { type Args, type Mode, parseArgs, printHelp } from "./cli/args.ts";
-import { processFileArguments } from "./cli/file-processor.ts";
-import { buildInitialMessage } from "./cli/initial-message.ts";
-import { listModels } from "./cli/list-models.ts";
-import { createProjectTrustContext } from "./cli/project-trust.ts";
-import { selectSession } from "./cli/session-picker.ts";
-import { shouldRunFirstTimeSetup, showFirstTimeSetup, showStartupSelector } from "./cli/startup-ui.ts";
 import { ENV_SESSION_DIR, expandTildePath, getAgentDir, getEnvFlag, getPackageDir, VERSION } from "./config.ts";
-import { type CreateAgentSessionRuntimeFactory, createAgentSessionRuntime } from "./core/agent-session-runtime.ts";
-import {
-	type AgentSessionRuntimeDiagnostic,
-	createAgentSessionFromServices,
-	createAgentSessionServices,
-} from "./core/agent-session-services.ts";
-import { formatNoModelsAvailableMessage } from "./core/auth-guidance.ts";
-import { AuthStorage } from "./core/auth-storage.ts";
-import { exportFromFile } from "./core/export-html/index.ts";
-import type { ExtensionFactory } from "./core/extensions/types.ts";
 import {
 	applyHttpProxySettings,
 	configureHttpDispatcher,
 	DEFAULT_HTTP_IDLE_TIMEOUT_MS,
 	OFFLINE_CONNECT_TIMEOUT_MS,
 } from "./core/http-dispatcher.ts";
-import type { ModelRegistry } from "./core/model-registry.ts";
-import { resolveCliModel, resolveModelScope, type ScopedModel } from "./core/model-resolver.ts";
-import { restoreStdout, takeOverStdout } from "./core/output-guard.ts";
-import { type AppMode, resolveProjectTrusted } from "./core/project-trust.ts";
-import type { CreateAgentSessionOptions } from "./core/sdk.ts";
-import {
-	formatMissingSessionCwdPrompt,
-	getMissingSessionCwdIssue,
-	MissingSessionCwdError,
-	type SessionCwdIssue,
-} from "./core/session-cwd.ts";
-import { assertValidSessionId, SessionManager } from "./core/session-manager.ts";
-import { getPreset } from "./core/subagent/index.ts";
 import { SettingsManager } from "./core/settings-manager.ts";
 import { printTimings, resetTimings, time } from "./core/timings.ts";
-import { hasTrustRequiringProjectResources, ProjectTrustStore } from "./core/trust-manager.ts";
-import { runMigrations, showDeprecationWarnings } from "./migrations.ts";
-import { InteractiveMode, runPrintMode, runRpcMode } from "./modes/index.ts";
-import { initTheme, stopThemeWatcher } from "./modes/interactive/theme/theme.ts";
-import { handleConfigCommand, handlePackageCommand } from "./package-manager-cli.ts";
-import { handleAddonCommand } from "./addon-cli.ts";
-import { isLocalPath, normalizePath, resolvePath } from "./utils/paths.ts";
-import { cleanupWindowsSelfUpdateQuarantine } from "./utils/windows-self-update.ts";
+
+import type { ImageContent } from "@misul/ai";
+import type { ExtensionFactory } from "./core/extensions/types.ts";
+import type { ModelRegistry } from "./core/model-registry.ts";
+import type { CreateAgentSessionOptions } from "./core/sdk.ts";
+import type { AgentSessionRuntimeDiagnostic } from "./core/agent-session-services.ts";
+import type { ScopedModel } from "./core/model-resolver.ts";
+import type { SessionCwdIssue } from "./core/session-cwd.ts";
+import type { AppMode } from "./core/project-trust.ts";
+import type { CreateAgentSessionRuntimeFactory } from "./core/agent-session-runtime.ts";
 
 /**
  * Read all content from piped stdin.
@@ -142,10 +102,12 @@ async function prepareInitialMessage(
 	initialMessage?: string;
 	initialImages?: ImageContent[];
 }> {
+	const { buildInitialMessage } = await import("./cli/initial-message.ts");
 	if (parsed.fileArgs.length === 0) {
 		return buildInitialMessage({ parsed, stdinContent });
 	}
 
+	const { processFileArguments } = await import("./cli/file-processor.ts");
 	const { text, images } = await processFileArguments(parsed.fileArgs, { autoResizeImages });
 	return buildInitialMessage({
 		parsed,
@@ -171,12 +133,15 @@ async function findLocalSessionByExactId(
 	cwd: string,
 	sessionDir?: string,
 ): Promise<{ type: "local"; path: string } | undefined> {
+	const { SessionManager } = await import("./core/session-manager.ts");
 	const localSessions = await SessionManager.list(cwd, sessionDir);
 	const localMatch = localSessions.find((s) => s.id === sessionId);
 	return localMatch ? { type: "local", path: localMatch.path } : undefined;
 }
 
 async function resolveSessionPath(sessionArg: string, cwd: string, sessionDir?: string): Promise<ResolvedSession> {
+	const { resolvePath } = await import("./utils/paths.ts");
+	const { SessionManager } = await import("./core/session-manager.ts");
 	// If it looks like a file path, resolve it before handing it to the session manager.
 	if (sessionArg.includes("/") || sessionArg.includes("\\") || sessionArg.endsWith(".jsonl")) {
 		return { type: "path", path: resolvePath(sessionArg, cwd) };
@@ -206,6 +171,7 @@ async function resolveSessionPath(sessionArg: string, cwd: string, sessionDir?: 
 
 /** Prompt user for yes/no confirmation */
 async function promptConfirm(message: string): Promise<boolean> {
+	const { createInterface } = await import("node:readline");
 	return new Promise((resolve) => {
 		const rl = createInterface({
 			input: process.stdin,
@@ -234,7 +200,7 @@ function validateForkFlags(parsed: Args): void {
 	}
 }
 
-function validateSessionIdFlags(parsed: Args): void {
+async function validateSessionIdFlags(parsed: Args): Promise<void> {
 	if (parsed.sessionId === undefined) return;
 
 	const conflictingFlags = [
@@ -249,6 +215,7 @@ function validateSessionIdFlags(parsed: Args): void {
 		process.exit(1);
 	}
 
+	const { assertValidSessionId } = await import("./core/session-manager.ts");
 	try {
 		assertValidSessionId(parsed.sessionId);
 	} catch (error: unknown) {
@@ -258,7 +225,8 @@ function validateSessionIdFlags(parsed: Args): void {
 	}
 }
 
-function forkSessionOrExit(sourcePath: string, cwd: string, sessionDir?: string, sessionId?: string): SessionManager {
+async function forkSessionOrExit(sourcePath: string, cwd: string, sessionDir?: string, sessionId?: string) {
+	const { SessionManager } = await import("./core/session-manager.ts");
 	try {
 		return SessionManager.forkFrom(sourcePath, cwd, sessionDir, { id: sessionId });
 	} catch (error: unknown) {
@@ -273,7 +241,8 @@ async function createSessionManager(
 	cwd: string,
 	sessionDir: string | undefined,
 	settingsManager: SettingsManager,
-): Promise<SessionManager> {
+) {
+	const { SessionManager } = await import("./core/session-manager.ts");
 	if (parsed.noSession || parsed.help || parsed.listModels !== undefined) {
 		return SessionManager.inMemory(cwd);
 	}
@@ -326,6 +295,8 @@ async function createSessionManager(
 	}
 
 	if (parsed.resume) {
+		const { initTheme, stopThemeWatcher } = await import("./modes/interactive/theme/theme.ts");
+		const { selectSession } = await import("./cli/session-picker.ts");
 		initTheme(settingsManager.getTheme(), true);
 		try {
 			const selectedPath = await selectSession(
@@ -356,17 +327,20 @@ async function createSessionManager(
 	return SessionManager.create(cwd, sessionDir, { id: parsed.sessionId });
 }
 
-export function buildSessionOptions(
+export async function buildSessionOptions(
 	parsed: Args,
 	scopedModels: ScopedModel[],
 	hasExistingSession: boolean,
 	modelRegistry: ModelRegistry,
 	settingsManager: SettingsManager,
-): {
+): Promise<{
 	options: CreateAgentSessionOptions;
 	cliThinkingFromModel: boolean;
 	diagnostics: AgentSessionRuntimeDiagnostic[];
-} {
+}> {
+	const { resolveCliModel } = await import("./core/model-resolver.ts");
+	const { modelsAreEqual } = await import("@misul/ai");
+	const { getPreset } = await import("./core/subagent/index.ts");
 	const options: CreateAgentSessionOptions = {};
 	const diagnostics: AgentSessionRuntimeDiagnostic[] = [];
 	let cliThinkingFromModel = false;
@@ -472,14 +446,18 @@ export function buildSessionOptions(
 	return { options, cliThinkingFromModel, diagnostics };
 }
 
-function resolveCliPaths(cwd: string, paths: string[] | undefined): string[] | undefined {
-	return paths?.map((value) => (isLocalPath(value) ? resolvePath(value, cwd) : value));
+async function resolveCliPaths(cwd: string, paths: string[] | undefined): Promise<string[] | undefined> {
+	if (!paths) return undefined;
+	const { isLocalPath, resolvePath } = await import("./utils/paths.ts");
+	return paths.map((value) => (isLocalPath(value) ? resolvePath(value, cwd) : value));
 }
 
 async function promptForMissingSessionCwd(
 	issue: SessionCwdIssue,
 	settingsManager: SettingsManager,
 ): Promise<string | undefined> {
+	const { showStartupSelector } = await import("./cli/startup-ui.ts");
+	const { formatMissingSessionCwdPrompt } = await import("./core/session-cwd.ts");
 	return showStartupSelector(settingsManager, formatMissingSessionCwdPrompt(issue), [
 		{ label: "Continue", value: issue.fallbackCwd },
 		{ label: "Cancel", value: undefined },
@@ -499,6 +477,7 @@ export async function main(args: string[], options?: MainOptions) {
 	}
 
 	if (process.platform === "win32") {
+		const { cleanupWindowsSelfUpdateQuarantine } = await import("./utils/windows-self-update.ts");
 		cleanupWindowsSelfUpdateQuarantine(getPackageDir());
 	}
 
@@ -508,27 +487,35 @@ export async function main(args: string[], options?: MainOptions) {
 	applyHttpProxySettings(bootstrapSettingsManager.getGlobalSettings().httpProxy);
 	configureHttpDispatcher(DEFAULT_HTTP_IDLE_TIMEOUT_MS, offlineMode ? { connectTimeoutMs: OFFLINE_CONNECT_TIMEOUT_MS } : undefined);
 
-	if (await handleAddonCommand(args)) {
-		const exitCode = process.exitCode ?? 0;
-		process.exit(exitCode);
-		return;
-	}
-
-	if (await handlePackageCommand(args, { extensionFactories: options?.extensionFactories })) {
-		const exitCode = process.exitCode ?? 0;
-		if (process.platform === "win32" && exitCode === 0 && args[0] === "update") {
-			// We normally prefer process.exit(0) for package commands so bad extensions cannot keep
-			// one-shot commands alive. On Windows, Node can assert after fetch() if process.exit(0)
-			// runs during teardown; let successful `misul update` drain naturally instead.
-			// https://github.com/nodejs/node/issues/56645
+	const firstArg = args[0];
+	if (firstArg === "addon" || firstArg === "addons") {
+		const { handleAddonCommand } = await import("./addon-cli.ts");
+		if (await handleAddonCommand(args)) {
+			const exitCode = process.exitCode ?? 0;
+			process.exit(exitCode);
 			return;
 		}
-		process.exit(exitCode);
-		return;
 	}
 
-	if (await handleConfigCommand(args, { extensionFactories: options?.extensionFactories })) {
-		return;
+	const pkgCommands = new Set(["install", "uninstall", "remove", "update", "list"]);
+	if (firstArg === "config" || (firstArg && pkgCommands.has(firstArg))) {
+		const { handleConfigCommand, handlePackageCommand } = await import("./package-manager-cli.ts");
+		if (await handlePackageCommand(args, { extensionFactories: options?.extensionFactories })) {
+			const exitCode = process.exitCode ?? 0;
+			if (process.platform === "win32" && exitCode === 0 && args[0] === "update") {
+				// We normally prefer process.exit(0) for package commands so bad extensions cannot keep
+				// one-shot commands alive. On Windows, Node can assert after fetch() if process.exit(0)
+				// runs during teardown; let successful `misul update` drain naturally instead.
+				// https://github.com/nodejs/node/issues/56645
+				return;
+			}
+			process.exit(exitCode);
+			return;
+		}
+
+		if (await handleConfigCommand(args, { extensionFactories: options?.extensionFactories })) {
+			return;
+		}
 	}
 
 	const parsed = parseArgs(args);
@@ -543,12 +530,15 @@ export async function main(args: string[], options?: MainOptions) {
 	}
 	time("parseArgs");
 
-	if (parsed.agent && getPreset(parsed.agent)) {
-		// --agent enables the chosen agent's persona + subagent delegation for this
-		// session. TODO(user-decision): running the top-level session through the
-		// full deep-work STRATEGY loop (spec -> plan -> execute -> review) is a
-		// larger run-mode integration + UX decision; deferred (see plan SP9).
-		console.error(`Running with the "${parsed.agent}" agent (subagent delegation enabled).`);
+	if (parsed.agent) {
+		const { getPreset } = await import("./core/subagent/index.ts");
+		if (getPreset(parsed.agent)) {
+			// --agent enables the chosen agent's persona + subagent delegation for this
+			// session. TODO(user-decision): running the top-level session through the
+			// full deep-work STRATEGY loop (spec -> plan -> execute -> review) is a
+			// larger run-mode integration + UX decision; deferred (see plan SP9).
+			console.error(`Running with the "${parsed.agent}" agent (subagent delegation enabled).`);
+		}
 	}
 
 	if (parsed.version) {
@@ -560,6 +550,7 @@ export async function main(args: string[], options?: MainOptions) {
 		let result: string;
 		try {
 			const outputPath = parsed.messages.length > 0 ? parsed.messages[0] : undefined;
+			const { exportFromFile } = await import("./core/export-html/index.ts");
 			result = await exportFromFile(parsed.export, outputPath);
 		} catch (error: unknown) {
 			const message = error instanceof Error ? error.message : "Failed to export session";
@@ -573,6 +564,7 @@ export async function main(args: string[], options?: MainOptions) {
 	let appMode = resolveAppMode(parsed, process.stdin.isTTY, process.stdout.isTTY);
 	const shouldTakeOverStdout = appMode !== "interactive" && !isPlainRuntimeMetadataCommand(parsed);
 	if (shouldTakeOverStdout) {
+		const { takeOverStdout } = await import("./core/output-guard.ts");
 		takeOverStdout();
 	}
 
@@ -594,9 +586,10 @@ export async function main(args: string[], options?: MainOptions) {
 	}
 
 	validateForkFlags(parsed);
-	validateSessionIdFlags(parsed);
+	await validateSessionIdFlags(parsed);
 
 	// Run migrations (pass cwd for project-local migrations)
+	const { runMigrations } = await import("./migrations.ts");
 	const { migratedAuthProviders: migratedProviders, deprecationWarnings } = runMigrations(cwd);
 	time("runMigrations");
 
@@ -605,9 +598,12 @@ export async function main(args: string[], options?: MainOptions) {
 
 	// Experimental first-time setup: theme choice and analytics opt-in.
 	// Runs before any runtime services are created so the chosen settings apply everywhere.
-	if (appMode === "interactive" && !parsed.help && parsed.listModels === undefined && shouldRunFirstTimeSetup()) {
-		await showFirstTimeSetup(startupSettingsManager);
-		time("firstTimeSetup");
+	if (appMode === "interactive" && !parsed.help && parsed.listModels === undefined) {
+		const { shouldRunFirstTimeSetup, showFirstTimeSetup } = await import("./cli/startup-ui.ts");
+		if (shouldRunFirstTimeSetup()) {
+			await showFirstTimeSetup(startupSettingsManager);
+			time("firstTimeSetup");
+		}
 	}
 
 	// Decide the final runtime cwd before creating cwd-bound runtime services.
@@ -616,11 +612,13 @@ export async function main(args: string[], options?: MainOptions) {
 	// the target session cwd is known. The startup-cwd settings manager is used only for
 	// sessionDir lookup during session selection.
 	const envSessionDir = process.env[ENV_SESSION_DIR];
+	const { normalizePath } = await import("./utils/paths.ts");
 	const sessionDir =
 		(parsed.sessionDir ? normalizePath(parsed.sessionDir) : undefined) ??
 		(envSessionDir ? expandTildePath(envSessionDir) : undefined) ??
 		startupSettingsManager.getSessionDir();
 	let sessionManager = await createSessionManager(parsed, cwd, sessionDir, startupSettingsManager);
+	const { getMissingSessionCwdIssue } = await import("./core/session-cwd.ts");
 	const missingSessionCwdIssue = getMissingSessionCwdIssue(sessionManager, cwd);
 	if (missingSessionCwdIssue) {
 		if (appMode === "interactive") {
@@ -628,8 +626,10 @@ export async function main(args: string[], options?: MainOptions) {
 			if (!selectedCwd) {
 				process.exit(0);
 			}
+			const { SessionManager } = await import("./core/session-manager.ts");
 			sessionManager = SessionManager.open(missingSessionCwdIssue.sessionFile!, sessionDir, selectedCwd);
 		} else {
+			const { MissingSessionCwdError } = await import("./core/session-cwd.ts");
 			console.error(chalk.red(new MissingSessionCwdError(missingSessionCwdIssue).message));
 			process.exit(1);
 		}
@@ -644,6 +644,7 @@ export async function main(args: string[], options?: MainOptions) {
 	}
 	time("createSessionManager");
 
+	const { ProjectTrustStore, hasTrustRequiringProjectResources } = await import("./core/trust-manager.ts");
 	const trustStore = new ProjectTrustStore(agentDir);
 	const sessionCwd = sessionManager.getCwd();
 	const autoTrustOnReloadCwd =
@@ -653,11 +654,12 @@ export async function main(args: string[], options?: MainOptions) {
 	const trustPromptMode: AppMode = parsed.help || parsed.listModels !== undefined ? "print" : appMode;
 	const projectTrustByCwd = new Map<string, boolean>();
 
-	const resolvedExtensionPaths = resolveCliPaths(cwd, parsed.extensions);
-	const resolvedSkillPaths = resolveCliPaths(cwd, parsed.skills);
-	const resolvedPromptTemplatePaths = resolveCliPaths(cwd, parsed.promptTemplates);
-	const resolvedThemePaths = resolveCliPaths(cwd, parsed.themes);
-	const resolvedAddonPaths = resolveCliPaths(cwd, parsed.addons);
+	const resolvedExtensionPaths = await resolveCliPaths(cwd, parsed.extensions);
+	const resolvedSkillPaths = await resolveCliPaths(cwd, parsed.skills);
+	const resolvedPromptTemplatePaths = await resolveCliPaths(cwd, parsed.promptTemplates);
+	const resolvedThemePaths = await resolveCliPaths(cwd, parsed.themes);
+	const resolvedAddonPaths = await resolveCliPaths(cwd, parsed.addons);
+	const { AuthStorage } = await import("./core/auth-storage.ts");
 	const authStorage = AuthStorage.create();
 	const createRuntime: CreateAgentSessionRuntimeFactory = async ({
 		cwd,
@@ -666,6 +668,10 @@ export async function main(args: string[], options?: MainOptions) {
 		sessionStartEvent,
 		projectTrustContext,
 	}) => {
+		const { createAgentSessionServices, createAgentSessionFromServices } = await import("./core/agent-session-services.ts");
+		const { resolveProjectTrusted } = await import("./core/project-trust.ts");
+		const { createProjectTrustContext } = await import("./cli/project-trust.ts");
+		const { getPreset } = await import("./core/subagent/index.ts");
 		const isInitialRuntime = sessionStartEvent === undefined;
 		const projectTrustDiagnostics: AgentSessionRuntimeDiagnostic[] = [];
 		const cachedProjectTrust = projectTrustByCwd.get(cwd);
@@ -742,42 +748,44 @@ export async function main(args: string[], options?: MainOptions) {
 		];
 
 		if (parsed.laplace) {
-			const modelPath = parsed.laplaceModel ?? resolveLaplaceModelPath();
+			const laplace = await import("@misul/ai");
+			const modelPath = parsed.laplaceModel ?? laplace.resolveLaplaceModelPath();
 			if (!modelPath) {
 				diagnostics.push({
 					type: "error" as const,
 					message: "--laplace requires a model path. Use --laplace-model <path>, set MISUL_LAPLACE_MODEL, or place a .gguf file in ~/Projects/Laplace/models/.",
 				});
 			} else {
-				const binaryPath = resolveLaplaceBinaryPath();
+				const binaryPath = laplace.resolveLaplaceBinaryPath();
 				const maxTokens = process.env.MISUL_LAPLACE_MAX_TOKENS
 					? parseInt(process.env.MISUL_LAPLACE_MAX_TOKENS, 10)
-					: LAPLACE_DEFAULT_MAX_TOKENS;
+					: laplace.LAPLACE_DEFAULT_MAX_TOKENS;
 				const extraArgs = process.env.MISUL_LAPLACE_EXTRA_ARGS
 					? process.env.MISUL_LAPLACE_EXTRA_ARGS.split(" ").filter(Boolean)
 					: [];
-				modelRegistry.registerProvider(LAPLACE_PROVIDER, {
+				modelRegistry.registerProvider(laplace.LAPLACE_PROVIDER, {
 					baseUrl: "http://localhost:0",
 					apiKey: "local",
-					api: LAPLACE_API,
-					streamSimple: createLaplaceStreamSimple({ binaryPath, modelPath, maxTokens, extraArgs }),
+					api: laplace.LAPLACE_API,
+					streamSimple: laplace.createLaplaceStreamSimple({ binaryPath, modelPath, maxTokens, extraArgs }),
 					models: [
 						{
-							id: LAPLACE_MODEL_ID,
+							id: laplace.LAPLACE_MODEL_ID,
 							name: "Laplace Local",
 							reasoning: false,
 							input: ["text"],
 							cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-							contextWindow: LAPLACE_DEFAULT_CONTEXT_WINDOW,
+							contextWindow: laplace.LAPLACE_DEFAULT_CONTEXT_WINDOW,
 							maxTokens,
 						},
 					],
 				});
-				parsed.provider = LAPLACE_PROVIDER;
-				parsed.model = LAPLACE_MODEL_ID;
+				parsed.provider = laplace.LAPLACE_PROVIDER;
+				parsed.model = laplace.LAPLACE_MODEL_ID;
 			}
 		}
 
+		const { resolveModelScope } = await import("./core/model-resolver.ts");
 		const modelPatterns = parsed.models ?? settingsManager.getEnabledModels();
 		const scopedModels =
 			modelPatterns && modelPatterns.length > 0 ? await resolveModelScope(modelPatterns, modelRegistry) : [];
@@ -785,7 +793,7 @@ export async function main(args: string[], options?: MainOptions) {
 			options: sessionOptions,
 			cliThinkingFromModel,
 			diagnostics: sessionOptionDiagnostics,
-		} = buildSessionOptions(
+		} = await buildSessionOptions(
 			parsed,
 			scopedModels,
 			sessionManager.buildSessionContext().messages.length > 0,
@@ -831,6 +839,7 @@ export async function main(args: string[], options?: MainOptions) {
 		};
 	};
 	time("createRuntime");
+	const { createAgentSessionRuntime } = await import("./core/agent-session-runtime.ts");
 	const runtime = await createAgentSessionRuntime(createRuntime, {
 		cwd: sessionManager.getCwd(),
 		agentDir,
@@ -854,6 +863,7 @@ export async function main(args: string[], options?: MainOptions) {
 	}
 
 	if (parsed.listModels !== undefined) {
+		const { listModels } = await import("./cli/list-models.ts");
 		const searchPattern = typeof parsed.listModels === "string" ? parsed.listModels : undefined;
 		await listModels(modelRegistry, searchPattern);
 		process.exit(0);
@@ -875,11 +885,13 @@ export async function main(args: string[], options?: MainOptions) {
 		stdinContent,
 	);
 	time("prepareInitialMessage");
+	const { initTheme } = await import("./modes/interactive/theme/theme.ts");
 	initTheme(settingsManager.getTheme(), appMode === "interactive");
 	time("initTheme");
 
 	// Show deprecation warnings in interactive mode
 	if (appMode === "interactive" && deprecationWarnings.length > 0) {
+		const { showDeprecationWarnings } = await import("./migrations.ts");
 		await showDeprecationWarnings(deprecationWarnings);
 	}
 
@@ -891,6 +903,7 @@ export async function main(args: string[], options?: MainOptions) {
 	time("createAgentSession");
 
 	if (appMode !== "interactive" && !session.model) {
+		const { formatNoModelsAvailableMessage } = await import("./core/auth-guidance.ts");
 		console.error(chalk.red(formatNoModelsAvailableMessage()));
 		process.exit(1);
 	}
@@ -901,10 +914,14 @@ export async function main(args: string[], options?: MainOptions) {
 		process.exit(1);
 	}
 
+	const { stopThemeWatcher } = await import("./modes/interactive/theme/theme.ts");
+	const { restoreStdout } = await import("./core/output-guard.ts");
 	if (appMode === "rpc") {
+		const { runRpcMode } = await import("./modes/index.ts");
 		printTimings();
 		await runRpcMode(runtime);
 	} else if (appMode === "interactive") {
+		const { InteractiveMode } = await import("./modes/index.ts");
 		const interactiveMode = new InteractiveMode(runtime, {
 			migratedProviders,
 			modelFallbackMessage,
@@ -1011,6 +1028,7 @@ export async function main(args: string[], options?: MainOptions) {
 			return;
 		}
 
+		const { runPrintMode } = await import("./modes/index.ts");
 		const exitCode = await runPrintMode(runtime, {
 			mode: toPrintOutputMode(appMode),
 			messages: parsed.messages,

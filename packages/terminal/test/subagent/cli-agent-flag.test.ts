@@ -12,22 +12,22 @@ import { DEEP_WORK } from "../../src/core/subagent/presets.ts";
 import { SessionManager } from "../../src/core/session-manager.ts";
 import { buildSessionOptions } from "../../src/main.ts";
 
-function buildOptionsFor(args: string[]) {
+async function buildOptionsFor(args: string[]) {
 	const parsed = parseArgs(args);
 	const authStorage = AuthStorage.inMemory();
 	const settingsManager = SettingsManager.inMemory();
 	const modelRegistry = ModelRegistry.inMemory(authStorage);
-	return buildSessionOptions(parsed, [], false, modelRegistry, settingsManager).options;
+	return (await buildSessionOptions(parsed, [], false, modelRegistry, settingsManager)).options;
 }
 
 describe("--agent flag wiring", () => {
-	it("--agent deep-work sets enableSubagents:true on the session options", () => {
-		expect(buildOptionsFor(["--agent", "deep-work"]).enableSubagents).toBe(true);
-		expect(buildOptionsFor(["--agent", "simple"]).enableSubagents).toBe(true);
+	it("--agent deep-work sets enableSubagents:true on the session options", async () => {
+		expect((await buildOptionsFor(["--agent", "deep-work"])).enableSubagents).toBe(true);
+		expect((await buildOptionsFor(["--agent", "simple"])).enableSubagents).toBe(true);
 	});
 
-	it("default (no --agent) leaves enableSubagents unset", () => {
-		expect(buildOptionsFor([]).enableSubagents).toBeUndefined();
+	it("default (no --agent) leaves enableSubagents unset", async () => {
+		expect((await buildOptionsFor([])).enableSubagents).toBeUndefined();
 	});
 
 	it("end-to-end (offline): --agent deep-work yields a session with spawn_agent AND the persona prompt; default has neither", async () => {
