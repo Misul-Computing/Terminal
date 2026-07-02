@@ -1,10 +1,10 @@
 /**
  * Run the eval harness with mimo-v2.5 via opencode-go.
- * Usage: node run-eval-mimo.mjs
+ * Usage: node packages/eval/scripts/run-eval-mimo.mjs
  */
 import { getModel } from "@misul/ai";
 import { AuthStorage, ModelRegistry } from "@misul/terminal";
-import { runEvalCli } from "@misul/eval/cli";
+import { runEvalCli } from "@misul/eval";
 import { join } from "node:path";
 import { homedir } from "node:os";
 
