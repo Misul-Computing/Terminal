@@ -1445,6 +1445,8 @@ export class AgentSession {
 				(advice) => {
 					this._queueSteer(`[advisor] ${advice}`).catch(() => {});
 				},
+				undefined,
+				this._baseSystemPrompt || undefined,
 			);
 		}
 	}

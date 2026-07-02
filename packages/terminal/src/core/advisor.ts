@@ -33,11 +33,21 @@ const ADVISOR_PRESET: AgentPreset = {
 	description: "Strategy advisor for the main agent",
 	systemPrompt:
 		"You are a strategy advisor reviewing another agent's work. You are READ-ONLY. " +
-		"Do not modify any files. Review the conversation and provide concise, actionable advice. " +
-		"Focus on: missed simpler approaches, over-engineering, unverified assumptions, " +
-		"potential bugs, and whether the agent is going in circles. " +
-		"If the agent is doing fine, respond with 'No advice needed.' " +
-		"Keep your response under 500 words. No fluff.",
+		"Do not modify any files.\n\n" +
+		"You are given the executor's system prompt (its constitution) and a recent " +
+		"slice of its conversation. Your job is to judge whether the executor is " +
+		"following its own constitution, not whether you would do things differently.\n\n" +
+		"Review against the executor's constitution:\n" +
+		"- Is it violating its own rules or guidelines?\n" +
+		"- Is it drifting from the stated task or goal?\n" +
+		"- Is it over-engineering when its own rules say to be simple?\n" +
+		"- Is it making unverified assumptions when its rules say to verify?\n" +
+		"- Is it going in circles or repeating failed approaches?\n" +
+		"- Is it missing edge cases or bugs that its rules say to check?\n" +
+		"- Should it delegate to a subagent or use a different tool?\n\n" +
+		"If the executor is following its constitution and on track, respond with " +
+		"'No advice needed.' Otherwise provide specific, actionable advice referencing " +
+		"the specific rule or principle being violated. Keep it under 500 words. No fluff.",
 	tools: ["read", "bash", "grep", "find"],
 	strategy: "single",
 };
@@ -79,6 +89,7 @@ export class AdvisorLoop {
 		cwd: string,
 		onAdvice: (advice: string) => void,
 		signal?: AbortSignal,
+		executorSystemPrompt?: string,
 	): void {
 		if (this._active) return;
 
@@ -102,7 +113,7 @@ export class AdvisorLoop {
 			signal.addEventListener("abort", () => this._abortController?.abort(), { once: true });
 		}
 
-		const task = buildAdvisorTask(conversation, hardness);
+		const task = buildAdvisorTask(conversation, hardness, executorSystemPrompt);
 		const opts: RunSubagentOptions = {
 			preset: ADVISOR_PRESET,
 			task,
@@ -205,16 +216,16 @@ function messageToText(msg: AgentMessage): string {
 	return "";
 }
 
-function buildAdvisorTask(conversation: string, hardness: number): string {
+function buildAdvisorTask(conversation: string, hardness: number, executorSystemPrompt?: string): string {
+	const constitution = executorSystemPrompt
+		? `## Executor's constitution (its system prompt)\n\n${executorSystemPrompt}\n\n`
+		: "";
 	return (
 		`Review the following agent conversation. Session hardness score: ${hardness}/100.\n\n` +
-		`Check for:\n` +
-		`1. Is the agent over-engineering? Could the task be done more simply?\n` +
-		`2. Is the agent making unverified assumptions about the codebase?\n` +
-		`3. Is the agent going in circles or repeating the same approach?\n` +
-		`4. Are there potential bugs or edge cases the agent is missing?\n` +
-		`5. Should the agent delegate to a subagent or use a different tool?\n\n` +
-		`Conversation:\n${conversation}\n\n` +
-		`Provide specific, actionable advice. If the agent is on track, say "No advice needed."`
+		constitution +
+		`## Recent conversation\n\n${conversation}\n\n` +
+		`Judge the executor against its own constitution above. If it is following ` +
+		`its rules and on track, say "No advice needed." Otherwise give specific, ` +
+		`actionable advice referencing the rule being violated.`
 	);
 }
