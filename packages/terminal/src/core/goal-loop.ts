@@ -117,11 +117,15 @@ export async function runGoalLoop(options: GoalLoopOptions): Promise<GoalLoopRes
 
 		if (detectGoalStuck(response)) {
 			stuckCount++;
-		} else if (toolCallDelta > 0) {
-			stuckCount = 0;
 		} else if (guardTripped) {
+			// Check the guard BEFORE toolCallDelta: the guard's whole purpose is
+			// to catch repeated identical tool calls, which still have
+			// toolCallDelta > 0. Checking toolCallDelta first would short-circuit
+			// the guard and make it dead code in exactly the scenario it exists for.
 			stuckCount += 2;
 			onStatus?.("Loop guard tripped: repeated identical tool calls.");
+		} else if (toolCallDelta > 0) {
+			stuckCount = 0;
 		} else {
 			stuckCount++;
 		}
@@ -303,8 +307,9 @@ async function spawnThinkingSubagents(
 	);
 
 	const insights = results
-		.filter((r) => !r.errored && r.output.trim())
-		.map((r, i) => `### ${angles[i].name}\n${r.output.trim()}`)
+		.map((r, i) => ({ r, i }))
+		.filter(({ r }) => !r.errored && r.output.trim())
+		.map(({ r, i }) => `### ${angles[i].name}\n${r.output.trim()}`)
 		.join("\n\n");
 
 	return insights || null;
