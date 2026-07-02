@@ -1437,6 +1437,9 @@ export class AgentSession {
 				this.agent.state.messages,
 				currentModel,
 				this._cwd,
+				(issue) => {
+					this._queueSteer(issue).catch(() => {});
+				},
 			);
 			this._advisor.maybeAdvise(
 				this.agent.state.messages,

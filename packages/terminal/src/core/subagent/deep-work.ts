@@ -26,15 +26,14 @@ export interface RunDeepWorkInput {
 	maxReviewCycles?: number;
 }
 
-type Verdict = "pass" | "fail";
+type Verdict = "pass" | "fail" | "unmarked";
 
 function reviewVerdict(output: string): Verdict {
-	const text = output.toLowerCase();
-	// Only an EXPLICIT `REVIEW: FAIL` re-executes. An unmarked review (the review
-	// ran but emitted no verdict) is accepted, not retried, to avoid wasted cycles
-	// and a false errored outcome.
-	if (text.includes("review: fail")) return "fail";
-	return "pass";
+	if (/review:\s*fail/i.test(output)) return "fail";
+	if (/review\s+fail/i.test(output)) return "fail";
+	if (/review:\s*pass/i.test(output)) return "pass";
+	if (/review\s+pass/i.test(output)) return "pass";
+	return "unmarked";
 }
 
 export async function runDeepWork(input: RunDeepWorkInput): Promise<SubagentRunResult> {
@@ -116,8 +115,11 @@ export async function runDeepWork(input: RunDeepWorkInput): Promise<SubagentRunR
 		accumulate(reviewResult);
 		if (reviewResult.errored) return fail(reviewResult.errorMessage ?? "review phase failed");
 
-		if (reviewVerdict(reviewResult.output) === "pass") {
-			const unmarked = !reviewResult.output.toLowerCase().includes("review: pass");
+		const verdict = reviewVerdict(reviewResult.output);
+		if (verdict === "unmarked") {
+			console.warn("deep-work: review verdict unmarked (no REVIEW: PASS/FAIL found)");
+		}
+		if (verdict === "pass" || verdict === "unmarked") {
 			return {
 				agent: preset.name,
 				output: lastExecuteOutput,
@@ -126,10 +128,10 @@ export async function runDeepWork(input: RunDeepWorkInput): Promise<SubagentRunR
 				durationMs: Date.now() - start,
 				phases,
 				errored: false,
-				...(unmarked ? { note: "review verdict unmarked; accepted as PASS" } : {}),
+				...(verdict === "unmarked" ? { note: "review verdict unmarked; accepted as PASS" } : {}),
 			};
 		}
-		feedback = reviewResult.output;
+		feedback = `The review phase found issues that MUST be fixed. Address every point below before completing:\n${reviewResult.output.trim()}`;
 	}
 
 	return fail(`review did not pass within ${maxReviewCycles} cycles`);

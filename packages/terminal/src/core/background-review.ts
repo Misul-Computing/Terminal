@@ -40,7 +40,13 @@ export class BackgroundReviewLoop {
 	}
 
 	/** Call after each user turn completes. Spawns review if threshold hit. */
-	maybeReview(messages: AgentMessage[], model: Model<any>, cwd: string, signal?: AbortSignal): void {
+	maybeReview(
+		messages: AgentMessage[],
+		model: Model<any>,
+		cwd: string,
+		onIssue?: (issue: string) => void,
+		signal?: AbortSignal,
+	): void {
 		if (this._nudgeInterval <= 0) return;
 		if (this._active) return; // don't overlap reviews
 
@@ -70,11 +76,21 @@ export class BackgroundReviewLoop {
 			timeoutMs: 120000,
 		};
 
-		// Fire and forget - don't block the main conversation.
-		// Background review is best-effort; errors don't affect the user.
 		this._active = this._runner(opts)
-			.then(() => {})
-			.catch(() => {})
+			.then((result) => {
+				if (result.errored) {
+					console.warn(`background-review: review agent error: ${result.errorMessage ?? "unknown"}`);
+					return;
+				}
+				const output = result.output.trim();
+				if (output && !output.toLowerCase().startsWith("nothing to save")) {
+					console.warn(`background-review: found issues worth flagging`);
+					onIssue?.(`[background-review] ${output}`);
+				}
+			})
+			.catch((err) => {
+				console.warn(`background-review: failed: ${err instanceof Error ? err.message : String(err)}`);
+			})
 			.finally(() => { this._active = null; this._abortController = null; });
 	}
 

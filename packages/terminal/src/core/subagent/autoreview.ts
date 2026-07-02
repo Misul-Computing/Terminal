@@ -14,9 +14,10 @@ export interface AutoReviewInput {
 }
 
 export function autoReviewVerdict(output: string): "pass" | "fail" | "unmarked" {
-	const t = output.toLowerCase();
-	if (t.includes("autoreview: fail")) return "fail";
-	if (t.includes("autoreview: pass")) return "pass";
+	if (/autoreview:\s*fail/i.test(output)) return "fail";
+	if (/autoreview\s+fail/i.test(output)) return "fail";
+	if (/autoreview:\s*pass/i.test(output)) return "pass";
+	if (/autoreview\s+pass/i.test(output)) return "pass";
 	return "unmarked";
 }
 
@@ -31,11 +32,17 @@ export async function runAutoReview(input: AutoReviewInput): Promise<SubagentRun
 		signal: signal ?? undefined,
 	});
 	const verdict = autoReviewVerdict(reviewResult.output);
-	const section = reviewResult.errored
-		? `AUTOREVIEW ERROR: ${reviewResult.errorMessage ?? "review agent failed"}`
-		: verdict === "unmarked"
-			? "AUTOREVIEW: UNMARKED"
-			: reviewResult.output;
+	let section: string;
+	if (reviewResult.errored) {
+		section = `AUTOREVIEW: FAIL - review agent error: ${reviewResult.errorMessage ?? "review agent failed"}`;
+	} else if (verdict === "unmarked") {
+		console.warn("autoreview: verdict unmarked (no AUTOREVIEW: PASS/FAIL found in review output)");
+		section = "AUTOREVIEW: UNMARKED - review produced no explicit verdict";
+	} else if (verdict === "fail") {
+		section = `AUTOREVIEW: FAIL - ${reviewResult.output.trim()}`;
+	} else {
+		section = reviewResult.output;
+	}
 	const r = reviewResult;
 	return {
 		...workResult,

@@ -18,6 +18,8 @@ import { getDefaultSessionDir, SessionManager } from "./session-manager.ts";
 import { SettingsManager } from "./settings-manager.ts";
 import { createSpawnAgentTool } from "./subagent/spawn-tool.ts";
 import { createSkillManageTool } from "./tools/skill-manage.ts";
+import { createMemoryWriteTool } from "./tools/memory-write.ts";
+import type { MemoryStore } from "./memory/index.ts";
 import { McpManager } from "./mcp-client.ts";
 import { time } from "./timings.ts";
 import {
@@ -408,9 +410,11 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 		sessionManager.appendThinkingLevelChange(thinkingLevel);
 	}
 
-	// Inject built-in tools: spawn_agent (opt-in via enableSubagents) and
-	// skill_manage (always available so the agent can manage its own skills).
+	// Inject built-in tools: spawn_agent (opt-in via enableSubagents),
+	// skill_manage (always available), and memory_write (always available).
 	const skillManageTool = createSkillManageTool();
+	let memoryStoreRef: MemoryStore | undefined;
+	const memoryWriteTool = createMemoryWriteTool({ getMemoryStore: () => memoryStoreRef });
 
 	// Start MCP servers from addons and collect their tools.
 	const addonMcpServers = resourceLoader.getAddonMcpServers();
@@ -422,8 +426,8 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 
 	const customTools =
 		options.enableSubagents === true
-			? [...(options.customTools ?? []), skillManageTool, createSpawnAgentTool({ getParentModel: () => agent.state.model, autoReview: options.autoReviewSubagents }), ...mcpTools]
-			: [...(options.customTools ?? []), skillManageTool, ...mcpTools];
+			? [...(options.customTools ?? []), skillManageTool, memoryWriteTool, createSpawnAgentTool({ getParentModel: () => agent.state.model, autoReview: options.autoReviewSubagents }), ...mcpTools]
+			: [...(options.customTools ?? []), skillManageTool, memoryWriteTool, ...mcpTools];
 
 	const session = new AgentSession({
 		agent,
@@ -441,6 +445,7 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 		extensionRunnerRef,
 		sessionStartEvent: options.sessionStartEvent,
 	});
+	session.memoryStoreReady.then((store) => { memoryStoreRef = store ?? undefined; }).catch(() => {});
 	const extensionsResult = resourceLoader.getExtensions();
 
 	return {

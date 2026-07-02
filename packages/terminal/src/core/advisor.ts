@@ -125,11 +125,17 @@ export class AdvisorLoop {
 
 		this._active = this._runner(opts)
 			.then((result) => {
+				if (result.errored) {
+					console.warn(`advisor: review agent error: ${result.errorMessage ?? "unknown"}`);
+					return;
+				}
 				if (result.output && !result.output.trim().startsWith("No advice")) {
 					onAdvice(result.output.trim());
 				}
 			})
-			.catch(() => {})
+			.catch((err) => {
+				console.warn(`advisor: failed: ${err instanceof Error ? err.message : String(err)}`);
+			})
 			.finally(() => {
 				this._active = null;
 				this._abortController = null;
