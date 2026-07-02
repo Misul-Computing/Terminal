@@ -8,6 +8,7 @@
  */
 
 import type { Model } from "@misul/ai";
+import type { ThinkingLevel } from "@misul/agent-core";
 import type { AuthStorage } from "../auth-storage.ts";
 import type { ModelRegistry } from "../model-registry.ts";
 import type { createAgentSession } from "../sdk.ts";
@@ -97,6 +98,8 @@ export interface RunSubagentOptions extends RunSubagentInput {
 	/** Isolated agent dir for offline tests so child session creation skips real extension discovery. */
 	agentDir?: string;
 	createSession?: typeof createAgentSession;
+	/** Thinking level forwarded to the child session (default: provider default). */
+	thinkingLevel?: ThinkingLevel;
 }
 
 /** True when a run completed without error. */

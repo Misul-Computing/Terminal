@@ -1,51 +1,53 @@
 /**
  * Goal mode: autonomous loop that drives the agent toward a user-defined goal.
  *
- * Loop: plan -> execute -> evaluate -> repeat.
- * - The original goal + guidelines are re-injected every iteration so they're
- *   never lost to compaction or context drift.
- * - When the agent declares GOAL: STUCK (or fails to make progress for N
- *   iterations), thinking subagents spawn with different angles to break
- *   the agent out of its current approach.
- * - The loop stops when the agent declares GOAL: ACHIEVED or the user
- *   interrupts (Esc).
- *
- * The "thinking outside the box" subagents are the key feature. Each one
- * approaches the problem from a fundamentally different angle:
- *   1. Question assumptions: what if the premise is wrong?
- *   2. Alternative approaches: what are completely different ways to solve this?
- *   3. Lateral research: what fields/problems have solved similar things?
+ * Design principles (see docs/cache-aware-design.md):
+ * - The goal + guidelines are sent once, in the first user message. The
+ *   session's stable system prompt prefix and compaction manage context after
+ *   that. Subsequent iterations send a short "continue" message so the cache
+ *   prefix stays hot.
+ * - Goal achievement is verified: after the model declares GOAL: ACHIEVED, a
+ *   verification prompt asks it to check its work before the loop accepts.
+ * - Stuck detection is based on tool-call activity and a loop-guard signature,
+ *   not brittle keyword matching. No tool calls for N iterations, or repeated
+ *   identical tool-call signatures, triggers thinking subagents.
+ * - Cost and tokens are tracked across all iterations via session stats.
  */
 
-import type { AgentMessage } from "@misul/agent-core";
 import type { Model } from "@misul/ai";
+import type { ThinkingLevel } from "@misul/agent-core";
+import { createLoopGuard, stripVolatileIds } from "./loop-guard.ts";
 import { getPreset } from "./subagent/presets.ts";
 import { runSubagent } from "./subagent/runner.ts";
 import type { SubagentRunResult } from "./subagent/types.ts";
 
-/** Max iterations before forcing a stuck check. */
 const MAX_ITERATIONS = 50;
-/** Consecutive no-progress iterations before spawning thinking subagents. */
-const STUCK_THRESHOLD = 2;
-/** Max thinking-subagent rounds before giving up. */
+const STUCK_THRESHOLD = 5;
 const MAX_THINKING_ROUNDS = 3;
+const LOOP_GUARD_THRESHOLD = 3;
+
+const GOAL_ACHIEVED = "GOAL: ACHIEVED";
+const GOAL_STUCK = "GOAL: STUCK";
+
+export interface GoalLoopStats {
+	cost: number;
+	tokens: { input: number; output: number; cacheRead: number; cacheWrite: number; total: number };
+}
 
 export interface GoalLoopOptions {
-	/** The user's goal description. */
 	goal: string;
-	/** Original guidelines/constraints (from system prompt, MISUL.md, AGENTS.md, etc). */
 	guidelines?: string;
-	/** Model for the main agent (inherited from session). */
 	model: Model<any>;
-	/** Working directory. */
 	cwd: string;
-	/** Abort signal (Esc / user interrupt). */
 	signal?: AbortSignal;
-	/** Callback to send a prompt to the session and wait for completion. */
+	thinkingLevel?: ThinkingLevel;
+	tools?: string[];
+	subagentPreset?: string;
 	prompt: (text: string) => Promise<void>;
-	/** Callback to get the last assistant message text. */
 	getLastResponse: () => string | undefined;
-	/** Callback for status updates (shown to user). */
+	getToolCallCount: () => number;
+	getLastTurnSignature: () => string;
+	getStats?: () => GoalLoopStats;
 	onStatus?: (status: string) => void;
 }
 
@@ -54,125 +56,200 @@ export interface GoalLoopResult {
 	iterations: number;
 	thinkingRounds: number;
 	finalStatus: string;
+	costUsd: number;
+	tokens: { input: number; output: number; cacheRead: number; cacheWrite: number; total: number };
 }
-
-const GOAL_ACHIEVED = "GOAL: ACHIEVED";
-const GOAL_STUCK = "GOAL: STUCK";
 
 export async function runGoalLoop(options: GoalLoopOptions): Promise<GoalLoopResult> {
 	const { goal, guidelines, model, cwd, signal, prompt, getLastResponse, onStatus } = options;
+	const tools = options.tools;
+	const thinkingLevel = options.thinkingLevel;
+	const presetName = options.subagentPreset ?? "simple";
 
 	let iterations = 0;
 	let thinkingRounds = 0;
 	let stuckCount = 0;
-	let lastResponse = "";
+	const loopGuard = createLoopGuard(LOOP_GUARD_THRESHOLD);
 
 	while (iterations < MAX_ITERATIONS) {
 		if (signal?.aborted) {
-			return { achieved: false, iterations, thinkingRounds, finalStatus: "interrupted" };
+			return buildResult(false, iterations, thinkingRounds, "interrupted", options);
 		}
 
 		iterations++;
 		onStatus?.(`Goal iteration ${iterations}`);
 
-		// Build the iteration prompt: re-inject goal + guidelines + progress so far.
-		const iterationPrompt = buildIterationPrompt(goal, guidelines, iterations, lastResponse);
-		await prompt(iterationPrompt);
+		const iterationPrompt = buildIterationPrompt(goal, guidelines, iterations);
+		const toolCallsBefore = options.getToolCallCount();
 
-		const response = getLastResponse() ?? "";
-		const previousResponse = lastResponse;
-		lastResponse = response;
-
-		// Check for explicit status declarations.
-		if (response.includes(GOAL_ACHIEVED)) {
-			onStatus?.("Goal achieved.");
-			return { achieved: true, iterations, thinkingRounds, finalStatus: "achieved" };
+		try {
+			await prompt(iterationPrompt);
+		} catch (err) {
+			onStatus?.(`Iteration ${iterations} errored: ${errorText(err)}. Retrying...`);
+			try {
+				await prompt(iterationPrompt);
+			} catch (err2) {
+				return buildResult(false, iterations, thinkingRounds, `error: ${errorText(err2)}`, options);
+			}
 		}
 
-		if (response.includes(GOAL_STUCK)) {
-			stuckCount++;
-		} else if (madeProgress(response, previousResponse)) {
+		if (signal?.aborted) {
+			return buildResult(false, iterations, thinkingRounds, "interrupted", options);
+		}
+
+		const response = getLastResponse() ?? "";
+		const toolCallDelta = options.getToolCallCount() - toolCallsBefore;
+
+		if (detectGoalAchieved(response)) {
+			onStatus?.("Goal declared achieved. Verifying...");
+			const verified = await verifyAchievement(prompt, getLastResponse, signal);
+			if (verified) {
+				onStatus?.("Goal verified.");
+				return buildResult(true, iterations, thinkingRounds, "achieved", options);
+			}
+			onStatus?.("Verification failed. Continuing.");
 			stuckCount = 0;
+			continue;
+		}
+
+		const signature = stripVolatileIds(options.getLastTurnSignature());
+		const guardTripped = loopGuard.record(signature);
+
+		if (detectGoalStuck(response)) {
+			stuckCount++;
+		} else if (toolCallDelta > 0) {
+			stuckCount = 0;
+		} else if (guardTripped) {
+			stuckCount += 2;
+			onStatus?.("Loop guard tripped: repeated identical tool calls.");
 		} else {
 			stuckCount++;
 		}
 
-		// If stuck, spawn thinking subagents to break out of the rut.
 		if (stuckCount >= STUCK_THRESHOLD && thinkingRounds < MAX_THINKING_ROUNDS) {
 			thinkingRounds++;
 			stuckCount = 0;
+			loopGuard.reset();
 			onStatus?.(`Stuck. Spawning thinking subagents (round ${thinkingRounds})...`);
 
-			const insights = await spawnThinkingSubagents(goal, response, model, cwd, signal);
+			const insights = await spawnThinkingSubagents(
+				goal, response, model, cwd, signal, presetName, tools, thinkingLevel,
+			);
 			if (insights) {
-				// Feed insights back to the main agent as a user message.
-				const insightPrompt = buildInsightPrompt(goal, insights);
-				await prompt(insightPrompt);
-				lastResponse = getLastResponse() ?? "";
-
-				if (lastResponse.includes(GOAL_ACHIEVED)) {
-					onStatus?.("Goal achieved after thinking round.");
-					return { achieved: true, iterations, thinkingRounds, finalStatus: "achieved" };
+				try {
+					await prompt(buildInsightPrompt(insights));
+				} catch (err) {
+					onStatus?.(`Insight prompt failed: ${errorText(err)}`);
+				}
+				const afterInsight = getLastResponse() ?? "";
+				if (detectGoalAchieved(afterInsight)) {
+					const verified = await verifyAchievement(prompt, getLastResponse, signal);
+					if (verified) {
+						onStatus?.("Goal achieved after thinking round.");
+						return buildResult(true, iterations, thinkingRounds, "achieved", options);
+					}
 				}
 			}
 		}
 	}
 
-	return { achieved: false, iterations, thinkingRounds, finalStatus: "max iterations reached" };
+	return buildResult(false, iterations, thinkingRounds, "max iterations reached", options);
 }
 
-function buildIterationPrompt(goal: string, guidelines: string | undefined, iteration: number, lastProgress: string): string {
-	const parts: string[] = [];
-
-	parts.push(`## GOAL (never lose sight of this)`);
-	parts.push(goal);
-
-	if (guidelines) {
-		parts.push(`\n## GUIDELINES (always follow these)`);
-		parts.push(guidelines);
+export function buildIterationPrompt(goal: string, guidelines: string | undefined, iteration: number): string {
+	if (iteration === 1) {
+		const parts: string[] = ["## GOAL", goal];
+		if (guidelines) {
+			parts.push("\n## GUIDELINES");
+			parts.push(guidelines);
+		}
+		parts.push("\nBegin working on this goal. Do the first concrete step.");
+		parts.push(`\nWhen the goal is fully accomplished, declare ${GOAL_ACHIEVED}.`);
+		parts.push(`If you cannot make progress after trying, declare ${GOAL_STUCK}.`);
+		parts.push("Otherwise, keep working and say nothing about status.");
+		return parts.join("\n");
 	}
-
-	parts.push(`\n## ITERATION ${iteration}`);
-	parts.push(`Continue working toward the goal. Do the next concrete step.`);
-
-	if (lastProgress) {
-		// Truncate to keep context manageable.
-		const progress = lastProgress.slice(-4000);
-		parts.push(`\n## YOUR LAST ACTIONS`);
-		parts.push(progress);
-	}
-
-	parts.push(`\n## STATUS`);
-	parts.push(`After your next action, declare one of:`);
-	parts.push(`- ${GOAL_ACHIEVED} - the goal is fully accomplished`);
-	parts.push(`- ${GOAL_STUCK} - you've tried and can't make progress with the current approach`);
-	parts.push(`- (say nothing) - still making progress, will continue next iteration`);
-
-	return parts.join("\n");
+	return "Continue working toward the goal. Do the next concrete step.";
 }
 
-function buildInsightPrompt(goal: string, insights: string): string {
+export function buildVerificationPrompt(): string {
 	return [
-		`## GOAL (never lose sight of this)`,
-		goal,
-		`\n## OUTSIDE-THE-BOX INSIGHTS`,
-		`You were stuck. Thinking subagents approached the problem from different angles. Here are their insights:`,
+		"You declared the goal achieved. Before confirming, verify your work:",
+		"1. Review what the goal required.",
+		"2. Check the actual state of the files or system you modified.",
+		"3. Run any relevant tests or build commands to confirm.",
 		"",
-		insights,
-		`\n## NEXT STEP`,
-		`Use these insights to try a fundamentally different approach. Don't repeat what failed. After your action, declare ${GOAL_ACHIEVED}, ${GOAL_STUCK}, or nothing (still progressing).`,
+		`If everything checks out, respond with exactly: ${GOAL_ACHIEVED}`,
+		"If something is incomplete or broken, explain what remains and continue working.",
 	].join("\n");
 }
 
-/** Three thinking subagents, each with a different angle. */
+export function buildInsightPrompt(insights: string): string {
+	return [
+		"## OUTSIDE-THE-BOX INSIGHTS",
+		"You were stuck. Thinking subagents approached the problem from different angles. Here are their insights:",
+		"",
+		insights,
+		"",
+		"Use these insights to try a fundamentally different approach. Don't repeat what failed.",
+		`If the goal is now accomplished, declare ${GOAL_ACHIEVED}. If still stuck, declare ${GOAL_STUCK}. Otherwise, keep working.`,
+	].join("\n");
+}
+
+export function detectGoalAchieved(response: string): boolean {
+	return response.includes(GOAL_ACHIEVED);
+}
+
+export function detectGoalStuck(response: string): boolean {
+	return response.includes(GOAL_STUCK);
+}
+
+async function verifyAchievement(
+	prompt: (text: string) => Promise<void>,
+	getLastResponse: () => string | undefined,
+	signal?: AbortSignal,
+): Promise<boolean> {
+	if (signal?.aborted) return false;
+	try {
+		await prompt(buildVerificationPrompt());
+	} catch {
+		return false;
+	}
+	return detectGoalAchieved(getLastResponse() ?? "");
+}
+
+function buildResult(
+	achieved: boolean,
+	iterations: number,
+	thinkingRounds: number,
+	finalStatus: string,
+	options: GoalLoopOptions,
+): GoalLoopResult {
+	let costUsd = 0;
+	let tokens = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 };
+	if (options.getStats) {
+		try {
+			const stats = options.getStats();
+			costUsd = Number.isFinite(stats.cost) ? stats.cost : 0;
+			tokens = stats.tokens;
+		} catch {
+			// Degrade to zero-cost rather than crashing the loop.
+		}
+	}
+	return { achieved, iterations, thinkingRounds, finalStatus, costUsd, tokens };
+}
+
 async function spawnThinkingSubagents(
 	goal: string,
 	stuckOutput: string,
 	model: Model<any>,
 	cwd: string,
-	signal?: AbortSignal,
+	signal: AbortSignal | undefined,
+	presetName: string,
+	tools: string[] | undefined,
+	thinkingLevel: ThinkingLevel | undefined,
 ): Promise<string | null> {
-	const preset = getPreset("simple");
+	const preset = getPreset(presetName);
 	if (!preset) return null;
 
 	const context = `## GOAL\n${goal}\n\n## WHAT WAS TRIED (agent is stuck)\n${stuckOutput.slice(-4000)}`;
@@ -181,23 +258,23 @@ async function spawnThinkingSubagents(
 		{
 			name: "question-assumptions",
 			prompt: `${context}\n\n## YOUR ANGLE: QUESTION ASSUMPTIONS\n` +
-				`What assumptions is the agent making that might be wrong? What if the premise itself is flawed? ` +
-				`What constraints does it think exist that actually don't? Identify 2-3 assumptions to challenge and suggest what happens if each is wrong. ` +
-				`Be specific and concrete. Don't repeat what the agent already tried.`,
+				"What assumptions is the agent making that might be wrong? What if the premise itself is flawed? " +
+				"What constraints does it think exist that actually don't? Identify 2-3 assumptions to challenge and suggest what happens if each is wrong. " +
+				"Be specific and concrete. Don't repeat what the agent already tried.",
 		},
 		{
 			name: "alternative-approaches",
 			prompt: `${context}\n\n## YOUR ANGLE: ALTERNATIVE APPROACHES\n` +
-				`What are completely different ways to solve this goal? Not variations of what was tried, but fundamentally different strategies. ` +
-				`Think about: different tools, different abstractions, different decomposition, different order of operations. ` +
-				`Suggest 2-3 concrete alternative approaches with enough detail to act on.`,
+				"What are completely different ways to solve this goal? Not variations of what was tried, but fundamentally different strategies. " +
+				"Think about: different tools, different abstractions, different decomposition, different order of operations. " +
+				"Suggest 2-3 concrete alternative approaches with enough detail to act on.",
 		},
 		{
 			name: "lateral-research",
 			prompt: `${context}\n\n## YOUR ANGLE: LATERAL RESEARCH\n` +
-				`What other fields, problems, or domains have solved similar challenges? What patterns or techniques transfer? ` +
-				`Look for analogies: is this problem isomorphic to something in distributed systems, game theory, compilers, biology, etc? ` +
-				`Suggest 2-3 cross-domain insights that could unblock this specific goal.`,
+				"What other fields, problems, or domains have solved similar challenges? What patterns or techniques transfer? " +
+				"Look for analogies: is this problem isomorphic to something in distributed systems, game theory, compilers, biology, etc? " +
+				"Suggest 2-3 cross-domain insights that could unblock this specific goal.",
 		},
 	];
 
@@ -209,9 +286,11 @@ async function spawnThinkingSubagents(
 				model,
 				cwd,
 				signal,
+				...(tools ? { tools: tools as any } : {}),
+				...(thinkingLevel ? { thinkingLevel } : {}),
 				timeoutMs: 120000,
 			}).catch((err): SubagentRunResult => ({
-				agent: "simple",
+				agent: preset.name,
 				output: "",
 				costUsd: 0,
 				tokens: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
@@ -231,23 +310,6 @@ async function spawnThinkingSubagents(
 	return insights || null;
 }
 
-/** Heuristic: did the agent make progress vs the previous response? */
-function madeProgress(response: string, previousResponse: string): boolean {
-	const lower = response.toLowerCase();
-	// No-progress signals.
-	const stuckSignals = ["stuck", "unable to", "can't", "cannot", "no progress", "giving up", "dead end"];
-	for (const signal of stuckSignals) {
-		if (lower.includes(signal)) return false;
-	}
-	// If the response is nearly identical to the previous one, no progress.
-	if (previousResponse && response.length > 100 && response.slice(-500) === previousResponse.slice(-500)) {
-		return false;
-	}
-	// Progress signals: tool calls, file edits, tests run, etc.
-	const progressSignals = ["edit", "write", "bash", "test", "build", "fix", "implement", "create", "update", "refactor"];
-	for (const signal of progressSignals) {
-		if (lower.includes(signal)) return true;
-	}
-	// Default: assume progress if there's substantial output.
-	return response.length > 200;
+function errorText(err: unknown): string {
+	return err instanceof Error ? err.message : String(err);
 }

@@ -943,11 +943,17 @@ export async function main(args: string[], options?: MainOptions) {
 			}
 			const abortController = new AbortController();
 			process.on("SIGINT", () => abortController.abort());
+			const guidelines = [
+				resourceLoader.getSystemPrompt(),
+				...resourceLoader.getAgentsFiles().agentsFiles.map((f) => f.content),
+			].filter(Boolean).join("\n\n") || undefined;
 			const result = await runGoalLoop({
 				goal: parsed.goal,
+				guidelines,
 				model,
 				cwd: sessionManager.getCwd(),
 				signal: abortController.signal,
+				thinkingLevel: session.thinkingLevel,
 				prompt: (text) => session.prompt(text),
 				getLastResponse: () => {
 					const msgs = session.agent.state.messages;
@@ -965,9 +971,40 @@ export async function main(args: string[], options?: MainOptions) {
 					}
 					return undefined;
 				},
+				getToolCallCount: () => {
+					let count = 0;
+					for (const m of session.agent.state.messages) {
+						if (m.role === "assistant" && Array.isArray(m.content)) {
+							count += m.content.filter((b) => b.type === "toolCall").length;
+						}
+					}
+					return count;
+				},
+				getLastTurnSignature: () => {
+					const msgs = session.agent.state.messages;
+					for (let i = msgs.length - 1; i >= 0; i--) {
+						const m = msgs[i];
+						if (m.role !== "assistant" || !Array.isArray(m.content)) continue;
+						const calls = m.content.filter((b) => b.type === "toolCall");
+						if (calls.length === 0) continue;
+						return calls
+							.map((c) => {
+								const tc = c as Extract<typeof c, { type: "toolCall" }>;
+								return `${tc.name}:${JSON.stringify(tc.arguments).slice(0, 200)}`;
+							})
+							.join("|");
+					}
+					return "";
+				},
+				getStats: () => {
+					const stats = session.getSessionStats();
+					return { cost: stats.cost, tokens: stats.tokens };
+				},
 				onStatus: (status) => console.error(`[goal] ${status}`),
 			});
-			console.error(`[goal] ${result.finalStatus} (${result.iterations} iterations, ${result.thinkingRounds} thinking rounds)`);
+			console.error(
+				`[goal] ${result.finalStatus} (${result.iterations} iterations, ${result.thinkingRounds} thinking rounds, $${result.costUsd.toFixed(4)})`,
+			);
 			stopThemeWatcher();
 			restoreStdout();
 			process.exitCode = result.achieved ? 0 : 1;

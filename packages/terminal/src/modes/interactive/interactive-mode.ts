@@ -6105,6 +6105,7 @@ export class InteractiveMode {
 				model,
 				cwd,
 				signal: abortController.signal,
+				thinkingLevel: this.session.thinkingLevel,
 				prompt: (text) => this.session.prompt(text),
 				getLastResponse: () => {
 					const messages = this.session.agent.state.messages;
@@ -6122,11 +6123,40 @@ export class InteractiveMode {
 					}
 					return undefined;
 				},
+				getToolCallCount: () => {
+					let count = 0;
+					for (const m of this.session.agent.state.messages) {
+						if (m.role === "assistant" && Array.isArray(m.content)) {
+							count += m.content.filter((b) => b.type === "toolCall").length;
+						}
+					}
+					return count;
+				},
+				getLastTurnSignature: () => {
+					const msgs = this.session.agent.state.messages;
+					for (let i = msgs.length - 1; i >= 0; i--) {
+						const m = msgs[i];
+						if (m.role !== "assistant" || !Array.isArray(m.content)) continue;
+						const calls = m.content.filter((b) => b.type === "toolCall");
+						if (calls.length === 0) continue;
+						return calls
+							.map((c) => {
+								const tc = c as Extract<typeof c, { type: "toolCall" }>;
+								return `${tc.name}:${JSON.stringify(tc.arguments).slice(0, 200)}`;
+							})
+							.join("|");
+					}
+					return "";
+				},
+				getStats: () => {
+					const stats = this.session.getSessionStats();
+					return { cost: stats.cost, tokens: stats.tokens };
+				},
 				onStatus: (status) => this.showWarning(status),
 			});
 
 			if (result.achieved) {
-				this.showWarning(`Goal achieved in ${result.iterations} iterations (${result.thinkingRounds} thinking rounds).`);
+				this.showWarning(`Goal achieved in ${result.iterations} iterations (${result.thinkingRounds} thinking rounds, $${result.costUsd.toFixed(4)}).`);
 			} else {
 				this.showWarning(`Goal mode ended: ${result.finalStatus} (${result.iterations} iterations).`);
 			}
