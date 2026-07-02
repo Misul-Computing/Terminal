@@ -180,6 +180,7 @@ export async function createHarness(options: HarnessOptions = {}): Promise<Harne
 		allowedToolNames: options.allowedToolNames,
 		excludedToolNames: options.excludedToolNames,
 		extensionRunnerRef,
+		permissionGateEnabled: false,
 	});
 
 	const events: AgentSessionEvent[] = [];

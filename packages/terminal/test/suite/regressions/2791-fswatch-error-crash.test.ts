@@ -28,9 +28,10 @@ describe("issue #2791 fs.watch error event crashes process", () => {
 		const themesDir = join(agentDir, "themes");
 		mkdirSync(themesDir, { recursive: true });
 
-		// Copy dark.json as "custom-test" theme
-		const darkThemePath = join(__dirname, "../../../src/modes/interactive/theme/dark.json");
-		const darkTheme = JSON.parse(readFileSync(darkThemePath, "utf-8"));
+		// Copy dark theme as "custom-test" theme
+		const themesPath = join(__dirname, "../../../src/modes/interactive/theme/themes.json");
+		const themes = JSON.parse(readFileSync(themesPath, "utf-8"));
+		const darkTheme = themes.dark;
 		darkTheme.name = "custom-test";
 		writeFileSync(join(themesDir, "custom-test.json"), JSON.stringify(darkTheme, null, 2));
 	});

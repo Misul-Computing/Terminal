@@ -262,6 +262,7 @@ export function createTestSession(options: TestSessionOptions = {}): TestSession
 		cwd: tempDir,
 		modelRegistry,
 		resourceLoader: createTestResourceLoader(),
+		permissionGateEnabled: false,
 	});
 
 	// Must subscribe to enable session persistence

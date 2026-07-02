@@ -100,6 +100,8 @@ export interface CreateAgentSessionOptions {
 	sessionStartEvent?: SessionStartEvent;
 	/** Override the assistant prefill text. Empty string disables prefill. */
 	assistantPrefill?: string;
+	/** Whether the permission gate is active. Default: true. Set false for test harnesses. */
+	permissionGateEnabled?: boolean;
 }
 
 /** Result from createAgentSession */
@@ -444,6 +446,7 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 		excludedToolNames,
 		extensionRunnerRef,
 		sessionStartEvent: options.sessionStartEvent,
+		permissionGateEnabled: options.permissionGateEnabled,
 	});
 	session.memoryStoreReady.then((store) => { memoryStoreRef = store ?? undefined; }).catch(() => {});
 	const extensionsResult = resourceLoader.getExtensions();

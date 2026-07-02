@@ -130,9 +130,10 @@ description: project
 Project skill`,
 			);
 
-			const baseTheme = JSON.parse(
-				readFileSync(join(process.cwd(), "src", "modes", "interactive", "theme", "dark.json"), "utf-8"),
-			) as { name: string; vars?: Record<string, string> };
+			const themes = JSON.parse(
+				readFileSync(join(process.cwd(), "src", "modes", "interactive", "theme", "themes.json"), "utf-8"),
+			) as Record<string, { name: string; vars?: Record<string, string> }>;
+			const baseTheme = themes.dark;
 			baseTheme.name = "collision-theme";
 			const userThemePath = join(agentDir, "themes", "collision.json");
 			const projectThemePath = join(cwd, ".misul", "themes", "collision.json");
@@ -401,9 +402,10 @@ description: Project skill
 Project skill content`,
 			);
 			writeFileSync(join(promptsDir, "project.md"), "Project prompt");
-			const themeData = JSON.parse(
-				readFileSync(join(process.cwd(), "src", "modes", "interactive", "theme", "dark.json"), "utf-8"),
-			) as { name: string };
+			const themes = JSON.parse(
+				readFileSync(join(process.cwd(), "src", "modes", "interactive", "theme", "themes.json"), "utf-8"),
+			) as Record<string, { name: string }>;
+			const themeData = themes.dark;
 			themeData.name = "project-theme";
 			writeFileSync(join(themesDir, "project.json"), JSON.stringify(themeData, null, 2));
 			const settingsManager = SettingsManager.create(cwd, agentDir, { projectTrusted: false });

@@ -200,6 +200,8 @@ export interface AgentSessionConfig {
 	extensionRunnerRef?: { current?: ExtensionRunner };
 	/** Session start event metadata emitted when extensions bind to this runtime. */
 	sessionStartEvent?: SessionStartEvent;
+	/** Whether the permission gate is active. Default: true. Set false for test harnesses. */
+	permissionGateEnabled?: boolean;
 }
 
 export interface ExtensionBindings {
@@ -359,6 +361,7 @@ export class AgentSession {
 	private _baseToolsOverride?: Record<string, AgentTool>;
 	private _resourceChecker: ResourceChangeChecker | undefined;
 	private _sessionStartEvent: SessionStartEvent;
+	private _permissionGateEnabled: boolean;
 	private _extensionUIContext?: ExtensionUIContext;
 	private _extensionMode: ExtensionMode = "print";
 	private _extensionCommandContextActions?: ExtensionCommandContextActions;
@@ -398,12 +401,19 @@ export class AgentSession {
 	// Per-project long-term memory store (initialized lazily)
 	private _memoryStore: MemoryStore | undefined;
 	private _memoryStoreInit: Promise<MemoryStore | undefined> | undefined;
+	// Cached project memory entries, populated asynchronously when the
+	// memory store resolves. Used by the synchronous _rebuildSystemPrompt
+	// so the initial prompt is available immediately after construction.
+	private _cachedProjectMemory: MemoryEntry[] | undefined;
 
 	// Per-run telemetry with cache-aware token accounting
 	private _telemetry = new RunTelemetry();
 
 	// Background job manager (scoped to this session)
 	private _jobManager = new JobManager();
+
+	// Set to true by dispose() so async callbacks can bail out early.
+	private _isDisposed = false;
 
 	constructor(config: AgentSessionConfig) {
 		this.agent = config.agent;
@@ -421,9 +431,26 @@ export class AgentSession {
 		this._excludedToolNames = config.excludedToolNames ? new Set(config.excludedToolNames) : undefined;
 		this._baseToolsOverride = config.baseToolsOverride;
 		this._sessionStartEvent = config.sessionStartEvent ?? { type: "session_start", reason: "startup" };
+		this._permissionGateEnabled = config.permissionGateEnabled ?? true;
 
 		this._memoryStoreInit = MemoryStore.create({ cwd: this._cwd, agentDir: config.agentDir })
-			.then((store) => { this._memoryStore = store; return store; })
+			.then((store) => {
+				this._memoryStore = store;
+				// Once the store resolves, read project memory and trigger an
+				// async prompt rebuild so the cached entries are included. The
+				// rebuild itself is synchronous; only the memory read is async.
+				if (store && !this._isDisposed) {
+					store.top(10)
+						.then((entries) => {
+							if (this._isDisposed) return;
+							this._cachedProjectMemory = entries.length > 0 ? entries : undefined;
+							this._baseSystemPrompt = this._rebuildSystemPrompt(this.getActiveToolNames());
+							this.agent.state.systemPrompt = this._baseSystemPrompt;
+						})
+						.catch(() => { /* ignore memory read errors */ });
+				}
+				return store;
+			})
 			.catch(() => { this._memoryStore = undefined; return undefined; });
 
 		// Always subscribe to agent events for internal handling
@@ -917,6 +944,7 @@ export class AgentSession {
 	 * Call this when completely done with the session.
 	 */
 	dispose(): void {
+		this._isDisposed = true;
 		try {
 			this.abortRetry();
 			this.abortCompaction();
@@ -980,7 +1008,7 @@ export class AgentSession {
 			}
 		}
 		return {
-			enabled: true,
+			enabled: this._permissionGateEnabled,
 			model,
 			apiKey,
 			headers,
@@ -1072,7 +1100,7 @@ export class AgentSession {
 	 * Also rebuilds the system prompt to reflect the new tool set.
 	 * Changes take effect on the next agent turn.
 	 */
-	async setActiveToolsByName(toolNames: string[]): Promise<void> {
+	setActiveToolsByName(toolNames: string[]): void {
 		const tools: AgentTool[] = [];
 		const validToolNames: string[] = [];
 		for (const name of toolNames) {
@@ -1085,7 +1113,7 @@ export class AgentSession {
 		this.agent.state.tools = tools;
 
 		// Rebuild base system prompt with new tool set
-		this._baseSystemPrompt = await this._rebuildSystemPrompt(validToolNames);
+		this._baseSystemPrompt = this._rebuildSystemPrompt(validToolNames);
 		this.agent.state.systemPrompt = this._baseSystemPrompt;
 	}
 
@@ -1172,7 +1200,7 @@ export class AgentSession {
 		return Array.from(unique);
 	}
 
-	private async _rebuildSystemPrompt(toolNames: string[]): Promise<string> {
+	private _rebuildSystemPrompt(toolNames: string[]): string {
 		const validToolNames = toolNames.filter((name) => this._toolRegistry.has(name));
 		const toolSnippets: Record<string, string> = {};
 		const promptGuidelines: string[] = [];
@@ -1195,16 +1223,13 @@ export class AgentSession {
 		const loadedSkills = this._resourceLoader.getSkills().skills;
 		const loadedContextFiles = this._resourceLoader.getAgentsFiles().agentsFiles;
 
-		let projectMemory: MemoryEntry[] | undefined;
-		const store = this._memoryStore ?? (await this._memoryStoreInit);
-		if (store) {
-			try {
-				projectMemory = await store.top(10);
-				if (projectMemory.length === 0) projectMemory = undefined;
-			} catch {
-				projectMemory = undefined;
-			}
-		}
+		// Project memory is cached asynchronously when the memory store
+		// resolves (see the .then() chained in the constructor). The
+		// synchronous rebuild uses the cached value so the prompt is
+		// available immediately after construction. This keeps the
+		// prompt-cache prefix stable because project memory is rendered
+		// as a separate block.
+		const projectMemory = this._cachedProjectMemory;
 
 		this._baseSystemPromptOptions = {
 			cwd: this._cwd,
@@ -2467,7 +2492,7 @@ export class AgentSession {
 		};
 
 		this._resourceLoader.extendResources(extensionPaths);
-		this._baseSystemPrompt = await this._rebuildSystemPrompt(this.getActiveToolNames());
+		this._baseSystemPrompt = this._rebuildSystemPrompt(this.getActiveToolNames());
 		this.agent.state.systemPrompt = this._baseSystemPrompt;
 	}
 
@@ -2728,7 +2753,7 @@ export class AgentSession {
 			}
 		}
 
-		void this.setActiveToolsByName([...new Set(nextActiveToolNames)]);
+		this.setActiveToolsByName([...new Set(nextActiveToolNames)]);
 	}
 
 	private _buildRuntime(options: {
@@ -2782,9 +2807,7 @@ export class AgentSession {
 
 		const defaultActiveToolNames = this._baseToolsOverride
 			? Object.keys(this._baseToolsOverride)
-			: ["read", "bash", "edit", "write",
-				"debug_launch", "debug_breakpoint", "debug_stack", "debug_variables",
-				"debug_continue", "debug_step", "debug_evaluate", "debug_disconnect"];
+			: ["read", "bash", "edit", "write"];
 		const baseActiveToolNames = options.activeToolNames ?? defaultActiveToolNames;
 		this._refreshToolRegistry({
 			activeToolNames: baseActiveToolNames,
@@ -2830,7 +2853,7 @@ export class AgentSession {
 	async liveReload(): Promise<void> {
 		if (this.isStreaming || this.isCompacting) return;
 		await this._resourceLoader.reload();
-		this._baseSystemPrompt = await this._rebuildSystemPrompt(this.getActiveToolNames());
+		this._baseSystemPrompt = this._rebuildSystemPrompt(this.getActiveToolNames());
 		this.agent.state.systemPrompt = this._baseSystemPrompt;
 	}
 

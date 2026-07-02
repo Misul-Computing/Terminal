@@ -79,8 +79,8 @@ describe("runAutoReview", () => {
 			cwd: ".",
 			runner: makeRunner("ignored", true),
 		});
-		expect(result.output).toContain("AUTOREVIEW ERROR");
-		expect(result.output).toContain("boom");
+		expect(result.output).toContain("AUTOREVIEW: FAIL");
+		expect(result.output).toContain("review agent error: boom");
 	});
 
 	test("handles unmarked verdict", async () => {

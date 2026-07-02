@@ -1,8 +1,8 @@
 /** Tier-1 deterministic grader: run the fixture's test command, exit 0 = pass. */
 
 import { spawn } from "node:child_process";
-import { copyFileSync, mkdirSync, readdirSync } from "node:fs";
-import { platform } from "node:os";
+import { closeSync, copyFileSync, mkdirSync, mkdtempSync, openSync, readFileSync, readdirSync, rmSync } from "node:fs";
+import { platform, tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
 import type { FixtureMetadata } from "./types.ts";
 
@@ -72,50 +72,55 @@ export function gradeRunDir(
 	if (inputDir) restoreOracleFiles(runDir, inputDir, metadata);
 
 	return new Promise<GradeResult>((resolve) => {
+		// Capture stdout/stderr via temp files instead of pipes. OS pipe buffers
+		// are ~64 KB, so a child that writes megabytes then calls process.exit()
+		// before flushing loses everything past the pipe buffer. Temp files let
+		// the kernel buffer the full output; we truncate after the fact.
+		const tmpDir = mkdtempSync(join(tmpdir(), "misul-grader-"));
+		const stdoutPath = join(tmpDir, "stdout");
+		const stderrPath = join(tmpDir, "stderr");
+		const stdoutFd = openSync(stdoutPath, "w");
+		const stderrFd = openSync(stderrPath, "w");
+
 		const child = spawn(metadata.testCommand, {
 			cwd: runDir,
 			shell: true,
 			windowsHide: true,
 			// POSIX: own process group so a timeout can kill the whole tree via -pid.
 			detached: platform() !== "win32",
+			stdio: ["ignore", stdoutFd, stderrFd],
 		});
 
-		let stdout = "";
-		let stderr = "";
-		let stdoutTruncated = false;
-		let stderrTruncated = false;
 		let timedOut = false;
 		let settled = false;
+		let spawnError = "";
 
 		const timer = setTimeout(() => {
 			timedOut = true;
 			killTree(child);
 		}, timeoutMs);
 
-		// Stop appending once a stream passes the cap; note that it was truncated.
-		child.stdout?.on("data", (chunk) => {
-			if (stdoutTruncated) return;
-			if (stdout.length >= MAX_CAPTURE_BYTES) {
-				stdout += "\n[truncated: stdout exceeded capture cap]";
-				stdoutTruncated = true;
-				return;
+		const readCapped = (path: string, label: string): string => {
+			try {
+				let content = readFileSync(path, "utf8");
+				if (content.length >= MAX_CAPTURE_BYTES) {
+					content = content.slice(0, MAX_CAPTURE_BYTES) + `\n[truncated: ${label} exceeded capture cap]`;
+				}
+				return content;
+			} catch {
+				return "";
 			}
-			stdout += chunk.toString();
-		});
-		child.stderr?.on("data", (chunk) => {
-			if (stderrTruncated) return;
-			if (stderr.length >= MAX_CAPTURE_BYTES) {
-				stderr += "\n[truncated: stderr exceeded capture cap]";
-				stderrTruncated = true;
-				return;
-			}
-			stderr += chunk.toString();
-		});
+		};
 
 		const finish = (exitCode: number | null) => {
 			if (settled) return;
 			settled = true;
 			clearTimeout(timer);
+			const stdout = readCapped(stdoutPath, "stdout");
+			const stderr = readCapped(stderrPath, "stderr") + spawnError;
+			try { closeSync(stdoutFd); } catch { /* best-effort */ }
+			try { closeSync(stderrFd); } catch { /* best-effort */ }
+			try { rmSync(tmpDir, { recursive: true, force: true }); } catch { /* best-effort */ }
 			resolve({
 				score: exitCode === 0 && !timedOut ? 1 : 0,
 				exitCode,
@@ -126,7 +131,7 @@ export function gradeRunDir(
 		};
 
 		child.on("error", (err) => {
-			stderr += String(err);
+			spawnError = String(err);
 			finish(null);
 		});
 		child.on("close", (code) => finish(code));

@@ -154,6 +154,8 @@ export async function runFixture(fixture: EvalFixture, options: RunFixtureOption
 				...(resourceLoader ? { resourceLoader } : {}),
 				tools,
 				sessionManager: SessionManager.inMemory(runDir),
+				permissionGateEnabled: false,
+				thinkingLevel: "off",
 			});
 		} catch (err) {
 			return {

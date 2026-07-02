@@ -32,9 +32,10 @@ describe("theme picker", () => {
 	});
 
 	it("uses custom theme content names instead of file names", () => {
-		const darkTheme = JSON.parse(
-			readFileSync(new URL("../src/modes/interactive/theme/dark.json", import.meta.url), "utf-8"),
-		) as ThemeFile;
+		const themes = JSON.parse(
+			readFileSync(new URL("../src/modes/interactive/theme/themes.json", import.meta.url), "utf-8"),
+		) as Record<string, ThemeFile>;
+		const darkTheme = themes.dark;
 		const customTheme: ThemeFile = {
 			...darkTheme,
 			name: "bar",

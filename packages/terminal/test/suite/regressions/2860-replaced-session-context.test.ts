@@ -84,6 +84,8 @@ describe("regression #2860: replaced session callbacks", () => {
 					sessionManager,
 					sessionStartEvent,
 					model: faux.getModel(),
+					thinkingLevel: "off",
+					permissionGateEnabled: false,
 				})),
 				services,
 				diagnostics: services.diagnostics,

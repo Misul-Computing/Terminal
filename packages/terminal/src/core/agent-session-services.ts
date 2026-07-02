@@ -66,6 +66,8 @@ export interface CreateAgentSessionFromServicesOptions {
 	/** Opt-in to the `spawn_agent` subagent tool (default off). */
 	enableSubagents?: boolean;
 	autoReviewSubagents?: boolean;
+	/** Whether the permission gate is active. Default: true. Set false for test harnesses. */
+	permissionGateEnabled?: boolean;
 }
 
 /**
@@ -208,5 +210,6 @@ export async function createAgentSessionFromServices(
 		enableSubagents: options.enableSubagents,
 		autoReviewSubagents: options.autoReviewSubagents,
 		sessionStartEvent: options.sessionStartEvent,
+		permissionGateEnabled: options.permissionGateEnabled,
 	});
 }
