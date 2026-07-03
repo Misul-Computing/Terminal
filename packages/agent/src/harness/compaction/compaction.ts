@@ -1,6 +1,7 @@
 import type { AssistantMessage, ImageContent, Model, TextContent, Usage } from "@misul/ai";
 import { completeSimple } from "@misul/ai";
 import type { AgentMessage, ThinkingLevel } from "../../types.ts";
+import { redactString } from "../../secret-redactor.ts";
 import {
 	convertToLlm,
 	createBranchSummaryMessage,
@@ -507,7 +508,7 @@ export async function generateSummary(
 		basePrompt = `${basePrompt}\n\nAdditional focus: ${customInstructions}`;
 	}
 	const llmMessages = convertToLlm(currentMessages);
-	const conversationText = serializeConversation(llmMessages);
+	const conversationText = redactString(serializeConversation(llmMessages));
 	let promptText = `<conversation>\n${conversationText}\n</conversation>\n\n`;
 	if (previousSummary) {
 		promptText += `<previous-summary>\n${previousSummary}\n</previous-summary>\n\n`;

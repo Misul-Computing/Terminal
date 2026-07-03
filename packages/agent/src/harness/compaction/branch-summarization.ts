@@ -1,6 +1,7 @@
 import type { Model } from "@misul/ai";
 import { completeSimple } from "@misul/ai";
 import type { AgentMessage } from "../../types.ts";
+import { redactString } from "../../secret-redactor.ts";
 import {
 	convertToLlm,
 	createBranchSummaryMessage,
@@ -212,7 +213,7 @@ export async function generateBranchSummary(
 		return ok({ summary: "No content to summarize", readFiles: [], modifiedFiles: [] });
 	}
 	const llmMessages = convertToLlm(messages);
-	const conversationText = serializeConversation(llmMessages);
+	const conversationText = redactString(serializeConversation(llmMessages));
 	let instructions: string;
 	if (replaceInstructions && customInstructions) {
 		instructions = customInstructions;

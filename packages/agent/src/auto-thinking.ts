@@ -1,5 +1,6 @@
 import type { Context, Model, TextContent, ThinkingLevel as AiThinkingLevel } from "@misul/ai";
 import type { StreamFn } from "./types.ts";
+import { redactString } from "./secret-redactor.ts";
 
 const CLASSIFY_LEVELS: AiThinkingLevel[] = ["minimal", "low", "medium", "high"];
 
@@ -34,7 +35,7 @@ export async function classifyThinkingLevel(
 
 	const classifyContext: Context = {
 		systemPrompt: CLASSIFY_PROMPT,
-		messages: [{ role: "user", content: trimmed.slice(0, 2000), timestamp: Date.now() }],
+		messages: [{ role: "user", content: redactString(trimmed.slice(0, 2000)), timestamp: Date.now() }],
 	};
 
 	try {
