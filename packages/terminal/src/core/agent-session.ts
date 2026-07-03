@@ -1773,6 +1773,8 @@ export class AgentSession {
 	 */
 	async abort(): Promise<void> {
 		this.abortRetry();
+		this._advisor.abort();
+		this._backgroundReview.abort();
 		this.agent.abort();
 		await this.agent.waitForIdle();
 	}

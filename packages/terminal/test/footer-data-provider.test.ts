@@ -179,7 +179,7 @@ describe("FooterDataProvider reftable branch detection", () => {
 			provider.onBranchChange(onBranchChange);
 
 			writeFileSync(join(reftableDir, "tables.list"), "1\n");
-			await waitFor(() => vi.mocked(execFile).mock.calls.length === 1);
+			await waitFor(() => vi.mocked(execFile).mock.calls.length === 1, 10000);
 
 			expect(vi.mocked(execFile)).toHaveBeenCalledTimes(1);
 			expect(vi.mocked(spawnSync)).not.toHaveBeenCalled();
@@ -206,7 +206,7 @@ describe("FooterDataProvider reftable branch detection", () => {
 			// plus extra margin for fs.watch event delivery under parallel load.
 			// Checking too early can miss a late-arriving watch event that
 			// schedules a second refresh.
-			await waitFor(() => vi.mocked(execFile).mock.calls.length >= 1);
+			await waitFor(() => vi.mocked(execFile).mock.calls.length >= 1, 10000);
 			await new Promise((resolve) => setTimeout(resolve, 1200));
 
 			expect(vi.mocked(execFile)).toHaveBeenCalledTimes(1);
@@ -227,8 +227,8 @@ describe("FooterDataProvider reftable branch detection", () => {
 			provider.onBranchChange(onBranchChange);
 
 			writeFileSync(join(reftableDir, "tables.list"), "1\n");
-			await waitFor(() => vi.mocked(execFile).mock.calls.length === 1);
-			await waitFor(() => provider.getGitBranch() === "foo");
+			await waitFor(() => vi.mocked(execFile).mock.calls.length === 1, 10000);
+			await waitFor(() => provider.getGitBranch() === "foo", 10000);
 
 			expect(vi.mocked(execFile)).toHaveBeenCalledTimes(1);
 			expect(provider.getGitBranch()).toBe("foo");

@@ -112,6 +112,11 @@ export class BackgroundReviewLoop {
 			.finally(() => { this._active = null; this._abortController = null; });
 	}
 
+	/** Abort the current review if active. Does not prevent future reviews. */
+	abort(): void {
+		this._abortController?.abort();
+	}
+
 	/** Abort any running review. Call on session dispose to prevent orphaned writes. */
 	dispose(): void {
 		this._abortController?.abort();

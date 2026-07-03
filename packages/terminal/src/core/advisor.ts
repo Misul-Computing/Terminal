@@ -181,6 +181,11 @@ export class AdvisorLoop {
 			});
 	}
 
+	/** Abort the current advisor run if active. Does not prevent future runs. */
+	abort(): void {
+		this._abortController?.abort();
+	}
+
 	dispose(): void {
 		this._abortController?.abort();
 		this._abortController = null;
