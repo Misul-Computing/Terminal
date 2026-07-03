@@ -62,6 +62,7 @@ This is a test skill.
 			getAppendSystemPrompt: () => [],
 			getAddons: () => [],
 			getAddonMcpServers: () => ({}),
+		getAddonAcpAgents: () => ({}),
 			extendResources: () => {},
 			reload: async () => {},
 		};
@@ -98,6 +99,7 @@ This is a test skill.
 			getAppendSystemPrompt: () => [],
 			getAddons: () => [],
 			getAddonMcpServers: () => ({}),
+		getAddonAcpAgents: () => ({}),
 			extendResources: () => {},
 			reload: async () => {},
 		};

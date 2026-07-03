@@ -43,6 +43,7 @@ export interface ResourceLoader {
 	getAppendSystemPrompt(): string[];
 	getAddons(): Addon[];
 	getAddonMcpServers(): Record<string, import("./addons.ts").McpServerConfig>;
+	getAddonAcpAgents(): Record<string, import("./addons.ts").AcpAgentConfig>;
 	extendResources(paths: ResourceExtensionPaths): void;
 	reload(options?: ResourceLoaderReloadOptions): Promise<void>;
 }
@@ -236,6 +237,7 @@ export class DefaultResourceLoader implements ResourceLoader {
 	private lastThemePaths: string[];
 	private addons: Addon[] = [];
 	private addonMcpServers: Record<string, import("./addons.ts").McpServerConfig> = {};
+	private addonAcpAgents: Record<string, import("./addons.ts").AcpAgentConfig> = {};
 
 	constructor(options: DefaultResourceLoaderOptions) {
 		this.cwd = resolvePath(options.cwd);
@@ -323,6 +325,10 @@ export class DefaultResourceLoader implements ResourceLoader {
 
 	getAddonMcpServers(): Record<string, import("./addons.ts").McpServerConfig> {
 		return this.addonMcpServers;
+	}
+
+	getAddonAcpAgents(): Record<string, import("./addons.ts").AcpAgentConfig> {
+		return this.addonAcpAgents;
 	}
 
 	extendResources(paths: ResourceExtensionPaths): void {
@@ -456,6 +462,8 @@ export class DefaultResourceLoader implements ResourceLoader {
 		const addonExtensionPaths = addonResult.extensionPaths;
 		// Store MCP server configs for later use
 		this.addonMcpServers = addonResult.mcpServers;
+		// Store ACP agent configs for later use
+		this.addonAcpAgents = addonResult.acpAgents;
 		for (const { path: p, metadata } of [...addonSkillPaths, ...addonExtensionPaths]) {
 			if (!metadataByPath.has(p)) {
 				metadataByPath.set(p, metadata);

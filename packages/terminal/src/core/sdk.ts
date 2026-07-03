@@ -21,6 +21,7 @@ import { createSkillManageTool } from "./tools/skill-manage.ts";
 import { createMemoryWriteTool } from "./tools/memory-write.ts";
 import type { MemoryStore } from "./memory/index.ts";
 import { McpManager } from "./mcp-client.ts";
+import { AcpManager } from "./acp-client.ts";
 import { time } from "./timings.ts";
 import {
 	createBashTool,
@@ -114,6 +115,8 @@ export interface CreateAgentSessionResult {
 	modelFallbackMessage?: string;
 	/** MCP manager for cleanup (stop servers on session dispose) */
 	mcpManager?: McpManager;
+	/** ACP manager for cleanup (stop agents on session dispose) */
+	acpManager?: AcpManager;
 }
 
 // Re-exports
@@ -426,10 +429,18 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 	}
 	const mcpTools = mcpManager.getToolDefinitions();
 
+	// Start ACP agents from addons and collect their tools.
+	const addonAcpAgents = resourceLoader.getAddonAcpAgents();
+	const acpManager = new AcpManager(cwd);
+	if (Object.keys(addonAcpAgents).length > 0) {
+		await acpManager.startAgents(addonAcpAgents);
+	}
+	const acpTools = acpManager.getToolDefinitions();
+
 	const customTools =
 		options.enableSubagents === true
-			? [...(options.customTools ?? []), skillManageTool, memoryWriteTool, createSpawnAgentTool({ getParentModel: () => agent.state.model, autoReview: options.autoReviewSubagents }), ...mcpTools]
-			: [...(options.customTools ?? []), skillManageTool, memoryWriteTool, ...mcpTools];
+			? [...(options.customTools ?? []), skillManageTool, memoryWriteTool, createSpawnAgentTool({ getParentModel: () => agent.state.model, autoReview: options.autoReviewSubagents }), ...mcpTools, ...acpTools]
+			: [...(options.customTools ?? []), skillManageTool, memoryWriteTool, ...mcpTools, ...acpTools];
 
 	const session = new AgentSession({
 		agent,
@@ -456,5 +467,6 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 		extensionsResult,
 		modelFallbackMessage,
 		mcpManager,
+		acpManager,
 	};
 }

@@ -182,6 +182,7 @@ function createMinimalResourceLoader(systemPrompt: string): ResourceLoader {
 		getAppendSystemPrompt: () => [],
 		getAddons: () => [],
 		getAddonMcpServers: () => ({}),
+		getAddonAcpAgents: () => ({}),
 		extendResources: () => {},
 		reload: async () => {},
 	};

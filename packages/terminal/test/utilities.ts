@@ -222,6 +222,7 @@ export function createTestResourceLoader(options: CreateTestResourceLoaderOption
 		getAppendSystemPrompt: () => [],
 		getAddons: () => [],
 		getAddonMcpServers: () => ({}),
+		getAddonAcpAgents: () => ({}),
 		extendResources: () => {},
 		reload: async () => {},
 	};

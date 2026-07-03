@@ -177,6 +177,7 @@ export function parseArgs(args: string[]): Args {
 		} else if ((arg === "--extension" || arg === "-e") && i + 1 < args.length) {
 			result.extensions = result.extensions ?? [];
 			result.extensions.push(args[++i]);
+			result.diagnostics.push({ type: "warning", message: `--extension is deprecated; use --addon to load extensions, skills, MCP servers, and ACP agents as a unified package.` });
 		} else if (arg === "--no-extensions" || arg === "-ne") {
 			result.noExtensions = true;
 		} else if (arg === "--addon" && i + 1 < args.length) {
@@ -185,6 +186,7 @@ export function parseArgs(args: string[]): Args {
 		} else if (arg === "--skill" && i + 1 < args.length) {
 			result.skills = result.skills ?? [];
 			result.skills.push(args[++i]);
+			result.diagnostics.push({ type: "warning", message: `--skill is deprecated; use --addon to load extensions, skills, MCP servers, and ACP agents as a unified package.` });
 		} else if (arg === "--prompt-template" && i + 1 < args.length) {
 			result.promptTemplates = result.promptTemplates ?? [];
 			result.promptTemplates.push(args[++i]);
@@ -309,10 +311,10 @@ ${chalk.bold("Options:")}
   --solo                         Disable subagent spawning entirely (overrides --agent)
   --autoreview                   Run autoreview after work subagents complete
   --thinking <level>             Set thinking level: off, minimal, low, medium, high, xhigh, max
-  --extension, -e <path>         Load an extension file (can be used multiple times)
+  --extension, -e <path>         (Deprecated, use --addon) Load an extension file
   --no-extensions, -ne           Disable extension discovery (explicit -e paths still work)
-  --addon <path>                 Load an addon directory (skills + extension + MCP server)
-  --skill <path>                 Load a skill file or directory (can be used multiple times)
+  --addon <path>                 Load an addon directory (skills, extension, MCP, ACP)
+  --skill <path>                 (Deprecated, use --addon) Load a skill file or directory
   --no-skills, -ns               Disable skills discovery and loading
   --prompt-template <path>       Load a prompt template file or directory (can be used multiple times)
   --no-prompt-templates, -np     Disable prompt template discovery and loading
