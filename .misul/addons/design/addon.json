@@ -1,7 +1,8 @@
 {
 	"name": "design",
-	"description": "WebGL2 fragment shader knowledge and templates for animated backgrounds and visual effects.",
-	"version": "0.1.0",
+	"description": "Design addon: frontend design discipline (tokens, typography, layout, color, anti-AI-look, micro-interactions, a11y) plus WebGL2 shader backgrounds (mesh gradient, metaballs, dot orbit, god rays, voronoi, neuro noise).",
+	"version": "0.2.0",
 	"author": { "name": "Misul Computing" },
-	"license": "Apache-2.0"
+	"license": "Apache-2.0",
+	"components": { "skills": true, "extension": false, "mcp": false, "acp": false }
 }

@@ -34,32 +34,31 @@ describe("bundled skills", () => {
 		const names = skills.map((s) => s.name);
 		expect(names).toContain("system-prompts");
 		expect(names).toContain("semantic-compression");
-		expect(names).toContain("frontend-design");
 		expect(names).toContain("api-design");
 		expect(names).toContain("secure-coding");
 
 		// Bundled skills carry the "bundled" source label.
-		const frontend = skills.find((s) => s.name === "frontend-design");
-		expect(frontend?.sourceInfo.source).toBe("bundled");
+		const api = skills.find((s) => s.name === "api-design");
+		expect(api?.sourceInfo.source).toBe("bundled");
 	});
 
 	it("lets a user skill override a bundled skill of the same name", () => {
-		const userSkillDir = join(agentDir, "skills", "frontend-design");
+		const userSkillDir = join(agentDir, "skills", "api-design");
 		mkdirSync(userSkillDir, { recursive: true });
 		const userSkillPath = join(userSkillDir, "SKILL.md");
 		writeFileSync(
 			userSkillPath,
-			["---", "name: frontend-design", "description: User override of the bundled frontend-design skill.", "---", "", "user body"].join(
+			["---", "name: api-design", "description: User override of the bundled api-design skill.", "---", "", "user body"].join(
 				"\n",
 			),
 		);
 
 		const { skills } = loadSkills({ agentDir, cwd, skillPaths: [], includeDefaults: true });
-		const frontend = skills.find((s) => s.name === "frontend-design");
-		expect(frontend).toBeDefined();
+		const api = skills.find((s) => s.name === "api-design");
+		expect(api).toBeDefined();
 		// The user file wins the name collision over the bundled one.
-		expect(frontend?.filePath).toBe(userSkillPath);
-		expect(frontend?.sourceInfo.scope).toBe("user");
+		expect(api?.filePath).toBe(userSkillPath);
+		expect(api?.sourceInfo.scope).toBe("user");
 	});
 
 	it("lets a project skill override a bundled skill of the same name", () => {

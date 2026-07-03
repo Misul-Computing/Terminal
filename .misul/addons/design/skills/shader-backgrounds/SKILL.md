@@ -1,9 +1,9 @@
 ---
-name: design
-description: WebGL2 fragment shader templates and a minimal mount function for animated backgrounds and visual effects. Six shaders — mesh gradient, metaballs, dot orbit, god rays, voronoi, neuro noise.
+name: shader-backgrounds
+description: WebGL2 fragment shader templates and a minimal mount function for animated backgrounds and visual effects. Six shaders — mesh gradient, metaballs, dot orbit, god rays, voronoi, neuro noise. Use when a web project needs animated/generative backgrounds or visual effects that CSS cannot do.
 ---
 
-# Design: WebGL2 shaders
+# Shader Backgrounds: WebGL2 shaders
 
 Six WebGL2 fragment shader templates plus a minimal mount function. Zero dependencies, plain TypeScript and GLSL. These are original implementations written from scratch. They are not copied from paper-design/shaders or any other library.
 
