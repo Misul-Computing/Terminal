@@ -196,15 +196,20 @@ async function runLoop(
 	while (true) {
 		// Resolve auto-thinking: classify the latest user message once per
 		// outer-loop iteration, then keep that level for all tool-call turns.
+		// Skip classification entirely for models that don't support reasoning.
 		if (config.autoThinking) {
-			const streamFunction = streamFn || streamSimple;
-			const resolved = await classifyThinkingLevel(
-				config.model,
-				currentContext.messages as { role: string; content: unknown }[],
-				streamFunction,
-				signal,
-			);
-			config = { ...config, reasoning: resolved, autoThinking: false };
+			if (!config.model.reasoning) {
+				config = { ...config, reasoning: undefined, autoThinking: false };
+			} else {
+				const streamFunction = streamFn || streamSimple;
+				const resolved = await classifyThinkingLevel(
+					config.model,
+					currentContext.messages as { role: string; content: unknown }[],
+					streamFunction,
+					signal,
+				);
+				config = { ...config, reasoning: resolved, autoThinking: false };
+			}
 		}
 
 		let hasMoreToolCalls = true;

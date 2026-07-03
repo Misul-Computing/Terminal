@@ -1384,3 +1384,46 @@ describe("agentLoopContinue with AgentMessage", () => {
 		expect(messages[0].role).toBe("assistant");
 	});
 });
+
+describe("agentLoop auto-thinking with non-reasoning model", () => {
+	it("should not call the classifier when model.reasoning is false", async () => {
+		const context: AgentContext = {
+			systemPrompt: "You are helpful.",
+			messages: [],
+			tools: [],
+		};
+
+		const userPrompt: AgentMessage = createUserMessage("Build a complex REST API with authentication, validation, and tests");
+
+		const config: AgentLoopConfig = {
+			model: createModel(), // reasoning: false
+			convertToLlm: identityConverter,
+			autoThinking: true,
+		};
+
+		let classifierCalled = false;
+		// The streamFn is used by the classifier too — if it gets called with
+		// the classify prompt, we know the classifier ran.
+		const streamFn = (model: any, ctx: any) => {
+			// Detect the classify prompt by its system prompt
+			if (ctx?.systemPrompt?.includes("Classify the reasoning effort")) {
+				classifierCalled = true;
+			}
+			const stream = new MockAssistantStream();
+			queueMicrotask(() => {
+				const message = createAssistantMessage([{ type: "text", text: "medium" }]);
+				stream.push({ type: "done", reason: "stop", message });
+			});
+			return stream;
+		};
+
+		const events: AgentEvent[] = [];
+		const stream = agentLoop([userPrompt], context, config, undefined, streamFn);
+		for await (const event of stream) {
+			events.push(event);
+			if (event.type === "agent_end") break;
+		}
+
+		expect(classifierCalled).toBe(false);
+	});
+});
