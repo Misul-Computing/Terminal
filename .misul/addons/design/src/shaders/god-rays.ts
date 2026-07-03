@@ -73,6 +73,6 @@ void main(){
   float v = rays * falloff * u_intensity;
   vec3 col = u_color * v;
   col += u_color * smoothstep(0.25, 0.0, r) * 0.5;
-  fragColor = vec4(col, 1.0);
+  fragColor = vec4(linearToSrgb(clamp(col, 0.0, 1.0)), 1.0);
 }
 `;

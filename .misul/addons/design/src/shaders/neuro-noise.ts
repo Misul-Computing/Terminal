@@ -68,6 +68,6 @@ void main(){
   float n = fbm(p + q * 2.0 + t * 0.5);
   vec3 col = mix(u_colorA, u_colorB, n);
   col = mix(col, u_colorC, smoothstep(0.4, 0.75, n));
-  fragColor = vec4(col, 1.0);
+  fragColor = vec4(linearToSrgb(clamp(col, 0.0, 1.0)), 1.0);
 }
 `;

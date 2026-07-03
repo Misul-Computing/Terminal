@@ -83,6 +83,6 @@ void main(){
     float df = smoothstep(u_dotSize, u_dotSize * 0.4, d);
     col = mix(col, u_color, df);
   }
-  fragColor = vec4(col, 1.0);
+  fragColor = vec4(linearToSrgb(clamp(col, 0.0, 1.0)), 1.0);
 }
 `;

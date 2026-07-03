@@ -93,6 +93,6 @@ void main(){
   float h = hash(id);
   vec3 col = mix(u_colorA, u_colorB, h);
   col *= edge;
-  fragColor = vec4(col, 1.0);
+  fragColor = vec4(linearToSrgb(clamp(col, 0.0, 1.0)), 1.0);
 }
 `;

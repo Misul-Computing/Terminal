@@ -79,6 +79,6 @@ void main(){
   vec3 col = mix(u_colorA, u_colorB, m);
   float edge = (1.0 - smoothstep(u_threshold, u_threshold + 0.4, v)) * smoothstep(u_threshold - 2.2, u_threshold - 0.6, v);
   col += u_colorB * edge * 0.35;
-  fragColor = vec4(col, 1.0);
+  fragColor = vec4(linearToSrgb(clamp(col, 0.0, 1.0)), 1.0);
 }
 `;
