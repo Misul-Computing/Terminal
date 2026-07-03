@@ -425,14 +425,13 @@ export async function buildSessionOptions(
 		options.excludeTools = [...parsed.excludeTools];
 	}
 
-	// --agent <name>: run this session WITH the chosen agent persona and enable
-	// subagent delegation (the spawn_agent tool). The persona system prompt is
-	// appended via resourceLoaderOptions.appendSystemPrompt (see createRuntime).
-	// --solo or soloMode setting overrides this and disables subagent spawning.
+	// Subagent delegation is enabled by default (deep-work persona).
+	// --agent <name> overrides the persona. --solo or soloMode setting disables
+	// subagent spawning entirely.
 	const soloMode = parsed.solo || settingsManager.getSoloMode();
 	if (soloMode) {
 		options.enableSubagents = false;
-	} else if (parsed.agent && getPreset(parsed.agent)) {
+	} else {
 		options.enableSubagents = true;
 		options.autoReviewSubagents = parsed.autoreview || settingsManager.getAutoReviewSubagents();
 	}
@@ -672,6 +671,7 @@ export async function main(args: string[], options?: MainOptions) {
 		const { resolveProjectTrusted } = await import("./core/project-trust.ts");
 		const { createProjectTrustContext } = await import("./cli/project-trust.ts");
 		const { getPreset } = await import("./core/subagent/index.ts");
+		const { DEEP_WORK } = await import("./core/subagent/presets.ts");
 		const isInitialRuntime = sessionStartEvent === undefined;
 		const projectTrustDiagnostics: AgentSessionRuntimeDiagnostic[] = [];
 		const cachedProjectTrust = projectTrustByCwd.get(cwd);
@@ -684,9 +684,9 @@ export async function main(args: string[], options?: MainOptions) {
 				parsed.projectTrustOverride ??
 				(!hasTrustRequiringResources || trustStore.get(cwd) === true));
 		const runtimeSettingsManager = SettingsManager.create(cwd, agentDir, { projectTrusted });
-		// --agent <name>: append the chosen preset's persona to the system prompt
-		// (subagent delegation itself is enabled via enableSubagents below).
-		const agentPreset = parsed.agent ? getPreset(parsed.agent) : undefined;
+		// Default to deep-work persona. --agent <name> overrides; --solo disables.
+		const isSolo = parsed.solo || runtimeSettingsManager.getSoloMode();
+		const agentPreset = isSolo ? undefined : (parsed.agent ? getPreset(parsed.agent) : DEEP_WORK);
 		const appendSystemPrompt = agentPreset
 			? [...(parsed.appendSystemPrompt ?? []), agentPreset.systemPrompt]
 			: parsed.appendSystemPrompt;

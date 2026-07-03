@@ -26,11 +26,15 @@ describe("--agent flag wiring", () => {
 		expect((await buildOptionsFor(["--agent", "simple"])).enableSubagents).toBe(true);
 	});
 
-	it("default (no --agent) leaves enableSubagents unset", async () => {
-		expect((await buildOptionsFor([])).enableSubagents).toBeUndefined();
+	it("default (no --agent) enables subagents (deep-work is the default)", async () => {
+		expect((await buildOptionsFor([])).enableSubagents).toBe(true);
 	});
 
-	it("end-to-end (offline): --agent deep-work yields a session with spawn_agent AND the persona prompt; default has neither", async () => {
+	it("--solo disables subagents", async () => {
+		expect((await buildOptionsFor(["--solo"])).enableSubagents).toBe(false);
+	});
+
+	it("end-to-end (offline): --agent deep-work yields a session with spawn_agent AND the persona prompt; --solo has neither", async () => {
 		const faux = registerFauxProvider({
 			models: [{ id: "faux-1", cost: { input: 0.000001, output: 0.000002, cacheRead: 0, cacheWrite: 0 } }],
 		});
@@ -40,7 +44,7 @@ describe("--agent flag wiring", () => {
 			authStorage.setRuntimeApiKey(model.provider, "faux-key");
 			const cwd = process.cwd();
 
-			// --agent deep-work: persona appended + subagents enabled (exactly what main builds).
+			// deep-work: persona appended + subagents enabled (exactly what main builds).
 			const agentServices = await createAgentSessionServices({
 				cwd,
 				authStorage,
@@ -68,8 +72,8 @@ describe("--agent flag wiring", () => {
 				agentSession.session.dispose();
 			}
 
-			// Default: no persona append, no spawn_agent.
-			const defaultServices = await createAgentSessionServices({
+			// --solo: no persona append, no spawn_agent.
+			const soloServices = await createAgentSessionServices({
 				cwd,
 				authStorage,
 				settingsManager: SettingsManager.inMemory(),
@@ -81,17 +85,17 @@ describe("--agent flag wiring", () => {
 					noContextFiles: true,
 				},
 			});
-			expect(defaultServices.resourceLoader.getAppendSystemPrompt()).not.toContain(DEEP_WORK.systemPrompt);
+			expect(soloServices.resourceLoader.getAppendSystemPrompt()).not.toContain(DEEP_WORK.systemPrompt);
 
-			const defaultSession = await createAgentSessionFromServices({
-				services: defaultServices,
+			const soloSession = await createAgentSessionFromServices({
+				services: soloServices,
 				sessionManager: SessionManager.inMemory(cwd),
 				model,
 			});
 			try {
-				expect(defaultSession.session.getAllTools().map((t) => t.name)).not.toContain("spawn_agent");
+				expect(soloSession.session.getAllTools().map((t) => t.name)).not.toContain("spawn_agent");
 			} finally {
-				defaultSession.session.dispose();
+				soloSession.session.dispose();
 			}
 		} finally {
 			faux.unregister();

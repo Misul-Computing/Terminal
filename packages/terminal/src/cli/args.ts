@@ -304,8 +304,8 @@ ${chalk.bold("Options:")}
                                  Applies to built-in, extension, and custom tools
   --exclude-tools, -xt <tools>   Comma-separated denylist of tool names to disable
                                  Applies to built-in, extension, and custom tools
-  --agent <name>                 Enable the chosen agent persona (simple or deep-work)
-                                 and subagent delegation (the spawn_agent tool)
+  --agent <name>                 Override the agent persona (simple or deep-work)
+                                 Default: deep-work (subagents enabled)
   --solo                         Disable subagent spawning entirely (overrides --agent)
   --autoreview                   Run autoreview after work subagents complete
   --thinking <level>             Set thinking level: off, minimal, low, medium, high, xhigh, max

@@ -24,7 +24,7 @@ import { createTestResourceLoader, hasAuthForProvider, resolveApiKey } from "./u
 import { MemoryStore } from "../src/core/memory/memory-store.ts";
 import { DebugSessionManager, createDapTools } from "../src/core/dap/index.ts";
 import { CapabilityRegistry } from "../src/core/capabilities.ts";
-import { AdvisorLoop } from "../src/core/advisor.ts";
+import { AdvisorLoop, ADVISOR_PRESET } from "../src/core/advisor.ts";
 
 const HAS_AUTH = hasAuthForProvider("opencode-go");
 const AUTH_PATH = join(require("node:os").homedir(), ".misul", "agent", "auth.json");
@@ -230,7 +230,13 @@ describe("Runtime: DAP tools and capability mapping", () => {
 
 describe("Runtime: advisor with constitution", () => {
 	it("advisor preset references executor constitution", () => {
-		// The advisor system prompt should mention "constitution"
+		// The advisor system prompt must establish identity ("the advisor"),
+		// reference the executor's constitution, and be read-only.
+		expect(ADVISOR_PRESET.systemPrompt).toContain("advisor");
+		expect(ADVISOR_PRESET.systemPrompt).toContain("constitution");
+		expect(ADVISOR_PRESET.systemPrompt).toContain("READ-ONLY");
+		expect(ADVISOR_PRESET.tools).not.toContain("edit");
+		expect(ADVISOR_PRESET.tools).not.toContain("write");
 		const advisor = new AdvisorLoop();
 		expect(advisor).toBeDefined();
 		expect(advisor.isRunning).toBe(false);
