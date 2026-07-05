@@ -1,20 +1,20 @@
 <p align="center"><img src="packages/terminal/docs/images/misul-logo-header.svg" alt="Misul Terminal" width="100%"></p>
 
 <p align="center">
-  <a href="https://discord.com/invite/3cU7Bz4UPx"><img alt="Discord" src="https://img.shields.io/badge/discord-community-5865F2?style=flat-square&logo=discord&logoColor=white" /></a>
   <a href="https://www.npmjs.com/package/@misul/terminal"><img alt="npm" src="https://img.shields.io/npm/v/@misul/terminal?style=flat-square" /></a>
+  <a href="https://misul.org/terminal/"><img alt="website" src="https://img.shields.io/badge/website-misul.org%2Fterminal-171e2b?style=flat-square" /></a>
 </p>
 
-Misul Terminal is a minimal terminal coding harness. Keep the core small and extend it with TypeScript extensions, skills, prompt templates, and themes.
+Misul Terminal is a minimal agent harness for the terminal. It keeps the core small and extends through TypeScript extensions, skills, prompt templates, and themes.
 
-- [Quickstart](packages/terminal/docs/quickstart.md)
-- [Usage](packages/terminal/docs/usage.md)
-- [Instant Tools](packages/terminal/docs/instant-tools.md)
-- [Providers](packages/terminal/docs/providers.md)
-- [Security](packages/terminal/docs/security.md)
-- [Settings](packages/terminal/docs/settings.md)
-- [Sessions](packages/terminal/docs/sessions.md)
-- [Development](packages/terminal/docs/development.md)
+- [Quickstart](https://misul.org/terminal/docs/quickstart)
+- [Usage](https://misul.org/terminal/docs/usage)
+- [Instant Tools](https://misul.org/terminal/docs/instant-tools)
+- [Providers](https://misul.org/terminal/docs/providers)
+- [Security](https://misul.org/terminal/docs/security)
+- [Settings](https://misul.org/terminal/docs/settings)
+- [Sessions](https://misul.org/terminal/docs/sessions)
+- [Development](https://misul.org/terminal/docs/development)
 
 ## Packages
 

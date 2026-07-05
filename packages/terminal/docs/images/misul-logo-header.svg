@@ -1,20 +1,37 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="1200" height="400">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="1200" height="400" preserveAspectRatio="xMidYMid slice">
   <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0f172a"/>
-      <stop offset="50%" stop-color="#1e293b"/>
-      <stop offset="100%" stop-color="#0f172a"/>
-    </linearGradient>
-    <linearGradient id="glow" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#6366f1" stop-opacity="0.4"/>
-      <stop offset="50%" stop-color="#a855f7" stop-opacity="0.2"/>
-      <stop offset="100%" stop-color="#ec4899" stop-opacity="0.4"/>
-    </linearGradient>
+    <radialGradient id="spot1" cx="30%" cy="35%" r="50%">
+      <stop offset="0%" stop-color="#1a1d26" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#1a1d26" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="spot2" cx="70%" cy="45%" r="45%">
+      <stop offset="0%" stop-color="#2e5fe0" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#2e5fe0" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="spot3" cx="50%" cy="70%" r="55%">
+      <stop offset="0%" stop-color="#1a1d26" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#1a1d26" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="spot4" cx="85%" cy="20%" r="35%">
+      <stop offset="0%" stop-color="#2e5fe0" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#2e5fe0" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="spot5" cx="15%" cy="80%" r="40%">
+      <stop offset="0%" stop-color="#1a1d26" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#1a1d26" stop-opacity="0"/>
+    </radialGradient>
   </defs>
-  <rect width="1200" height="400" fill="url(#bg)"/>
-  <rect width="1200" height="400" fill="url(#glow)"/>
+  <rect width="1200" height="400" fill="#f9fafc"/>
+  <rect width="1200" height="400" fill="url(#spot1)"/>
+  <rect width="1200" height="400" fill="url(#spot2)"/>
+  <rect width="1200" height="400" fill="url(#spot3)"/>
+  <rect width="1200" height="400" fill="url(#spot4)"/>
+  <rect width="1200" height="400" fill="url(#spot5)"/>
   <g transform="translate(600, 200)" text-anchor="middle">
-    <text x="0" y="-20" font-family="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif" font-size="96" font-weight="700" fill="#f8fafc" letter-spacing="-0.04em">Misul</text>
-    <text x="0" y="50" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="32" fill="#94a3b8" letter-spacing="0.1em">TERMINAL</text>
+    <g transform="translate(0, -50) scale(3)">
+      <path fill="#171e2b" d="M5 27 V15 a6 6 0 0 1 12 0 a6 6 0 0 1 12 0 V27 H22 V18 a2.5 2.5 0 0 0 -5 0 V27 H12 V15 a1 1 0 0 0 -2 0 V27 Z"/>
+    </g>
+    <text x="0" y="50" font-family="'Helvetica Neue', Arial, sans-serif" font-size="64" font-weight="700" fill="#171e2b" letter-spacing="-0.03em">Misul Terminal</text>
+    <text x="0" y="100" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="22" fill="#475569" letter-spacing="0.04em">A minimal agent harness for the terminal.</text>
   </g>
 </svg>
