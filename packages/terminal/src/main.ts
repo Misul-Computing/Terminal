@@ -1,13 +1,6 @@
-/**
- * Main entry point for the coding agent CLI.
- *
- * This file handles CLI argument parsing and translates them into
- * createAgentSession() options. The SDK does the heavy lifting.
- */
-
 import chalk from "chalk";
 import { type Args, type Mode, parseArgs, printHelp } from "./cli/args.ts";
-import { ENV_SESSION_DIR, expandTildePath, getAgentDir, getEnvFlag, getPackageDir, VERSION } from "./config.ts";
+import { ENV_SESSION_DIR, expandTildePath, getAgentDir, getEnv, getEnvFlag, getPackageDir, VERSION } from "./config.ts";
 import {
 	applyHttpProxySettings,
 	configureHttpDispatcher,
@@ -335,15 +328,12 @@ export async function buildSessionOptions(
 	settingsManager: SettingsManager,
 ): Promise<{
 	options: CreateAgentSessionOptions;
-	cliThinkingFromModel: boolean;
 	diagnostics: AgentSessionRuntimeDiagnostic[];
 }> {
 	const { resolveCliModel } = await import("./core/model-resolver.ts");
 	const { modelsAreEqual } = await import("@misul/ai");
-	const { getPreset } = await import("./core/subagent/index.ts");
 	const options: CreateAgentSessionOptions = {};
 	const diagnostics: AgentSessionRuntimeDiagnostic[] = [];
-	let cliThinkingFromModel = false;
 
 	// Model from CLI
 	// - supports --provider <name> --model <pattern>
@@ -363,11 +353,8 @@ export async function buildSessionOptions(
 		}
 		if (resolved.model) {
 			options.model = resolved.model;
-			// Allow "--model <pattern>:<thinking>" as a shorthand.
-			// Explicit --thinking still takes precedence (applied later).
 			if (!parsed.thinking && resolved.thinkingLevel) {
 				options.thinkingLevel = resolved.thinkingLevel;
-				cliThinkingFromModel = true;
 			}
 		}
 	}
@@ -425,9 +412,9 @@ export async function buildSessionOptions(
 		options.excludeTools = [...parsed.excludeTools];
 	}
 
-	// Subagent delegation is enabled by default (deep-work persona).
-	// --agent <name> overrides the persona. --solo or soloMode setting disables
-	// subagent spawning entirely.
+	// Subagent delegation is enabled by default. --solo or soloMode disables it.
+	// The main agent uses its own Misul constitution by default; --agent <name>
+	// appends an optional persona (e.g. deep-work) only when explicitly requested.
 	const soloMode = parsed.solo || settingsManager.getSoloMode();
 	if (soloMode) {
 		options.enableSubagents = false;
@@ -442,7 +429,7 @@ export async function buildSessionOptions(
 		options.assistantPrefill = parsed.assistantPrefill;
 	}
 
-	return { options, cliThinkingFromModel, diagnostics };
+	return { options, diagnostics };
 }
 
 async function resolveCliPaths(cwd: string, paths: string[] | undefined): Promise<string[] | undefined> {
@@ -487,14 +474,6 @@ export async function main(args: string[], options?: MainOptions) {
 	configureHttpDispatcher(DEFAULT_HTTP_IDLE_TIMEOUT_MS, offlineMode ? { connectTimeoutMs: OFFLINE_CONNECT_TIMEOUT_MS } : undefined);
 
 	const firstArg = args[0];
-	if (firstArg === "addon" || firstArg === "addons") {
-		const { handleAddonCommand } = await import("./addon-cli.ts");
-		if (await handleAddonCommand(args)) {
-			const exitCode = process.exitCode ?? 0;
-			process.exit(exitCode);
-			return;
-		}
-	}
 
 	const pkgCommands = new Set(["install", "uninstall", "remove", "update", "list"]);
 	if (firstArg === "config" || (firstArg && pkgCommands.has(firstArg))) {
@@ -532,11 +511,10 @@ export async function main(args: string[], options?: MainOptions) {
 	if (parsed.agent) {
 		const { getPreset } = await import("./core/subagent/index.ts");
 		if (getPreset(parsed.agent)) {
-			// --agent enables the chosen agent's persona + subagent delegation for this
-			// session. TODO(user-decision): running the top-level session through the
-			// full deep-work STRATEGY loop (spec -> plan -> execute -> review) is a
-			// larger run-mode integration + UX decision; deferred (see plan SP9).
 			console.error(`Running with the "${parsed.agent}" agent (subagent delegation enabled).`);
+		} else {
+			console.error(`Unknown agent preset: ${parsed.agent}`);
+			process.exit(1);
 		}
 	}
 
@@ -657,7 +635,6 @@ export async function main(args: string[], options?: MainOptions) {
 	const resolvedSkillPaths = await resolveCliPaths(cwd, parsed.skills);
 	const resolvedPromptTemplatePaths = await resolveCliPaths(cwd, parsed.promptTemplates);
 	const resolvedThemePaths = await resolveCliPaths(cwd, parsed.themes);
-	const resolvedAddonPaths = await resolveCliPaths(cwd, parsed.addons);
 	const { AuthStorage } = await import("./core/auth-storage.ts");
 	const authStorage = AuthStorage.create();
 	const createRuntime: CreateAgentSessionRuntimeFactory = async ({
@@ -671,7 +648,6 @@ export async function main(args: string[], options?: MainOptions) {
 		const { resolveProjectTrusted } = await import("./core/project-trust.ts");
 		const { createProjectTrustContext } = await import("./cli/project-trust.ts");
 		const { getPreset } = await import("./core/subagent/index.ts");
-		const { DEEP_WORK } = await import("./core/subagent/presets.ts");
 		const isInitialRuntime = sessionStartEvent === undefined;
 		const projectTrustDiagnostics: AgentSessionRuntimeDiagnostic[] = [];
 		const cachedProjectTrust = projectTrustByCwd.get(cwd);
@@ -684,9 +660,10 @@ export async function main(args: string[], options?: MainOptions) {
 				parsed.projectTrustOverride ??
 				(!hasTrustRequiringResources || trustStore.get(cwd) === true));
 		const runtimeSettingsManager = SettingsManager.create(cwd, agentDir, { projectTrusted });
-		// Default to deep-work persona. --agent <name> overrides; --solo disables.
+		// The main agent uses its own constitution. Apply an optional persona only
+		// when the user explicitly passes --agent <name>. --solo disables it.
 		const isSolo = parsed.solo || runtimeSettingsManager.getSoloMode();
-		const agentPreset = isSolo ? undefined : (parsed.agent ? getPreset(parsed.agent) : DEEP_WORK);
+		const agentPreset = isSolo ? undefined : (parsed.agent ? getPreset(parsed.agent) : undefined);
 		const appendSystemPrompt = agentPreset
 			? [...(parsed.appendSystemPrompt ?? []), agentPreset.systemPrompt]
 			: parsed.appendSystemPrompt;
@@ -725,7 +702,6 @@ export async function main(args: string[], options?: MainOptions) {
 				additionalSkillPaths: resolvedSkillPaths,
 				additionalPromptTemplatePaths: resolvedPromptTemplatePaths,
 				additionalThemePaths: resolvedThemePaths,
-				additionalAddonPaths: resolvedAddonPaths,
 				noExtensions: parsed.noExtensions,
 				noSkills: parsed.noSkills,
 				noPromptTemplates: parsed.noPromptTemplates,
@@ -757,12 +733,10 @@ export async function main(args: string[], options?: MainOptions) {
 				});
 			} else {
 				const binaryPath = laplace.resolveLaplaceBinaryPath();
-				const maxTokens = process.env.MISUL_LAPLACE_MAX_TOKENS
-					? parseInt(process.env.MISUL_LAPLACE_MAX_TOKENS, 10)
-					: laplace.LAPLACE_DEFAULT_MAX_TOKENS;
-				const extraArgs = process.env.MISUL_LAPLACE_EXTRA_ARGS
-					? process.env.MISUL_LAPLACE_EXTRA_ARGS.split(" ").filter(Boolean)
-					: [];
+				const rawMaxTokens = getEnv("LAPLACE_MAX_TOKENS");
+				const parsedMaxTokens = rawMaxTokens ? parseInt(rawMaxTokens, 10) : NaN;
+				const maxTokens = Number.isNaN(parsedMaxTokens) ? laplace.LAPLACE_DEFAULT_MAX_TOKENS : parsedMaxTokens;
+				const extraArgs = getEnv("LAPLACE_EXTRA_ARGS")?.split(" ").filter(Boolean) ?? [];
 				modelRegistry.registerProvider(laplace.LAPLACE_PROVIDER, {
 					baseUrl: "http://localhost:0",
 					apiKey: "local",
@@ -791,7 +765,6 @@ export async function main(args: string[], options?: MainOptions) {
 			modelPatterns && modelPatterns.length > 0 ? await resolveModelScope(modelPatterns, modelRegistry) : [];
 		const {
 			options: sessionOptions,
-			cliThinkingFromModel,
 			diagnostics: sessionOptionDiagnostics,
 		} = await buildSessionOptions(
 			parsed,
@@ -827,11 +800,6 @@ export async function main(args: string[], options?: MainOptions) {
 			enableSubagents: sessionOptions.enableSubagents,
 			autoReviewSubagents: sessionOptions.autoReviewSubagents,
 		});
-		const cliThinkingOverride = parsed.thinking !== undefined || cliThinkingFromModel;
-		if (created.session.model && cliThinkingOverride) {
-			created.session.setThinkingLevel(created.session.thinkingLevel);
-		}
-
 		return {
 			...created,
 			services,

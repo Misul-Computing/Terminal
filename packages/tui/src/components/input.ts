@@ -17,6 +17,13 @@ interface InputState {
  * Input component - single-line text input with horizontal scrolling
  */
 export class Input implements Component, Focusable {
+	/**
+	 * Default cursor renderer used by all Input instances.
+	 * Set this from the terminal package to use theme-aware colors
+	 * instead of the default inverse video.
+	 */
+	static defaultCursorRender: (char: string) => string = (char: string) => `\x1b[7m${char}\x1b[27m`;
+
 	private value: string = "";
 	private cursor: number = 0; // Cursor position in the value
 	public onSubmit?: (value: string) => void;
@@ -433,8 +440,8 @@ export class Input implements Component, Focusable {
 		// Hardware cursor marker (zero-width, emitted before fake cursor for IME positioning)
 		const marker = this.focused ? CURSOR_MARKER : "";
 
-		// Use inverse video to show cursor
-		const cursorChar = `\x1b[7m${atCursor}\x1b[27m`; // ESC[7m = reverse video, ESC[27m = normal
+		// Use theme cursor renderer (defaults to inverse video)
+		const cursorChar = Input.defaultCursorRender(atCursor);
 		const textWithCursor = beforeCursor + marker + cursorChar + afterCursor;
 
 		// Calculate visual width

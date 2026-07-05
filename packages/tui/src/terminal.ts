@@ -1,5 +1,6 @@
 import * as fs from "node:fs";
 import { createRequire } from "node:module";
+import * as os from "node:os";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { setKittyProtocolActive } from "./keys.ts";
@@ -91,6 +92,10 @@ export interface Terminal {
 
 	// Progress indicator (OSC 9;4)
 	setProgress(active: boolean): void;
+
+	// Mouse capture control
+	enableMouseCapture(): void;
+	disableMouseCapture(): void;
 }
 
 /**
@@ -122,6 +127,8 @@ export class ProcessTerminal implements Terminal {
 	private keyboardProtocolBufferFlushTimer?: ReturnType<typeof setTimeout>;
 	private stdinBuffer?: StdinBuffer;
 	private stdinDataHandler?: (data: string) => void;
+	/** When true, mouse capture sequences are not sent, allowing native text selection. */
+	private _disableMouseCapture = false;
 	private progressInterval?: ReturnType<typeof setInterval>;
 	private writeLogPath = (() => {
 		const env = process.env.MISUL_TUI_WRITE_LOG || "";
@@ -144,6 +151,15 @@ export class ProcessTerminal implements Terminal {
 
 	get modifyOtherKeysActive(): boolean {
 		return this._modifyOtherKeysActive;
+	}
+
+	/**
+	 * @param disableMouseCapture When true, mouse capture is not enabled,
+	 *   allowing native terminal text selection (highlight-to-copy) without
+	 *   needing Shift-drag. Wheel scroll and click-to-toggle are disabled.
+	 */
+	constructor(disableMouseCapture = false) {
+		this._disableMouseCapture = disableMouseCapture;
 	}
 
 	start(onInput: (data: string) => void, onResize: () => void): void {
@@ -169,13 +185,17 @@ export class ProcessTerminal implements Terminal {
 		// Enable bracketed paste mode - terminal will wrap pastes in \x1b[200~ ... \x1b[201~
 		process.stdout.write("\x1b[?2004h");
 
-		// Enable SGR mouse (1006) + click tracking (1000) so the wheel drives the
-		// in-app scroll (a clean history view that avoids polluting native
-		// scrollback) and clicks reach the UI. Because the app holds the mouse, the
-		// terminal routes plain drags to it, so native highlight-to-copy needs the
-		// terminal's selection modifier: Shift-drag, or Option/Cmd-drag on some
-		// macOS terminals. Wheel events arrive as button 64/65 (see handleMouse).
-		process.stdout.write("\x1b[?1006h\x1b[?1000h");
+		// Enable SGR mouse (1006) + click tracking (1000) + button-motion tracking
+		// (1002) so the wheel drives the in-app scroll, clicks reach the UI, and
+		// plain drags can be used for in-app text selection. Native highlight-to-copy
+		// is still available via the terminal's selection modifier: Shift-drag, or
+		// Option/Cmd-drag on some macOS terminals. Wheel events arrive as button 64/65.
+		// Note: xterm tracking modes are mutually exclusive, so 1002 must be set
+		// after 1000 to keep button-motion tracking active.
+		// When disableMouseCapture is set, skip this to allow native text selection.
+		if (!this._disableMouseCapture) {
+			process.stdout.write("\x1b[?1006h\x1b[?1000h\x1b[?1002h");
+		}
 
 		// Set up resize handler immediately
 		process.stdout.on("resize", this.resizeHandler);
@@ -345,30 +365,66 @@ export class ProcessTerminal implements Terminal {
 			const col = Number.parseInt(mouseMatch[2]!, 10);
 			const row = Number.parseInt(mouseMatch[3]!, 10);
 			const isRelease = mouseMatch[4] === "m";
-			// SGR button encoding: 0=left, 1=middle, 2=right, 3=release(legacy)
-			// bits: +8=ctrl, +16=alt, +32=shift. For drag, button has +32.
-			// Wheel: button 64=scroll up, 65=scroll down (always press+release pair).
-			const isWheel = button === 64 || button === 65;
-			const lowButton = isWheel ? button : button % 3;
-			const type: MouseEvent["type"] = isWheel
-				? "wheel"
-				: isRelease
-					? "release"
-					: button >= 32 ? "drag" : "press";
+
+			// SGR 1006 mouse encoding:
+			//   bits 0-1: button number (0=left, 1=middle, 2=right, 3=release)
+			//   bit 2: shift
+			//   bit 3: meta/alt
+			//   bit 4: ctrl
+			//   bit 5: motion (drag)
+			//   bit 6: wheel event
+			const SGR_BUTTON_MASK = 0b000011;
+			const SGR_SHIFT = 0b000100;
+			const SGR_META = 0b001000;
+			const SGR_CTRL = 0b010000;
+			const SGR_MOTION = 0b100000;
+			const SGR_WHEEL = 0b1000000;
+
+			const buttonNumber = button & SGR_BUTTON_MASK;
+			const shift = (button & SGR_SHIFT) !== 0;
+			const meta = (button & SGR_META) !== 0;
+			const ctrl = (button & SGR_CTRL) !== 0;
+			const motion = (button & SGR_MOTION) !== 0;
+			const wheel = (button & SGR_WHEEL) !== 0;
+
+			// Let the terminal handle mouse events with modifiers (Shift+drag for text
+			// selection, Cmd/Ctrl+click for links, etc.) instead of consuming them.
+			if (shift || meta || ctrl) {
+				return;
+			}
+
+			let type: MouseEvent["type"];
+			let outputButton: number;
+			if (wheel) {
+				type = "wheel";
+				outputButton = buttonNumber === 0 ? 64 : 65;
+			} else if (isRelease) {
+				type = "release";
+				outputButton = buttonNumber;
+			} else if (motion) {
+				type = "drag";
+				outputButton = buttonNumber;
+			} else {
+				type = "press";
+				outputButton = buttonNumber;
+			}
+
 			if (process.env.MISUL_MOUSE_DEBUG) {
-				fs.appendFileSync("/tmp/misul-mouse.log", `MOUSE: type=${type} button=${lowButton} col=${col} row=${row} raw=${JSON.stringify(sequence)} handler=${this.mouseHandler ? "yes" : "no"}\n`);
+				const logPath = path.join(os.tmpdir(), "misul-mouse.log");
+				fs.appendFileSync(logPath, `MOUSE: type=${type} button=${outputButton} col=${col} row=${row} raw=${JSON.stringify(sequence)} handler=${this.mouseHandler ? "yes" : "no"}\n`);
 			}
 			if (!this.mouseHandler) return;
-			// Forward left-click press/release and wheel events.
-			if (lowButton === 0 || isWheel) {
-				this.mouseHandler({ type, button: lowButton, col, row });
+			// Forward left-button press/release/drag and wheel events.
+			if (outputButton === 0 || type === "wheel") {
+				this.mouseHandler({ type, button: outputButton, col, row });
 			}
 			return;
 		}
 
 		// Debug log for non-mouse sequences that look like they might be mouse-related
 		if (process.env.MISUL_MOUSE_DEBUG && sequence.startsWith("\x1b[<")) {
-			fs.appendFileSync("/tmp/misul-mouse.log", `NON-MATCH MOUSE-LIKE: ${JSON.stringify(sequence)}\n`);
+			const logPath = path.join(os.tmpdir(), "misul-mouse.log");
+			fs.appendFileSync(logPath, `NON-MATCH MOUSE-LIKE: ${JSON.stringify(sequence)}\n`);
 		}
 
 		if (!this.inputHandler) return;
@@ -475,8 +531,10 @@ export class ProcessTerminal implements Terminal {
 		// Disable bracketed paste mode
 		process.stdout.write("\x1b[?2004l");
 
-		// Disable mouse tracking
-		process.stdout.write("\x1b[?1000l\x1b[?1006l");
+		// Disable mouse tracking (only if it was enabled)
+		if (!this._disableMouseCapture) {
+			process.stdout.write("\x1b[?1002l\x1b[?1000l\x1b[?1006l");
+		}
 
 		// Leave the alternate screen, restoring the user's pre-launch terminal.
 		process.stdout.write("\x1b[?1049l");
@@ -519,6 +577,18 @@ export class ProcessTerminal implements Terminal {
 		if (process.stdin.setRawMode) {
 			process.stdin.setRawMode(this.wasRaw);
 		}
+	}
+
+	enableMouseCapture(): void {
+		if (!this._disableMouseCapture) return;
+		this._disableMouseCapture = false;
+		process.stdout.write("\x1b[?1006h\x1b[?1000h\x1b[?1002h");
+	}
+
+	disableMouseCapture(): void {
+		if (this._disableMouseCapture) return;
+		this._disableMouseCapture = true;
+		process.stdout.write("\x1b[?1002l\x1b[?1000l\x1b[?1006l");
 	}
 
 	write(data: string): void {

@@ -421,19 +421,19 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 	let memoryStoreRef: MemoryStore | undefined;
 	const memoryWriteTool = createMemoryWriteTool({ getMemoryStore: () => memoryStoreRef });
 
-	// Start MCP servers from addons and collect their tools.
-	const addonMcpServers = resourceLoader.getAddonMcpServers();
+	// Start MCP servers from mcp.json configs and collect their tools.
+	const mcpServers = resourceLoader.getMcpServers();
 	const mcpManager = new McpManager(cwd);
-	if (Object.keys(addonMcpServers).length > 0) {
-		await mcpManager.startServers(addonMcpServers);
+	if (Object.keys(mcpServers).length > 0) {
+		await mcpManager.startServers(mcpServers);
 	}
 	const mcpTools = mcpManager.getToolDefinitions();
 
-	// Start ACP agents from addons and collect their tools.
-	const addonAcpAgents = resourceLoader.getAddonAcpAgents();
+	// Start ACP agents from acp.json configs and collect their tools.
+	const acpAgents = resourceLoader.getAcpAgents();
 	const acpManager = new AcpManager(cwd);
-	if (Object.keys(addonAcpAgents).length > 0) {
-		await acpManager.startAgents(addonAcpAgents);
+	if (Object.keys(acpAgents).length > 0) {
+		await acpManager.startAgents(acpAgents);
 	}
 	const acpTools = acpManager.getToolDefinitions();
 

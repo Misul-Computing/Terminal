@@ -3,6 +3,7 @@ import * as path from "node:path";
 import {
 	type EditorTheme,
 	getCapabilities,
+	Input,
 	type MarkdownTheme,
 	type RgbColor,
 	type SelectListTheme,
@@ -46,6 +47,8 @@ const ThemeJsonSchema = Type.Object({
 		thinkingText: ColorValueSchema,
 		// Backgrounds & Content Text (11 colors)
 		selectedBg: ColorValueSchema,
+		cursorBg: ColorValueSchema,
+		cursorFg: ColorValueSchema,
 		userMessageBg: ColorValueSchema,
 		userMessageText: ColorValueSchema,
 		customMessageBg: ColorValueSchema,
@@ -149,6 +152,7 @@ export type ThemeColor =
 	| "thinkingMedium"
 	| "thinkingHigh"
 	| "thinkingXhigh"
+	| "cursorFg"
 	| "bashMode";
 
 export type ThemeBg =
@@ -157,7 +161,8 @@ export type ThemeBg =
 	| "customMessageBg"
 	| "toolPendingBg"
 	| "toolSuccessBg"
-	| "toolErrorBg";
+	| "toolErrorBg"
+	| "cursorBg";
 
 type ColorMode = "truecolor" | "256color";
 
@@ -360,6 +365,17 @@ export class Theme {
 		return `${ansi}${text}\x1b[49m`; // Reset only background color
 	}
 
+	/**
+	 * Return the raw ANSI SGR sequence for a background color, without wrapping
+	 * any text or emitting a reset. Useful for applying background to partial
+	 * ranges while preserving existing styling.
+	 */
+	bgCode(color: ThemeBg): string {
+		const ansi = this.bgColors.get(color);
+		if (!ansi) throw new Error(`Unknown theme background color: ${color}`);
+		return ansi;
+	}
+
 	bold(text: string): string {
 		return chalk.bold(text);
 	}
@@ -373,7 +389,8 @@ export class Theme {
 	}
 
 	inverse(text: string): string {
-		return chalk.inverse(text);
+		// Use theme cursor colors for a guaranteed-contrast inverse effect
+		return this.bg("cursorBg", this.fg("cursorFg", text));
 	}
 
 	strikethrough(text: string): string {
@@ -586,6 +603,7 @@ function createTheme(themeJson: ThemeJson, mode?: ColorMode, sourcePath?: string
 	const bgColors: Record<ThemeBg, string | number> = {} as Record<ThemeBg, string | number>;
 	const bgColorKeys: Set<string> = new Set([
 		"selectedBg",
+		"cursorBg",
 		"userMessageBg",
 		"customMessageBg",
 		"toolPendingBg",
@@ -1207,9 +1225,13 @@ export function getSelectListTheme(): SelectListTheme {
 }
 
 export function getEditorTheme(): EditorTheme {
+	const cursorRender = (char: string) => theme.bg("cursorBg", theme.fg("cursorFg", char));
+	// Also set the static cursor renderer for Input components
+	Input.defaultCursorRender = cursorRender;
 	return {
 		borderColor: (text: string) => theme.fg("border", text),
 		selectList: getSelectListTheme(),
+		cursor: cursorRender,
 	};
 }
 

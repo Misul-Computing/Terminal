@@ -47,6 +47,7 @@ import {
 	collectEntriesForBranchSummary,
 	compact,
 	estimateContextTokens,
+	formatActiveSkills,
 	generateBranchSummary,
 	prepareCompaction,
 	shouldCompact,
@@ -1001,7 +1002,6 @@ export class AgentSession {
 			activeTools: this.getActiveToolNames(),
 			enableSubagents: true,
 			goalMode: false,
-			addonTools: [],
 		};
 	}
 
@@ -2086,6 +2086,10 @@ export class AgentSession {
 				details = result.details;
 			}
 
+			// Enrich summary with active skill names so the model can
+			// re-invoke skills after compaction without user re-prompting.
+			summary = this._enrichSummaryWithSkills(summary);
+
 			if (this._compactionAbortController.signal.aborted) {
 				throw new Error("Compaction cancelled");
 			}
@@ -2115,6 +2119,14 @@ export class AgentSession {
 					fromExtension,
 				});
 			}
+
+			// Refresh skills and other resources after compaction. The context was
+			// just rebuilt, so this is the ideal moment to pick up any resource
+			// changes that happened during the compacted-away portion of the
+			// conversation. Clear the abort controller first so liveReload()'s
+			// isCompacting guard doesn't skip the reload.
+			this._compactionAbortController = undefined;
+			await this.liveReload();
 
 			const compactionResult = {
 				summary,
@@ -2255,6 +2267,19 @@ export class AgentSession {
 	}
 
 	/**
+	 * Enrich a compaction summary with active skill names.
+	 * After compaction, the model loses track of which skills were in use.
+	 * Appending the active skill list to the summary lets the model re-invoke
+	 * them without the user re-prompting.
+	 */
+	private _enrichSummaryWithSkills(summary: string): string {
+		const skills = this._resourceLoader.getSkills().skills;
+		if (skills.length === 0) return summary;
+		const skillNames = skills.map((s) => s.name);
+		return summary + formatActiveSkills(skillNames);
+	}
+
+	/**
 	 * Internal: Run auto-compaction with events.
 	 */
 	private async _runAutoCompaction(reason: "overflow" | "threshold", willRetry: boolean): Promise<boolean> {
@@ -2370,6 +2395,10 @@ export class AgentSession {
 				details = compactResult.details;
 			}
 
+			// Enrich summary with active skill names so the model can
+			// re-invoke skills after compaction without user re-prompting.
+			summary = this._enrichSummaryWithSkills(summary);
+
 			if (this._autoCompactionAbortController.signal.aborted) {
 				this._emit({
 					type: "compaction_end",
@@ -2406,6 +2435,14 @@ export class AgentSession {
 					fromExtension,
 				});
 			}
+
+			// Refresh skills and other resources after compaction. The context was
+			// just rebuilt, so this is the ideal moment to pick up any resource
+			// changes that happened during the compacted-away portion of the
+			// conversation. Clear the abort controller first so liveReload()'s
+			// isCompacting guard doesn't skip the reload.
+			this._autoCompactionAbortController = undefined;
+			await this.liveReload();
 
 			const result: CompactionResult = {
 				summary,

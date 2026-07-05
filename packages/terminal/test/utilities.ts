@@ -220,9 +220,8 @@ export function createTestResourceLoader(options: CreateTestResourceLoaderOption
 		getMemory: () => undefined,
 		getSystemPrompt: () => undefined,
 		getAppendSystemPrompt: () => [],
-		getAddons: () => [],
-		getAddonMcpServers: () => ({}),
-		getAddonAcpAgents: () => ({}),
+		getMcpServers: () => ({}),
+		getAcpAgents: () => ({}),
 		extendResources: () => {},
 		reload: async () => {},
 	};

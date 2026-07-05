@@ -902,6 +902,47 @@ export function applyBackgroundToLine(line: string, width: number, bgFn: (text: 
 }
 
 /**
+ * Apply a background color to a visible-column range of a line.
+ * ANSI codes are preserved: existing foreground/styles remain active and the
+ * background is applied only between the selected columns.
+ */
+export function applyBackgroundToRange(
+	line: string,
+	startCol: number,
+	endCol: number,
+	bgCode: string,
+	resetBgCode: string,
+): string {
+	if (startCol >= endCol || endCol <= 0) return line;
+	const lineWidth = visibleWidth(line);
+	if (startCol >= lineWidth) return line;
+	const actualEnd = Math.min(endCol, lineWidth);
+
+	const before = sliceByColumn(line, 0, startCol);
+	const selected = sliceByColumn(line, startCol, actualEnd - startCol);
+	const after = sliceByColumn(line, actualEnd, lineWidth - actualEnd);
+	return `${before}${bgCode}${selected}${resetBgCode}${after}`;
+}
+
+/**
+ * Remove ANSI escape codes (including OSC hyperlinks) from a string.
+ */
+export function stripAnsi(str: string): string {
+	let result = "";
+	let i = 0;
+	while (i < str.length) {
+		const ansi = extractAnsiCode(str, i);
+		if (ansi) {
+			i += ansi.length;
+			continue;
+		}
+		result += str[i];
+		i++;
+	}
+	return result;
+}
+
+/**
  * Truncate text to fit within a maximum visible width, adding ellipsis if needed.
  * Optionally pad with spaces to reach exactly maxWidth.
  * Properly handles ANSI escape codes (they don't count toward width).

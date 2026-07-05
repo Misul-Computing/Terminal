@@ -9,9 +9,10 @@ export type { ResourceCollision, ResourceDiagnostic } from "./diagnostics.ts";
 
 import { canonicalizePath, isLocalPath, resolvePath } from "../utils/paths.ts";
 import { createEventBus, type EventBus } from "./event-bus.ts";
-import { getGlobalAddonsDir, getProjectAddonsDir, loadAddons, type Addon } from "./addons.ts";
+import { loadAcpAgentsConfigs, type AcpAgentConfig } from "./acp-config.ts";
 import { createExtensionRuntime, loadExtensionFromFactory, loadExtensions } from "./extensions/loader.ts";
 import type { Extension, ExtensionFactory, ExtensionRuntime, LoadExtensionsResult } from "./extensions/types.ts";
+import { loadMcpServers, type McpServerConfig } from "./mcp-config.ts";
 import { DefaultPackageManager, type PathMetadata, type ResolvedResource } from "./package-manager.ts";
 import type { PromptTemplate } from "./prompt-templates.ts";
 import { loadPromptTemplates } from "./prompt-templates.ts";
@@ -41,9 +42,8 @@ export interface ResourceLoader {
 	getMemory(): LoadedMemory | undefined;
 	getSystemPrompt(): string | undefined;
 	getAppendSystemPrompt(): string[];
-	getAddons(): Addon[];
-	getAddonMcpServers(): Record<string, import("./addons.ts").McpServerConfig>;
-	getAddonAcpAgents(): Record<string, import("./addons.ts").AcpAgentConfig>;
+	getMcpServers(): Record<string, McpServerConfig>;
+	getAcpAgents(): Record<string, AcpAgentConfig>;
 	extendResources(paths: ResourceExtensionPaths): void;
 	reload(options?: ResourceLoaderReloadOptions): Promise<void>;
 }
@@ -150,7 +150,6 @@ export interface DefaultResourceLoaderOptions {
 	additionalSkillPaths?: string[];
 	additionalPromptTemplatePaths?: string[];
 	additionalThemePaths?: string[];
-	additionalAddonPaths?: string[];
 	extensionFactories?: ExtensionFactory[];
 	noExtensions?: boolean;
 	noSkills?: boolean;
@@ -189,7 +188,6 @@ export class DefaultResourceLoader implements ResourceLoader {
 	private additionalSkillPaths: string[];
 	private additionalPromptTemplatePaths: string[];
 	private additionalThemePaths: string[];
-	private additionalAddonPaths: string[];
 	private extensionFactories: ExtensionFactory[];
 	private noExtensions: boolean;
 	private noSkills: boolean;
@@ -235,9 +233,8 @@ export class DefaultResourceLoader implements ResourceLoader {
 	private extensionThemeSourceInfos: Map<string, SourceInfo>;
 	private lastPromptPaths: string[];
 	private lastThemePaths: string[];
-	private addons: Addon[] = [];
-	private addonMcpServers: Record<string, import("./addons.ts").McpServerConfig> = {};
-	private addonAcpAgents: Record<string, import("./addons.ts").AcpAgentConfig> = {};
+	private mcpServers: Record<string, McpServerConfig> = {};
+	private acpAgents: Record<string, AcpAgentConfig> = {};
 
 	constructor(options: DefaultResourceLoaderOptions) {
 		this.cwd = resolvePath(options.cwd);
@@ -253,7 +250,6 @@ export class DefaultResourceLoader implements ResourceLoader {
 		this.additionalSkillPaths = options.additionalSkillPaths ?? [];
 		this.additionalPromptTemplatePaths = options.additionalPromptTemplatePaths ?? [];
 		this.additionalThemePaths = options.additionalThemePaths ?? [];
-		this.additionalAddonPaths = options.additionalAddonPaths ?? [];
 		this.extensionFactories = options.extensionFactories ?? [];
 		this.noExtensions = options.noExtensions ?? false;
 		this.noSkills = options.noSkills ?? false;
@@ -319,16 +315,12 @@ export class DefaultResourceLoader implements ResourceLoader {
 		return this.appendSystemPrompt;
 	}
 
-	getAddons(): Addon[] {
-		return this.addons;
+	getMcpServers(): Record<string, McpServerConfig> {
+		return this.mcpServers;
 	}
 
-	getAddonMcpServers(): Record<string, import("./addons.ts").McpServerConfig> {
-		return this.addonMcpServers;
-	}
-
-	getAddonAcpAgents(): Record<string, import("./addons.ts").AcpAgentConfig> {
-		return this.addonAcpAgents;
+	getAcpAgents(): Record<string, AcpAgentConfig> {
+		return this.acpAgents;
 	}
 
 	extendResources(paths: ResourceExtensionPaths): void {
@@ -435,44 +427,35 @@ export class DefaultResourceLoader implements ResourceLoader {
 		const cliEnabledPrompts = getEnabledPaths(cliExtensionPaths.prompts);
 		const cliEnabledThemes = getEnabledPaths(cliExtensionPaths.themes);
 
-		// Discover addons from global and project addon directories.
-		// Addons are unified containers that can hold skills, extensions, and MCP servers.
-		// Their components are routed to the existing skill/extension loaders.
-		const addonDirs: Array<{ path: string; metadata: PathMetadata }> = [];
-		const globalAddonsDir = getGlobalAddonsDir(this.agentDir);
-		if (existsSync(globalAddonsDir)) {
-			addonDirs.push({ path: globalAddonsDir, metadata: { source: "global", scope: "user", origin: "addons" } });
+		// Load MCP server configs from global and project mcp.json files.
+		const mcpConfigDirs: Array<{ path: string; metadata: PathMetadata }> = [
+			{ path: this.agentDir, metadata: { source: "global", scope: "user", origin: "top-level" } },
+		];
+		if (this.settingsManager.isProjectTrusted()) {
+			mcpConfigDirs.push({ path: this.cwd, metadata: { source: "project", scope: "project", origin: "top-level" } });
 		}
-		const projectAddonsDir = getProjectAddonsDir(this.cwd);
-		if (existsSync(projectAddonsDir)) {
-			addonDirs.push({ path: projectAddonsDir, metadata: { source: "project", scope: "project", origin: "addons" } });
-		}
-		// CLI-specified addon paths
-		for (const p of this.additionalAddonPaths) {
-			addonDirs.push({ path: resolvePath(p), metadata: { source: "cli", scope: "temporary", origin: "addons" } });
-		}
-		const addonResult = loadAddons(addonDirs);
-		this.addons = addonResult.addons;
-		for (const diag of addonResult.diagnostics) {
+		const mcpResult = loadMcpServers(mcpConfigDirs);
+		this.mcpServers = mcpResult.mcpServers;
+		for (const diag of mcpResult.diagnostics) {
 			this.skillDiagnostics.push(diag);
 		}
-		// Route addon skill paths into the skill loading pipeline
-		const addonSkillPaths = addonResult.skillPaths;
-		// Route addon extension paths into the extension loading pipeline
-		const addonExtensionPaths = addonResult.extensionPaths;
-		// Store MCP server configs for later use
-		this.addonMcpServers = addonResult.mcpServers;
-		// Store ACP agent configs for later use
-		this.addonAcpAgents = addonResult.acpAgents;
-		for (const { path: p, metadata } of [...addonSkillPaths, ...addonExtensionPaths]) {
-			if (!metadataByPath.has(p)) {
-				metadataByPath.set(p, metadata);
-			}
+
+		// Load ACP agent configs from global and project acp.json files.
+		const acpConfigDirs: Array<{ path: string; metadata: PathMetadata }> = [
+			{ path: this.agentDir, metadata: { source: "global", scope: "user", origin: "top-level" } },
+		];
+		if (this.settingsManager.isProjectTrusted()) {
+			acpConfigDirs.push({ path: this.cwd, metadata: { source: "project", scope: "project", origin: "top-level" } });
+		}
+		const acpResult = loadAcpAgentsConfigs(acpConfigDirs);
+		this.acpAgents = acpResult.acpAgents;
+		for (const diag of acpResult.diagnostics) {
+			this.skillDiagnostics.push(diag);
 		}
 
 		const extensionPaths = this.noExtensions
-			? [...cliEnabledExtensions, ...addonExtensionPaths.map((p) => p.path)]
-			: this.mergePaths([...cliEnabledExtensions, ...addonExtensionPaths.map((p) => p.path)], enabledExtensions);
+			? [...cliEnabledExtensions]
+			: this.mergePaths([...cliEnabledExtensions], enabledExtensions);
 
 		const extensionsResult = await this.loadFinalExtensionSet(extensionPaths, preTrustExtensions);
 		for (const p of this.additionalExtensionPaths) {
@@ -486,11 +469,10 @@ export class DefaultResourceLoader implements ResourceLoader {
 		this.extensionsResult = this.extensionsOverride ? this.extensionsOverride(extensionsResult) : extensionsResult;
 		this.applyExtensionSourceInfo(this.extensionsResult.extensions, metadataByPath);
 
-		const addonSkillPathStrings = addonSkillPaths.map((p) => p.path);
 		const skillPaths = this.noSkills
-			? this.mergePaths([...cliEnabledSkills, ...addonSkillPathStrings], this.additionalSkillPaths)
-			: // Bundled defaults load last so user/project/cli/addon skills win name collisions.
-				this.mergePaths([...cliEnabledSkills, ...enabledSkills, ...addonSkillPathStrings], [...this.additionalSkillPaths, getBundledSkillsDir()]);
+			? this.mergePaths([...cliEnabledSkills], this.additionalSkillPaths)
+			: // Bundled defaults load last so user/project/cli skills win name collisions.
+				this.mergePaths([...cliEnabledSkills, ...enabledSkills], [...this.additionalSkillPaths, getBundledSkillsDir()]);
 
 		this.lastSkillPaths = skillPaths;
 		this.updateSkillsFromPaths(skillPaths, metadataByPath);

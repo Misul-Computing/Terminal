@@ -119,8 +119,8 @@ These rules are learned from this codebase and must be enforced:
 9. **Footer caches by entry count.** Any new per-frame computation must be cached the same way.
 10. **No AI-isms in docs.** No emojis (unless intentional branding), no "Generated with X" headers, no AI-style filler ("it's worth noting", "delve into", "leverage", "seamless").
 11. **No `.catch(() => {})` or empty catch blocks.** If you swallow an error, leave a comment explaining why.
-12. **No `as any` without a comment.** If you must bypass types, explain why in a `// ponytail:` or inline comment.
-13. **Follow ponytail principles.** No unrequested abstractions, no boilerplate for later, deletion over addition.
+12. **No `as any` without a comment.** If you must bypass types, explain why in a `// cm:` or inline comment.
+13. **Follow coding-minimalism principles.** No unrequested abstractions, no boilerplate for later, deletion over addition.
 14. **No AI co-author trailers.** No `Co-Authored-By` for any assistant. No "Generated with X" footer. Commits read as the user's own work.
 15. **No AI-tells in prose.** No em dashes or en dashes (plain hyphen, comma, or new sentence). No stock vocabulary: "delve", "leverage" as a verb, "boasts", "robust", "seamless", "elevate", "intricate". No "not only X but also Y" constructions. No filler openers. Straight ASCII quotes, not curly. No decorative emoji.
 
@@ -157,7 +157,7 @@ a finding that turns out to be a false positive.
 - Code that matches existing codebase patterns even if suboptimal
 - Test files using mock data or test-specific patterns
 - Comments explaining non-obvious business logic
-- Intentional simplifications marked with `// ponytail:`
+- Intentional simplifications marked with `// cm:`
 
 ## Depth
 

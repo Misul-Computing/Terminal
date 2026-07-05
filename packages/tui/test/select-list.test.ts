@@ -6,6 +6,7 @@ import { visibleWidth } from "../src/utils.ts";
 const testTheme = {
 	selectedPrefix: (text: string) => text,
 	selectedText: (text: string) => text,
+	unselectedText: (text: string) => text,
 	description: (text: string) => text,
 	scrollInfo: (text: string) => text,
 	noMatch: (text: string) => text,

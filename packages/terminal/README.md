@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/images/misul-logo-header.svg" alt="Misul Terminal" width="100%"></p>
+
 <p align="center">
   <a href="https://discord.com/invite/3cU7Bz4UPx"><img alt="Discord" src="https://img.shields.io/badge/discord-community-5865F2?style=flat-square&logo=discord&logoColor=white" /></a>
   <a href="https://www.npmjs.com/package/@misul/terminal"><img alt="npm" src="https://img.shields.io/npm/v/@misul/terminal?style=flat-square" /></a>
@@ -12,12 +14,6 @@ Misul Terminal is a minimal terminal coding harness. Adapt misul to your workflo
 Misul Terminal ships with powerful defaults but skips features like sub agents and plan mode. Instead, you can ask misul to build what you want or install a third party Misul package that matches your workflow.
 
 Misul Terminal runs in four modes: interactive, print or JSON, RPC for process integration, and an SDK for embedding in your own apps. See [openclaw/openclaw](https://github.com/openclaw/openclaw) for a real-world SDK integration.
-
-## Share your OSS coding agent sessions
-
-If you use misul for open source work, please share your coding agent sessions.
-
-Public OSS session data helps improve models, prompts, tools, and evaluations using real development workflows.
 
 ## Table of Contents
 
@@ -133,7 +129,7 @@ See [docs/providers.md](docs/providers.md) for detailed setup instructions.
 
 The interface from top to bottom:
 
-- **Startup header** - Shows shortcuts (`/hotkeys` for all), loaded AGENTS.md files, prompt templates, skills, and extensions
+- **Startup header** - Logo, version, and tagline
 - **Messages** - Your messages, assistant responses, tool calls and results, notifications, errors, and extension UI
 - **Editor** - Where you type; border color indicates thinking level
 - **Footer** - Working directory, session name, total token/cache usage (`↑` input, `↓` output, `R` cache read, `W` cache write, `CH` latest cache hit rate), cost, context usage, current model
@@ -160,23 +156,23 @@ Type `/` in the editor to trigger commands. [Extensions](#extensions) can regist
 |---------|-------------|
 | `/login`, `/logout` | OAuth authentication |
 | `/model` | Switch models |
-| `/scoped-models` | Enable/disable models for Ctrl+P cycling |
 | `/settings` | Thinking level, theme, message delivery, transport |
 | `/resume` | Pick from previous sessions |
 | `/new` | Start a new session |
 | `/name <name>` | Set session display name |
 | `/session` | Show session info (file, ID, messages, tokens, cost) |
 | `/tree` | Jump to any point in the session and continue from there |
-| `/trust` | Save project trust decision for future sessions (restart required) |
 | `/fork` | Create a new session from a previous user message |
 | `/clone` | Duplicate the current active branch into a new session |
 | `/compact [prompt]` | Manually compact context, optional custom instructions |
 | `/copy` | Copy last assistant message to clipboard |
 | `/export [file]` | Export session to HTML file |
-| `/share` | Upload as private GitHub gist with shareable HTML link |
 | `/reload` | Reload keybindings, extensions, skills, prompts, and context files (themes hot-reload automatically) |
 | `/hotkeys` | Show all keyboard shortcuts |
-| `/changelog` | Display version history |
+| `/read <path>` | Read a file instantly |
+| `/grep <pattern> [path]` | Search file contents instantly |
+| `/edit <path> "<old>" "<new>"` | Apply a simple edit instantly |
+| `/todo [text]` | Show or add to the local task list |
 | `/quit` | Quit misul |
 
 ### Keyboard Shortcuts
@@ -282,14 +278,12 @@ If no extension or saved decision applies, `defaultProjectTrust` controls the fa
 
 `misul config` and package commands use the same project trust flow, except `misul update` never prompts. Pass `--approve` to trust project-local settings for one command or `--no-approve` to ignore them.
 
-Use `/trust` in interactive mode to save a project trust decision for future sessions, including trust for the immediate parent folder. It writes `~/.misul/agent/trust.json` only; the current session is not reloaded, so restart misul for changes to take effect.
-
 ### Telemetry and update checks
 
 Misul Terminal has two separate startup features:
 
 - **Update check:** fetches `https://misul.dev/api/latest-version` to check whether a newer Misul Terminal version exists. Disable it with `MISUL_SKIP_VERSION_CHECK=1`. Disabling update checks only turns off this check.
-- **Install/update telemetry:** after first install or a changelog-detected update, sends an anonymous version ping to `https://misul.dev/api/report-install`. This setting also controls optional provider attribution headers for OpenRouter, Cloudflare, and direct NVIDIA NIM requests. Opt out by setting `enableInstallTelemetry` to `false` in `settings.json`, or by setting `MISUL_TELEMETRY=0`. This does not disable update checks; Misul Terminal may still contact `misul.dev` for the latest version unless update checks are disabled or offline mode is enabled.
+- **Install/update telemetry:** after first install or updates, sends an anonymous version ping to `https://misul.dev/api/report-install`. This setting also controls optional provider attribution headers for OpenRouter, Cloudflare, and direct NVIDIA NIM requests. Opt out by setting `enableInstallTelemetry` to `false` in `settings.json`, or by setting `MISUL_TELEMETRY=0`. This does not disable update checks; Misul Terminal may still contact `misul.dev` for the latest version unless update checks are disabled or offline mode is enabled.
 
 Use `--offline` or `MISUL_OFFLINE=1` to disable all startup network operations described here, including update checks, package update checks, and install/update telemetry.
 

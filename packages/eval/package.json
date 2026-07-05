@@ -1,6 +1,6 @@
 {
 	"name": "@misul/eval",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"description": "Quality-per-dollar (QpD) eval meter for the Misul agent",
 	"type": "module",
 	"main": "./dist/index.js",

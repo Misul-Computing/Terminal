@@ -121,7 +121,7 @@ export interface CompactionSettings {
 export const DEFAULT_COMPACTION_SETTINGS: CompactionSettings = {
 	enabled: true,
 	reserveTokens: 16384,
-	keepRecentTokens: 20000,
+	keepRecentTokens: 24000,
 };
 
 // ============================================================================
@@ -503,6 +503,10 @@ Use this EXACT format:
 - [Any data, examples, or references needed to continue]
 - [Or "(none)" if not applicable]
 
+## Active Skills
+- [Names of skills that were invoked during the compacted conversation, if any]
+- [Or "(none)" if no skills were used]
+
 Keep each section concise. Preserve exact file paths, function names, and error messages.`;
 
 const UPDATE_SUMMARIZATION_PROMPT = `The messages above are NEW conversation messages to incorporate into the existing summary provided in <previous-summary> tags.
@@ -553,6 +557,10 @@ Use this EXACT format:
 
 ## Critical Context
 - [Preserve important context, add new if needed]
+
+## Active Skills
+- [Preserve existing skill names, add new ones if skills were invoked]
+- [Or "(none)" if no skills were used]
 
 Keep each section concise. Preserve exact file paths, function names, and error messages.`;
 

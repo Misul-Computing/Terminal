@@ -10,6 +10,7 @@ const chalk = new Chalk({ level: 3 });
 export const defaultSelectListTheme: SelectListTheme = {
 	selectedPrefix: (text: string) => chalk.blue(text),
 	selectedText: (text: string) => chalk.bold(text),
+	unselectedText: (text: string) => text,
 	description: (text: string) => chalk.dim(text),
 	scrollInfo: (text: string) => chalk.dim(text),
 	noMatch: (text: string) => chalk.dim(text),
@@ -35,4 +36,5 @@ export const defaultMarkdownTheme: MarkdownTheme = {
 export const defaultEditorTheme: EditorTheme = {
 	borderColor: (text: string) => chalk.dim(text),
 	selectList: defaultSelectListTheme,
+	cursor: (char: string) => `\x1b[7m${char}\x1b[0m`,
 };

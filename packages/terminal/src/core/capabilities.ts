@@ -1,11 +1,11 @@
 // Capability system: the internal spine for what the agent can do.
-// Unifies tool availability, addon trust, permission decisions, and
-// subagent constraints into a single capability registry.
+// Unifies tool availability, permission decisions, and subagent
+// constraints into a single capability registry.
 //
 // No user-facing UI. The agent queries capabilities internally to decide
 // what tools are available, what needs confirmation, what subagents can
 // do, and what goal mode may touch. Everything is derived from settings,
-// trust state, and addon manifests.
+// trust state, and the active tool set.
 
 import type { SettingsManager } from "./settings-manager.ts";
 
@@ -24,8 +24,6 @@ export type Capability =
 	| "goal_mode"
 	| "network"
 	| "write_outside_repo"
-	| "install_addon"
-	| "remove_addon"
 	| "modify_settings"
 	| "destructive_git";
 
@@ -35,7 +33,6 @@ export interface CapabilityContext {
 	activeTools: string[];
 	enableSubagents: boolean;
 	goalMode: boolean;
-	addonTools: string[];
 }
 
 export interface CapabilityDecision {
@@ -59,15 +56,11 @@ const SAFE_CAPABILITIES: ReadonlySet<Capability> = new Set([
 const ALWAYS_CONFIRM: ReadonlySet<Capability> = new Set([
 	"destructive_git",
 	"write_outside_repo",
-	"install_addon",
-	"remove_addon",
 ]);
 
 /** Capabilities that subagents cannot use, regardless of config. */
 const SUBAGENT_BLOCKED: ReadonlySet<Capability> = new Set([
 	"spawn_agent",
-	"install_addon",
-	"remove_addon",
 	"modify_settings",
 	"goal_mode",
 ]);
@@ -125,7 +118,7 @@ export class CapabilityRegistry {
 		const all: Capability[] = [
 			"read", "edit", "write", "bash", "grep", "find", "ls",
 			"spawn_agent", "web_search", "mcp", "debug", "goal_mode",
-			"network", "write_outside_repo", "install_addon", "remove_addon",
+			"network", "write_outside_repo",
 			"modify_settings", "destructive_git",
 		];
 		return all.filter((cap) => this.check(cap, ctx).available);
@@ -161,13 +154,12 @@ export class CapabilityRegistry {
 		if (SAFE_CAPABILITIES.has(cap)) return true;
 		const toolName = this._capabilityToTool(cap);
 		if (!toolName) return true;
-		return ctx.activeTools.includes(toolName) || ctx.addonTools.includes(toolName);
+		return ctx.activeTools.includes(toolName);
 	}
 
 	private _isWriteCapability(cap: Capability): boolean {
 		return cap === "edit" || cap === "write" || cap === "bash" ||
 			cap === "write_outside_repo" || cap === "destructive_git" ||
-			cap === "install_addon" || cap === "remove_addon" ||
 			cap === "modify_settings";
 	}
 
@@ -187,8 +179,6 @@ export class CapabilityRegistry {
 			goal_mode: undefined,
 			network: undefined,
 			write_outside_repo: undefined,
-			install_addon: undefined,
-			remove_addon: undefined,
 			modify_settings: undefined,
 			destructive_git: undefined,
 		};

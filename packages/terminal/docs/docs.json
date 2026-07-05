@@ -16,6 +16,10 @@
           "path": "usage.md"
         },
         {
+          "title": "Instant Tools",
+          "path": "instant-tools.md"
+        },
+        {
           "title": "Providers",
           "path": "providers.md"
         },

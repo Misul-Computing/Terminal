@@ -2,7 +2,7 @@ import { spawn, type ChildProcess } from "node:child_process";
 import { EventEmitter } from "node:events";
 import { Type } from "typebox";
 import type { AgentToolResult } from "@misul/agent-core";
-import type { AcpAgentConfig } from "./addons.ts";
+import type { AcpAgentConfig } from "./acp-config.ts";
 import { defineTool, type ToolDefinition } from "./extensions/types.ts";
 
 const ACP_PROTOCOL_VERSION = 1;

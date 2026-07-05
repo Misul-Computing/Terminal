@@ -7,6 +7,7 @@ import { createEditToolDefinition } from "../src/core/tools/edit.ts";
 import { computeEditsDiff, type Edit } from "../src/core/tools/edit-diff.ts";
 import { ToolExecutionComponent } from "../src/modes/interactive/components/tool-execution.ts";
 import { initTheme } from "../src/modes/interactive/theme/theme.ts";
+import { stripAnsi } from "../src/utils/ansi.ts";
 
 class FakeTerminal implements Terminal {
 	columns = 80;
@@ -50,7 +51,7 @@ async function waitForRenderedText(
 		onRetry?.();
 		await waitForRender();
 		lastRender = getRender();
-		if (lastRender.includes(expectedText)) {
+		if (stripAnsi(lastRender).includes(expectedText)) {
 			return lastRender;
 		}
 	}
@@ -124,8 +125,8 @@ describe("edit tool TUI rendering", () => {
 			"line 50 changed",
 			() => tui.requestRender(true),
 		);
-		expect(callOnlyRender).toContain("edit");
-		expect(callOnlyRender).toContain("line 950 changed");
+		expect(stripAnsi(callOnlyRender)).toContain("edit");
+		expect(stripAnsi(callOnlyRender)).toContain("line 950 changed");
 
 		const redrawsBeforeResult = tui.fullRedraws;
 		const clearsBeforeResult = terminal.fullClearCount;
@@ -144,9 +145,9 @@ describe("edit tool TUI rendering", () => {
 		expect(terminal.fullClearCount).toBe(clearsBeforeResult);
 
 		const settledRender = component.render(80).join("\n");
-		expect(settledRender).toContain("line 50 changed");
-		expect(settledRender).toContain("line 950 changed");
-		expect(settledRender).not.toContain("Successfully replaced");
+		expect(stripAnsi(settledRender)).toContain("line 50 changed");
+		expect(stripAnsi(settledRender)).toContain("line 950 changed");
+		expect(stripAnsi(settledRender)).not.toContain("Successfully replaced");
 	});
 
 	it("reconstructs the boxed preview from a settled result without argsComplete", async () => {
@@ -194,8 +195,8 @@ describe("edit tool TUI rendering", () => {
 		await waitForRender();
 
 		const rendered = component.render(80).join("\n");
-		expect(rendered).toContain("line 50 changed");
-		expect(rendered).toContain("line 150 changed");
+		expect(stripAnsi(rendered)).toContain("line 50 changed");
+		expect(stripAnsi(rendered)).toContain("line 150 changed");
 	});
 
 	it("shows a preflight error without rendering a diff when the edits do not apply", async () => {

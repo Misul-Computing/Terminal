@@ -83,6 +83,7 @@ describe("AssistantMessageComponent collapsible blocks", () => {
 	});
 
 	test("setSelected changes the selected state on the item", () => {
+		initTheme("dark");
 		const msg = makeMessage([
 			{ type: "thinking", thinking: "Think..." },
 		]);

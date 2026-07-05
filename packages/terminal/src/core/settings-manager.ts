@@ -10,7 +10,7 @@ import { DEFAULT_HTTP_IDLE_TIMEOUT_MS, parseHttpIdleTimeoutMs } from "./http-dis
 export interface CompactionSettings {
 	enabled?: boolean; // default: true
 	reserveTokens?: number; // default: 16384
-	keepRecentTokens?: number; // default: 20000
+	keepRecentTokens?: number; // default: 24000
 }
 
 export interface BranchSummarySettings {
@@ -36,6 +36,7 @@ export interface TerminalSettings {
 	imageWidthCells?: number; // default: 60 (preferred inline image width in terminal cells)
 	clearOnShrink?: boolean; // default: false (clear empty rows when content shrinks)
 	showTerminalProgress?: boolean; // default: false (OSC 9;4 terminal progress indicators)
+	disableMouseCapture?: boolean; // default: false - when true, mouse capture is not enabled, allowing native terminal text selection (Shift-drag no longer needed); wheel scroll and click-to-toggle are disabled
 }
 
 export interface ImageSettings {
@@ -97,7 +98,6 @@ export interface Settings {
 	defaultProjectTrust?: DefaultProjectTrust; // default: "ask"; global setting only
 	shellCommandPrefix?: string; // Prefix prepended to every bash command (e.g., "shopt -s expand_aliases" for alias support)
 	npmCommand?: string[]; // Command used for npm package lookup/install operations, argv-style (e.g., ["mise", "exec", "node@20", "--", "npm"])
-	collapseChangelog?: boolean; // Show condensed changelog after update (use /changelog for full)
 	enableInstallTelemetry?: boolean; // default: true - anonymous version/update ping after changelog-detected updates
 	enableAnalytics?: boolean; // default: false - opt-in analytics data sharing
 	trackingId?: string; // analytics tracking identifier, generated when analytics is enabled
@@ -126,8 +126,6 @@ export interface Settings {
 	cacheAggressiveness?: CacheAggressivenessSetting; // default: "standard"
 	soloMode?: boolean; // default: false - disable subagent spawning entirely
 	autoReviewSubagents?: boolean; // default: false - run autoreview after work subagents
-	addons?: string[]; // Array of addon source strings (git/npm/local) for persistent install tracking
-	addonStoreUrl?: string; // URL of the addon registry JSON; falls back to DEFAULT_ADDON_STORE_URL
 }
 
 /** Deep merge settings: project/overrides take precedence, nested objects merge recursively */
@@ -770,7 +768,7 @@ export class SettingsManager {
 	}
 
 	getCompactionKeepRecentTokens(): number {
-		return this.settings.compaction?.keepRecentTokens ?? 20000;
+		return this.settings.compaction?.keepRecentTokens ?? 24000;
 	}
 
 	getCompactionSettings(): { enabled: boolean; reserveTokens: number; keepRecentTokens: number } {
@@ -935,16 +933,6 @@ export class SettingsManager {
 		this.save();
 	}
 
-	getCollapseChangelog(): boolean {
-		return this.settings.collapseChangelog ?? false;
-	}
-
-	setCollapseChangelog(collapse: boolean): void {
-		this.globalSettings.collapseChangelog = collapse;
-		this.markModified("collapseChangelog");
-		this.save();
-	}
-
 	getEnableInstallTelemetry(): boolean {
 		return this.settings.enableInstallTelemetry ?? true;
 	}
@@ -988,26 +976,6 @@ export class SettingsManager {
 		this.updateProjectSettings("packages", (settings) => {
 			settings.packages = packages;
 		});
-	}
-
-	getAddons(): string[] {
-		return [...(this.settings.addons ?? [])];
-	}
-
-	setAddons(addons: string[]): void {
-		this.globalSettings.addons = addons;
-		this.markModified("addons");
-		this.save();
-	}
-
-	setProjectAddons(addons: string[]): void {
-		this.updateProjectSettings("addons", (settings) => {
-			settings.addons = addons;
-		});
-	}
-
-	getAddonStoreUrl(): string | undefined {
-		return this.settings.addonStoreUrl;
 	}
 
 	getExtensionPaths(): string[] {
@@ -1139,6 +1107,19 @@ export class SettingsManager {
 		return this.settings.terminal?.showTerminalProgress ?? false;
 	}
 
+	getDisableMouseCapture(): boolean {
+		return this.settings.terminal?.disableMouseCapture ?? false;
+	}
+
+	setDisableMouseCapture(enabled: boolean): void {
+		if (!this.globalSettings.terminal) {
+			this.globalSettings.terminal = {};
+		}
+		this.globalSettings.terminal.disableMouseCapture = enabled;
+		this.markModified("terminal", "disableMouseCapture");
+		this.save();
+	}
+
 	setShowTerminalProgress(enabled: boolean): void {
 		if (!this.globalSettings.terminal) {
 			this.globalSettings.terminal = {};
@@ -1250,9 +1231,4 @@ export class SettingsManager {
 		this.save();
 	}
 
-	setAddonStoreUrl(url: string | undefined): void {
-		this.globalSettings.addonStoreUrl = url;
-		this.markModified("addonStoreUrl");
-		this.save();
-	}
 }

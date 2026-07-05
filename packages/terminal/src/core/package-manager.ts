@@ -54,7 +54,7 @@ function getNpmVersionRange(version: string | undefined): string | undefined {
 export interface PathMetadata {
 	source: string;
 	scope: SourceScope;
-	origin: "package" | "top-level" | "addons";
+	origin: "package" | "top-level";
 	baseDir?: string;
 }
 

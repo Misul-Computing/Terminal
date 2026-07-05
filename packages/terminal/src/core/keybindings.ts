@@ -53,6 +53,7 @@ export interface AppKeybindings {
 	"app.tree.filter.all": true;
 	"app.tree.filter.cycleForward": true;
 	"app.tree.filter.cycleBackward": true;
+	"app.mouse.toggle": true;
 }
 
 export type AppKeybinding = keyof AppKeybindings;
@@ -203,6 +204,10 @@ export const KEYBINDINGS = {
 	"app.tree.filter.cycleBackward": {
 		defaultKeys: "shift+ctrl+o",
 		description: "Tree filter: cycle backward",
+	},
+	"app.mouse.toggle": {
+		defaultKeys: "ctrl+shift+m",
+		description: "Toggle mouse capture for text selection",
 	},
 } as const satisfies KeybindingDefinitions;
 

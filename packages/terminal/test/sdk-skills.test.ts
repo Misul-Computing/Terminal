@@ -60,9 +60,8 @@ This is a test skill.
 			getMemory: () => undefined,
 			getSystemPrompt: () => undefined,
 			getAppendSystemPrompt: () => [],
-			getAddons: () => [],
-			getAddonMcpServers: () => ({}),
-		getAddonAcpAgents: () => ({}),
+			getMcpServers: () => ({}),
+			getAcpAgents: () => ({}),
 			extendResources: () => {},
 			reload: async () => {},
 		};
@@ -97,9 +96,8 @@ This is a test skill.
 			getMemory: () => undefined,
 			getSystemPrompt: () => undefined,
 			getAppendSystemPrompt: () => [],
-			getAddons: () => [],
-			getAddonMcpServers: () => ({}),
-		getAddonAcpAgents: () => ({}),
+			getMcpServers: () => ({}),
+			getAcpAgents: () => ({}),
 			extendResources: () => {},
 			reload: async () => {},
 		};

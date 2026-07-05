@@ -14,7 +14,7 @@ import { EventEmitter } from "node:events";
 import { join } from "node:path";
 import { Type, type Static } from "typebox";
 import type { AgentToolResult } from "@misul/agent-core";
-import type { McpServerConfig } from "./addons.ts";
+import type { McpServerConfig } from "./mcp-config.ts";
 import { defineTool, type ToolDefinition } from "./extensions/types.ts";
 
 /** A tool discovered from an MCP server. */

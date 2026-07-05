@@ -81,6 +81,16 @@ export function formatFileOperations(readFiles: string[], modifiedFiles: string[
 	return `\n\n${sections.join("\n\n")}`;
 }
 
+/**
+ * Format active skill names as an XML tag for the compaction summary.
+ * This tells the model which skills were in use when compaction happened,
+ * so it can re-invoke them after compaction without the user re-prompting.
+ */
+export function formatActiveSkills(skillNames: string[]): string {
+	if (skillNames.length === 0) return "";
+	return `\n\n<active-skills>\n${skillNames.join("\n")}\n</active-skills>`;
+}
+
 // ============================================================================
 // Message Serialization
 // ============================================================================

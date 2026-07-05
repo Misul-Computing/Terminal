@@ -26,7 +26,7 @@ describe("--agent flag wiring", () => {
 		expect((await buildOptionsFor(["--agent", "simple"])).enableSubagents).toBe(true);
 	});
 
-	it("default (no --agent) enables subagents (deep-work is the default)", async () => {
+	it("default (no --agent) enables subagents but does not append a persona", async () => {
 		expect((await buildOptionsFor([])).enableSubagents).toBe(true);
 	});
 
@@ -34,7 +34,7 @@ describe("--agent flag wiring", () => {
 		expect((await buildOptionsFor(["--solo"])).enableSubagents).toBe(false);
 	});
 
-	it("end-to-end (offline): --agent deep-work yields a session with spawn_agent AND the persona prompt; --solo has neither", async () => {
+	it("end-to-end (offline): default has no persona but spawn_agent; --agent deep-work appends persona; --solo has neither", async () => {
 		const faux = registerFauxProvider({
 			models: [{ id: "faux-1", cost: { input: 0.000001, output: 0.000002, cacheRead: 0, cacheWrite: 0 } }],
 		});
@@ -44,7 +44,34 @@ describe("--agent flag wiring", () => {
 			authStorage.setRuntimeApiKey(model.provider, "faux-key");
 			const cwd = process.cwd();
 
-			// deep-work: persona appended + subagents enabled (exactly what main builds).
+			// Default: no deep-work persona appended, but subagents enabled.
+			const defaultServices = await createAgentSessionServices({
+				cwd,
+				authStorage,
+				settingsManager: SettingsManager.inMemory(),
+				resourceLoaderOptions: {
+					noExtensions: true,
+					noSkills: true,
+					noPromptTemplates: true,
+					noThemes: true,
+					noContextFiles: true,
+				},
+			});
+			expect(defaultServices.resourceLoader.getAppendSystemPrompt()).not.toContain(DEEP_WORK.systemPrompt);
+
+			const defaultSession = await createAgentSessionFromServices({
+				services: defaultServices,
+				sessionManager: SessionManager.inMemory(cwd),
+				model,
+				enableSubagents: true,
+			});
+			try {
+				expect(defaultSession.session.getAllTools().map((t) => t.name)).toContain("spawn_agent");
+			} finally {
+				defaultSession.session.dispose();
+			}
+
+			// --agent deep-work: persona appended + subagents enabled.
 			const agentServices = await createAgentSessionServices({
 				cwd,
 				authStorage,

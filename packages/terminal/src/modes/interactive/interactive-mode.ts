@@ -10,7 +10,6 @@ import * as path from "node:path";
 import type { AgentMessage } from "@misul/agent-core";
 import {
 	type AssistantMessage,
-	completeSimple,
 	getProviders,
 	type ImageContent,
 	type Message,
@@ -18,7 +17,6 @@ import {
 	type OAuthProviderId,
 	type OAuthSelectPrompt,
 	thinkingLevelLabel,
-	type ThinkingLevel,
 } from "@misul/ai";
 import type {
 	AutocompleteItem,
@@ -49,7 +47,7 @@ import {
 	visibleWidth,
 } from "@misul/tui";
 import chalk from "chalk";
-import { spawn, spawnSync } from "child_process";
+import { spawn } from "child_process";
 import {
 	APP_NAME,
 	APP_TITLE,
@@ -58,7 +56,6 @@ import {
 	getDebugLogPath,
 	getDocsPath,
 	getEnvFlag,
-	getShareViewerUrl,
 	VERSION,
 } from "../../config.ts";
 import { type AgentSession, type AgentSessionEvent, parseSkillBlock } from "../../core/agent-session.ts";
@@ -75,13 +72,13 @@ import type {
 	ProjectTrustContext,
 } from "../../core/extensions/index.ts";
 import { FooterDataProvider, type ReadonlyFooterDataProvider } from "../../core/footer-data-provider.ts";
+import { handleInstantToolCommand } from "../../core/instant-tools.ts";
 import { configureHttpDispatcher, formatHttpIdleTimeoutMs } from "../../core/http-dispatcher.ts";
 import { type AppKeybinding, KeybindingsManager } from "../../core/keybindings.ts";
 import { createCompactionSummaryMessage } from "../../core/messages.ts";
-import { defaultModelPerProvider, findExactModelReferenceMatch, resolveModelScope } from "../../core/model-resolver.ts";
+import { defaultModelPerProvider, findExactModelReferenceMatch } from "../../core/model-resolver.ts";
 import { DefaultPackageManager } from "../../core/package-manager.ts";
 import { BUILT_IN_PROVIDER_DISPLAY_NAMES } from "../../core/provider-display-names.ts";
-import type { ResourceDiagnostic } from "../../core/resource-loader.ts";
 import { ResourceChangeChecker, type ResourceDirs } from "../../core/resource-watcher.ts";
 import { formatMissingSessionCwdPrompt, MissingSessionCwdError } from "../../core/session-cwd.ts";
 import { type SessionContext, SessionManager } from "../../core/session-manager.ts";
@@ -89,11 +86,11 @@ import { BUILTIN_SLASH_COMMANDS } from "../../core/slash-commands.ts";
 import { runGoalLoop } from "../../core/goal-loop.ts";
 import { getPreset } from "../../core/subagent/presets.ts";
 import { runSubagent } from "../../core/subagent/runner.ts";
-import { PROBE_TIERS, recordProbedThinkingLevels } from "../../core/thinking-capabilities.ts";
+
 import type { SourceInfo } from "../../core/source-info.ts";
 import type { TruncationResult } from "../../core/tools/truncate.ts";
 import { hasTrustRequiringProjectResources, ProjectTrustStore } from "../../core/trust-manager.ts";
-import { getChangelogPath, getNewEntries, normalizeChangelogLinks, parseChangelog } from "../../utils/changelog.ts";
+
 import { MISUL_LOGO_LINES } from "./misul-logo.ts";
 import { CenteredText } from "./components/centered-text.ts";
 import { CenteredBlock } from "./components/centered-block.ts";
@@ -125,13 +122,11 @@ import { ModelSelectorComponent } from "./components/model-selector.ts";
 import { SkillsSelectorComponent } from "./components/skills-selector.ts";
 import { ThinkingSelectorComponent } from "./components/thinking-selector.ts";
 import { type AuthSelectorProvider, OAuthSelectorComponent } from "./components/oauth-selector.ts";
-import { ScopedModelsSelectorComponent } from "./components/scoped-models-selector.ts";
 import { SessionSelectorComponent } from "./components/session-selector.ts";
 import { SettingsSelectorComponent } from "./components/settings-selector.ts";
 import { SkillInvocationMessageComponent } from "./components/skill-invocation-message.ts";
 import { ToolExecutionComponent } from "./components/tool-execution.ts";
 import { TreeSelectorComponent } from "./components/tree-selector.ts";
-import { TrustSelectorComponent } from "./components/trust-selector.ts";
 import { UserMessageComponent } from "./components/user-message.ts";
 import { UserMessageSelectorComponent } from "./components/user-message-selector.ts";
 import {
@@ -148,38 +143,15 @@ import {
 	setThemeInstance,
 	stopThemeWatcher,
 	Theme,
-	type ThemeColor,
 	theme,
 } from "./theme/theme.ts";
 
-/** Interface for components that can be expanded/collapsed */
 interface Expandable {
 	setExpanded(expanded: boolean): void;
 }
 
 function isExpandable(obj: unknown): obj is Expandable {
 	return typeof obj === "object" && obj !== null && "setExpanded" in obj && typeof obj.setExpanded === "function";
-}
-
-class ExpandableText extends Text implements Expandable {
-	private readonly getCollapsedText: () => string;
-	private readonly getExpandedText: () => string;
-
-	constructor(
-		getCollapsedText: () => string,
-		getExpandedText: () => string,
-		expanded = false,
-		paddingX = 0,
-		paddingY = 0,
-	) {
-		super(expanded ? getExpandedText() : getCollapsedText(), paddingX, paddingY);
-		this.getCollapsedText = getCollapsedText;
-		this.getExpandedText = getExpandedText;
-	}
-
-	setExpanded(expanded: boolean): void {
-		this.setText(expanded ? this.getExpandedText() : this.getCollapsedText());
-	}
 }
 
 type CompactionQueuedMessage = {
@@ -302,15 +274,11 @@ export class InteractiveMode {
 
 	private lastSigintTime = 0;
 	private lastEscapeTime = 0;
-	private changelogMarkdown: string | undefined = undefined;
-	private startupNoticesShown = false;
 	private anthropicSubscriptionWarningShown = false;
 
-	// Status line tracking (for mutating immediately-sequential status updates)
 	private lastStatusSpacer: Spacer | undefined = undefined;
 	private lastStatusText: Text | undefined = undefined;
 
-	// Streaming message tracking
 	private streamingComponent: AssistantMessageComponent | undefined = undefined;
 	private streamingMessage: AssistantMessage | undefined = undefined;
 	// Coalesce per-token markdown rebuilds to ~30fps: re-parsing the whole growing
@@ -328,6 +296,9 @@ export class InteractiveMode {
 
 	// Chat cursor navigation: -1 = not active (editor has focus), >=0 = index into collapsible items
 	private chatCursorIndex = -1;
+
+	// Local todo list for the /todo instant tool.
+	private instantTodos: string[] = [];
 
 	// Agent subscription unsubscribe function
 	private unsubscribe?: () => void;
@@ -410,8 +381,9 @@ export class InteractiveMode {
 			await this.rebindCurrentSession();
 		});
 		this.version = VERSION;
-		this.ui = new TUI(new ProcessTerminal(), this.settingsManager.getShowHardwareCursor());
+		this.ui = new TUI(new ProcessTerminal(this.settingsManager.getDisableMouseCapture()), this.settingsManager.getShowHardwareCursor());
 		this.ui.setClearOnShrink(this.settingsManager.getClearOnShrink());
+		this.ui.setSelectionBackground(theme.bgCode("selectedBg"), "\x1b[49m");
 		this.headerContainer = new Container();
 		this.chatContainer = new CenteredContainer(80);
 		this.pendingMessagesContainer = new Container();
@@ -441,22 +413,25 @@ export class InteractiveMode {
 		initTheme(this.settingsManager.getTheme(), true);
 	}
 
-	private async detectThemeIfUnset(): Promise<void> {
-		if (this.settingsManager.getTheme()) {
-			return;
-		}
-
+	private async detectTheme(): Promise<void> {
+		const currentTheme = this.settingsManager.getTheme();
 		const detection = await detectTerminalBackgroundTheme({ ui: this.ui, timeoutMs: 100 });
-		const result = setTheme(detection.theme, true);
-		if (!result.success) {
-			return;
-		}
 
-		if (detection.confidence === "high") {
+		// Only switch when the terminal reports its background with high confidence
+		// and the detected theme differs from the current setting. This keeps the app
+		// readable when the terminal profile or system light/dark mode changes.
+		if (detection.confidence === "high" && detection.theme !== currentTheme) {
+			const result = setTheme(detection.theme, true);
+			if (!result.success) {
+				this.ui.requestRender();
+				return;
+			}
+
 			this.settingsManager.setTheme(detection.theme);
 			await this.settingsManager.flush();
+			this.updateEditorBorderColor();
 		}
-		this.updateEditorBorderColor();
+
 		this.ui.requestRender();
 	}
 
@@ -491,21 +466,6 @@ export class InteractiveMode {
 			return description;
 		}
 		return description ? `[${sourceTag}] ${description}` : `[${sourceTag}]`;
-	}
-
-	private getBuiltInCommandConflictDiagnostics(extensionRunner: ExtensionRunner): ResourceDiagnostic[] {
-		const builtinNames = new Set(BUILTIN_SLASH_COMMANDS.map((command) => command.name));
-		return extensionRunner
-			.getRegisteredCommands()
-			.filter((command) => builtinNames.has(command.name))
-			.map((command) => ({
-				type: "warning" as const,
-				message:
-					command.invocationName === command.name
-						? `Extension command '/${command.name}' conflicts with built-in interactive command. Skipping in autocomplete.`
-						: `Extension command '/${command.name}' conflicts with built-in interactive command. Available as '/${command.invocationName}'.`,
-				path: command.sourceInfo.path,
-			}));
 	}
 
 	private createBaseAutocompleteProvider(): AutocompleteProvider {
@@ -592,46 +552,11 @@ export class InteractiveMode {
 		}
 	}
 
-	private showStartupNoticesIfNeeded(): void {
-		if (this.startupNoticesShown) {
-			return;
-		}
-		this.startupNoticesShown = true;
-
-		if (!this.changelogMarkdown) {
-			return;
-		}
-
-		if (this.chatContainer.children.length > 0) {
-			this.chatContainer.addChild(new Spacer(1));
-		}
-		this.chatContainer.addChild(new DynamicBorder());
-		if (this.settingsManager.getCollapseChangelog()) {
-			const versionMatch = this.changelogMarkdown.match(/##\s+\[?(\d+\.\d+\.\d+)\]?/);
-			const latestVersion = versionMatch ? versionMatch[1] : this.version;
-			const condensedText = `Updated to v${latestVersion}. Use ${theme.bold("/changelog")} to view full changelog.`;
-			this.chatContainer.addChild(new Text(condensedText, 1, 0));
-		} else {
-			this.chatContainer.addChild(new Text(theme.bold(theme.fg("accent", "What's New")), 1, 0));
-			this.chatContainer.addChild(new Spacer(1));
-			this.chatContainer.addChild(
-				new Markdown(this.changelogMarkdown.trim(), 1, 0, this.getMarkdownThemeWithSettings()),
-			);
-			this.chatContainer.addChild(new Spacer(1));
-		}
-		this.chatContainer.addChild(new DynamicBorder());
-	}
-
 	async init(): Promise<void> {
 		if (this.isInitialized) return;
 
 		this.registerSignalHandlers();
 
-		// Load changelog (only show new entries, skip for resumed sessions)
-		this.changelogMarkdown = this.getChangelogForDisplay();
-
-		// Ensure fd and rg are available (downloads if missing, adds to PATH via getBinDir)
-		// Both are needed: fd for autocomplete, rg for grep tool and bash commands
 		const [fdPath] = await Promise.all([ensureTool("fd"), ensureTool("rg")]);
 		this.fdPath = fdPath;
 
@@ -650,7 +575,7 @@ export class InteractiveMode {
 			console.log(theme.fg("dim", `Model scope: ${modelList}${cycleHint}`));
 		}
 
-		// Add header container as first child. Populate it after detectThemeIfUnset.
+		// Add header container as first child. Populate it after detectTheme.
 		// All sections are wrapped in CenteredContainer for consistent centering.
 		const centeredHeader = new CenteredContainer(80);
 		centeredHeader.addChild(this.headerContainer);
@@ -696,7 +621,7 @@ export class InteractiveMode {
 		this.ui.start();
 		this.isInitialized = true;
 
-		await this.detectThemeIfUnset();
+		await this.detectTheme();
 
 		// Add header with keybindings from config (unless silenced)
 		if (this.options.verbose || !this.settingsManager.getQuietStartup()) {
@@ -912,19 +837,7 @@ export class InteractiveMode {
 		return undefined;
 	}
 
-	/**
-	 * Get changelog entries to display on startup.
-	 * Only shows new entries since last seen version, skips for resumed sessions.
-	 */
-	private getChangelogForDisplay(): string | undefined {
-		// Changelog display disabled
-		return undefined;
-	}
-
-	private reportInstallTelemetry(_version: string): void {
-		// Install telemetry removed — Misul Terminal does not phone home.
-		// Telemetry setting is still respected for provider attribution headers.
-	}
+	private reportInstallTelemetry(_version: string): void {}
 
 	private getMarkdownThemeWithSettings(): MarkdownTheme {
 		return {
@@ -947,525 +860,6 @@ export class InteractiveMode {
 		}
 
 		return result;
-	}
-
-	private formatExtensionDisplayPath(path: string): string {
-		let result = this.formatDisplayPath(path);
-		result = result.replace(/\/index\.ts$/, "").replace(/\/index\.js$/, "");
-		return result;
-	}
-
-	private getStartupExpansionState(): boolean {
-		return this.options.verbose || this.toolOutputExpanded;
-	}
-
-	/**
-	 * Get a short path relative to the package root for display.
-	 */
-	private getShortPath(fullPath: string, sourceInfo?: SourceInfo): string {
-		const baseDir = sourceInfo?.baseDir;
-		if (baseDir && this.isPackageSource(sourceInfo)) {
-			const relativePath = path.relative(path.resolve(baseDir), path.resolve(fullPath));
-			if (
-				relativePath &&
-				relativePath !== "." &&
-				!relativePath.startsWith("..") &&
-				!relativePath.startsWith(`..${path.sep}`) &&
-				!path.isAbsolute(relativePath)
-			) {
-				return relativePath.replace(/\\/g, "/");
-			}
-		}
-
-		const source = sourceInfo?.source ?? "";
-		const npmMatch = fullPath.match(/node_modules\/(@?[^/]+(?:\/[^/]+)?)\/(.*)/);
-		if (npmMatch && source.startsWith("npm:")) {
-			return npmMatch[2];
-		}
-
-		const gitMatch = fullPath.match(/git\/[^/]+\/[^/]+\/(.*)/);
-		if (gitMatch && source.startsWith("git:")) {
-			return gitMatch[1];
-		}
-
-		return this.formatDisplayPath(fullPath);
-	}
-
-	private getCompactPathLabel(resourcePath: string, sourceInfo?: SourceInfo): string {
-		const shortPath = this.getShortPath(resourcePath, sourceInfo);
-		const normalizedPath = shortPath.replace(/\\/g, "/");
-		const segments = normalizedPath.split("/").filter((segment) => segment.length > 0 && segment !== "~");
-		if (segments.length > 0) {
-			return segments[segments.length - 1]!;
-		}
-		return shortPath;
-	}
-
-	private getCompactPackageSourceLabel(sourceInfo?: SourceInfo): string {
-		const source = sourceInfo?.source ?? "";
-		if (source.startsWith("npm:")) {
-			return source.slice("npm:".length) || source;
-		}
-
-		const gitSource = parseGitUrl(source);
-		if (gitSource) {
-			return gitSource.path || source;
-		}
-
-		return source;
-	}
-
-	private getCompactExtensionLabel(resourcePath: string, sourceInfo?: SourceInfo): string {
-		if (!this.isPackageSource(sourceInfo)) {
-			return this.getCompactPathLabel(resourcePath, sourceInfo);
-		}
-
-		const sourceLabel = this.getCompactPackageSourceLabel(sourceInfo);
-		if (!sourceLabel) {
-			return this.getCompactPathLabel(resourcePath, sourceInfo);
-		}
-
-		const shortPath = this.getShortPath(resourcePath, sourceInfo).replace(/\\/g, "/");
-		const packagePath = shortPath.startsWith("extensions/") ? shortPath.slice("extensions/".length) : shortPath;
-		const parsedPath = path.posix.parse(packagePath);
-
-		if (parsedPath.name === "index") {
-			return !parsedPath.dir || parsedPath.dir === "." ? sourceLabel : `${sourceLabel}:${parsedPath.dir}`;
-		}
-
-		return `${sourceLabel}:${packagePath}`;
-	}
-
-	private getCompactDisplayPathSegments(resourcePath: string): string[] {
-		return this.formatDisplayPath(resourcePath)
-			.replace(/\\/g, "/")
-			.split("/")
-			.filter((segment) => segment.length > 0 && segment !== "~");
-	}
-
-	private getCompactNonPackageExtensionLabel(
-		resourcePath: string,
-		index: number,
-		allPaths: Array<{ path: string; segments: string[] }>,
-	): string {
-		const segments = allPaths[index]?.segments;
-		if (!segments || segments.length === 0) {
-			return this.getCompactPathLabel(resourcePath);
-		}
-
-		for (let segmentCount = 1; segmentCount <= segments.length; segmentCount += 1) {
-			const candidate = segments.slice(-segmentCount).join("/");
-			const isUnique = allPaths.every((item, itemIndex) => {
-				if (itemIndex === index) {
-					return true;
-				}
-				return item.segments.slice(-segmentCount).join("/") !== candidate;
-			});
-
-			if (isUnique) {
-				return candidate;
-			}
-		}
-
-		return segments.join("/");
-	}
-
-	private getCompactExtensionLabels(extensions: Array<{ path: string; sourceInfo?: SourceInfo }>): string[] {
-		const nonPackageExtensions = extensions
-			.map((extension) => {
-				const segments = this.getCompactDisplayPathSegments(extension.path);
-				const lastSegment = segments[segments.length - 1];
-				if (segments.length > 1 && (lastSegment === "index.ts" || lastSegment === "index.js")) {
-					segments.pop();
-				}
-				return {
-					path: extension.path,
-					sourceInfo: extension.sourceInfo,
-					segments,
-				};
-			})
-			.filter((extension) => !this.isPackageSource(extension.sourceInfo));
-
-		return extensions.map((extension) => {
-			if (this.isPackageSource(extension.sourceInfo)) {
-				return this.getCompactExtensionLabel(extension.path, extension.sourceInfo);
-			}
-
-			const nonPackageIndex = nonPackageExtensions.findIndex((item) => item.path === extension.path);
-			if (nonPackageIndex === -1) {
-				return this.getCompactPathLabel(extension.path, extension.sourceInfo);
-			}
-
-			return this.getCompactNonPackageExtensionLabel(extension.path, nonPackageIndex, nonPackageExtensions);
-		});
-	}
-
-	private getDisplaySourceInfo(sourceInfo?: SourceInfo): {
-		label: string;
-		scopeLabel?: string;
-		color: "accent" | "muted";
-	} {
-		const source = sourceInfo?.source ?? "local";
-		const scope = sourceInfo?.scope ?? "project";
-		if (source === "local") {
-			if (scope === "user") {
-				return { label: "user", color: "muted" };
-			}
-			if (scope === "project") {
-				return { label: "project", color: "muted" };
-			}
-			if (scope === "temporary") {
-				return { label: "path", scopeLabel: "temp", color: "muted" };
-			}
-			return { label: "path", color: "muted" };
-		}
-
-		if (source === "cli") {
-			return { label: "path", scopeLabel: scope === "temporary" ? "temp" : undefined, color: "muted" };
-		}
-
-		const scopeLabel =
-			scope === "user" ? "user" : scope === "project" ? "project" : scope === "temporary" ? "temp" : undefined;
-		return { label: source, scopeLabel, color: "accent" };
-	}
-
-	private getScopeGroup(sourceInfo?: SourceInfo): "user" | "project" | "path" {
-		const source = sourceInfo?.source ?? "local";
-		const scope = sourceInfo?.scope ?? "project";
-		if (source === "cli" || scope === "temporary") return "path";
-		if (scope === "user") return "user";
-		if (scope === "project") return "project";
-		return "path";
-	}
-
-	private isPackageSource(sourceInfo?: SourceInfo): boolean {
-		const source = sourceInfo?.source ?? "";
-		return source.startsWith("npm:") || source.startsWith("git:");
-	}
-
-	private buildScopeGroups(items: Array<{ path: string; sourceInfo?: SourceInfo }>): Array<{
-		scope: "user" | "project" | "path";
-		paths: Array<{ path: string; sourceInfo?: SourceInfo }>;
-		packages: Map<string, Array<{ path: string; sourceInfo?: SourceInfo }>>;
-	}> {
-		const groups: Record<
-			"user" | "project" | "path",
-			{
-				scope: "user" | "project" | "path";
-				paths: Array<{ path: string; sourceInfo?: SourceInfo }>;
-				packages: Map<string, Array<{ path: string; sourceInfo?: SourceInfo }>>;
-			}
-		> = {
-			user: { scope: "user", paths: [], packages: new Map() },
-			project: { scope: "project", paths: [], packages: new Map() },
-			path: { scope: "path", paths: [], packages: new Map() },
-		};
-
-		for (const item of items) {
-			const groupKey = this.getScopeGroup(item.sourceInfo);
-			const group = groups[groupKey];
-			const source = item.sourceInfo?.source ?? "local";
-
-			if (this.isPackageSource(item.sourceInfo)) {
-				const list = group.packages.get(source) ?? [];
-				list.push(item);
-				group.packages.set(source, list);
-			} else {
-				group.paths.push(item);
-			}
-		}
-
-		return [groups.project, groups.user, groups.path].filter(
-			(group) => group.paths.length > 0 || group.packages.size > 0,
-		);
-	}
-
-	private formatScopeGroups(
-		groups: Array<{
-			scope: "user" | "project" | "path";
-			paths: Array<{ path: string; sourceInfo?: SourceInfo }>;
-			packages: Map<string, Array<{ path: string; sourceInfo?: SourceInfo }>>;
-		}>,
-		options: {
-			formatPath: (item: { path: string; sourceInfo?: SourceInfo }) => string;
-			formatPackagePath: (item: { path: string; sourceInfo?: SourceInfo }, source: string) => string;
-		},
-	): string {
-		const lines: string[] = [];
-
-		for (const group of groups) {
-			lines.push(`  ${theme.fg("accent", group.scope)}`);
-
-			const sortedPaths = [...group.paths].sort((a, b) => a.path.localeCompare(b.path));
-			for (const item of sortedPaths) {
-				lines.push(theme.fg("dim", `    ${options.formatPath(item)}`));
-			}
-
-			const sortedPackages = Array.from(group.packages.entries()).sort(([a], [b]) => a.localeCompare(b));
-			for (const [source, items] of sortedPackages) {
-				lines.push(`    ${theme.fg("mdLink", source)}`);
-				const sortedPackagePaths = [...items].sort((a, b) => a.path.localeCompare(b.path));
-				for (const item of sortedPackagePaths) {
-					lines.push(theme.fg("dim", `      ${options.formatPackagePath(item, source)}`));
-				}
-			}
-		}
-
-		return lines.join("\n");
-	}
-
-	private findSourceInfoForPath(p: string, sourceInfos: Map<string, SourceInfo>): SourceInfo | undefined {
-		const exact = sourceInfos.get(p);
-		if (exact) return exact;
-
-		let current = p;
-		while (current.includes("/")) {
-			current = current.substring(0, current.lastIndexOf("/"));
-			const parent = sourceInfos.get(current);
-			if (parent) return parent;
-		}
-
-		return undefined;
-	}
-
-	private formatPathWithSource(p: string, sourceInfo?: SourceInfo): string {
-		if (sourceInfo) {
-			const shortPath = this.getShortPath(p, sourceInfo);
-			const { label, scopeLabel } = this.getDisplaySourceInfo(sourceInfo);
-			const labelText = scopeLabel ? `${label} (${scopeLabel})` : label;
-			return `${labelText} ${shortPath}`;
-		}
-		return this.formatDisplayPath(p);
-	}
-
-	private formatDiagnostics(diagnostics: readonly ResourceDiagnostic[], sourceInfos: Map<string, SourceInfo>): string {
-		const lines: string[] = [];
-
-		// Group collision diagnostics by name
-		const collisions = new Map<string, ResourceDiagnostic[]>();
-		const otherDiagnostics: ResourceDiagnostic[] = [];
-
-		for (const d of diagnostics) {
-			if (d.type === "collision" && d.collision) {
-				const list = collisions.get(d.collision.name) ?? [];
-				list.push(d);
-				collisions.set(d.collision.name, list);
-			} else {
-				otherDiagnostics.push(d);
-			}
-		}
-
-		// Format collision diagnostics grouped by name
-		for (const [name, collisionList] of collisions) {
-			const first = collisionList[0]?.collision;
-			if (!first) continue;
-			lines.push(theme.fg("warning", `  "${name}" collision:`));
-			lines.push(
-				theme.fg(
-					"dim",
-					`    ${theme.fg("success", "✓")} ${this.formatPathWithSource(first.winnerPath, this.findSourceInfoForPath(first.winnerPath, sourceInfos))}`,
-				),
-			);
-			for (const d of collisionList) {
-				if (d.collision) {
-					lines.push(
-						theme.fg(
-							"dim",
-							`    ${theme.fg("warning", "✗")} ${this.formatPathWithSource(d.collision.loserPath, this.findSourceInfoForPath(d.collision.loserPath, sourceInfos))} (skipped)`,
-						),
-					);
-				}
-			}
-		}
-
-		for (const d of otherDiagnostics) {
-			if (d.path) {
-				const formattedPath = this.formatPathWithSource(d.path, this.findSourceInfoForPath(d.path, sourceInfos));
-				lines.push(theme.fg(d.type === "error" ? "error" : "warning", `  ${formattedPath}`));
-				lines.push(theme.fg(d.type === "error" ? "error" : "warning", `    ${d.message}`));
-			} else {
-				lines.push(theme.fg(d.type === "error" ? "error" : "warning", `  ${d.message}`));
-			}
-		}
-
-		return lines.join("\n");
-	}
-
-	private showLoadedResources(options?: {
-		extensions?: Array<{ path: string; sourceInfo?: SourceInfo }>;
-		force?: boolean;
-		showDiagnosticsWhenQuiet?: boolean;
-	}): void {
-		const showListing = options?.force || this.options.verbose || !this.settingsManager.getQuietStartup();
-		const showDiagnostics = showListing || options?.showDiagnosticsWhenQuiet === true;
-		if (!showListing && !showDiagnostics) {
-			return;
-		}
-
-		const sectionHeader = (name: string, color: ThemeColor = "mdHeading") => theme.fg(color, `[${name}]`);
-		const formatCompactList = (items: string[], options?: { sort?: boolean }): string => {
-			const labels = items.map((item) => item.trim()).filter((item) => item.length > 0);
-			if (options?.sort !== false) {
-				labels.sort((a, b) => a.localeCompare(b));
-			}
-			return theme.fg("dim", `  ${labels.join(", ")}`);
-		};
-		const addLoadedSection = (
-			name: string,
-			collapsedBody: string,
-			expandedBody = collapsedBody,
-			color: ThemeColor = "mdHeading",
-		): void => {
-			const section = new ExpandableText(
-				() => `${sectionHeader(name, color)}\n${collapsedBody}`,
-				() => `${sectionHeader(name, color)}\n${expandedBody}`,
-				this.getStartupExpansionState(),
-				0,
-				0,
-			);
-			this.chatContainer.addChild(section);
-			this.chatContainer.addChild(new Spacer(1));
-		};
-
-		const skillsResult = this.session.resourceLoader.getSkills();
-		const promptsResult = this.session.resourceLoader.getPrompts();
-		const themesResult = this.session.resourceLoader.getThemes();
-		const extensions =
-			options?.extensions ??
-			this.session.resourceLoader.getExtensions().extensions.map((extension) => ({
-				path: extension.path,
-				sourceInfo: extension.sourceInfo,
-			}));
-		const sourceInfos = new Map<string, SourceInfo>();
-		for (const extension of extensions) {
-			if (extension.sourceInfo) {
-				sourceInfos.set(extension.path, extension.sourceInfo);
-			}
-		}
-		for (const skill of skillsResult.skills) {
-			if (skill.sourceInfo) {
-				sourceInfos.set(skill.filePath, skill.sourceInfo);
-			}
-		}
-		for (const prompt of promptsResult.prompts) {
-			if (prompt.sourceInfo) {
-				sourceInfos.set(prompt.filePath, prompt.sourceInfo);
-			}
-		}
-		for (const loadedTheme of themesResult.themes) {
-			if (loadedTheme.sourcePath && loadedTheme.sourceInfo) {
-				sourceInfos.set(loadedTheme.sourcePath, loadedTheme.sourceInfo);
-			}
-		}
-
-		if (showListing) {
-			// Context files (MISUL.md, AGENTS.md, etc.) are loaded silently;
-			// they don't need a startup section since they're already in the system prompt.
-
-			// Skills are intentionally NOT listed at startup; they are available via the /skills menu.
-
-			const templates = this.session.promptTemplates;
-			if (templates.length > 0) {
-				const groups = this.buildScopeGroups(
-					templates.map((template) => ({ path: template.filePath, sourceInfo: template.sourceInfo })),
-				);
-				const templateByPath = new Map(templates.map((t) => [t.filePath, t]));
-				const templateList = this.formatScopeGroups(groups, {
-					formatPath: (item) => {
-						const template = templateByPath.get(item.path);
-						return template ? `/${template.name}` : this.formatDisplayPath(item.path);
-					},
-					formatPackagePath: (item) => {
-						const template = templateByPath.get(item.path);
-						return template ? `/${template.name}` : this.formatDisplayPath(item.path);
-					},
-				});
-				const promptCompactList = formatCompactList(templates.map((template) => `/${template.name}`));
-				addLoadedSection("Prompts", promptCompactList, templateList);
-			}
-
-			if (extensions.length > 0) {
-				const groups = this.buildScopeGroups(extensions);
-				const extList = this.formatScopeGroups(groups, {
-					formatPath: (item) => this.formatExtensionDisplayPath(item.path),
-					formatPackagePath: (item) =>
-						this.formatExtensionDisplayPath(this.getShortPath(item.path, item.sourceInfo)),
-				});
-				const extensionCompactList = formatCompactList(this.getCompactExtensionLabels(extensions));
-				addLoadedSection("Extensions", extensionCompactList, extList, "mdHeading");
-			}
-
-			// Show loaded themes (excluding built-in)
-			const loadedThemes = themesResult.themes;
-			const customThemes = loadedThemes.filter((t) => t.sourcePath);
-			if (customThemes.length > 0) {
-				const groups = this.buildScopeGroups(
-					customThemes.map((loadedTheme) => ({
-						path: loadedTheme.sourcePath!,
-						sourceInfo: loadedTheme.sourceInfo,
-					})),
-				);
-				const themeList = this.formatScopeGroups(groups, {
-					formatPath: (item) => this.formatDisplayPath(item.path),
-					formatPackagePath: (item) => this.getShortPath(item.path, item.sourceInfo),
-				});
-				const themeCompactList = formatCompactList(
-					customThemes.map(
-						(loadedTheme) =>
-							loadedTheme.name ?? this.getCompactPathLabel(loadedTheme.sourcePath!, loadedTheme.sourceInfo),
-					),
-				);
-				addLoadedSection("Themes", themeCompactList, themeList);
-			}
-		}
-
-		if (showDiagnostics) {
-			const skillDiagnostics = skillsResult.diagnostics;
-			if (skillDiagnostics.length > 0) {
-				const warningLines = this.formatDiagnostics(skillDiagnostics, sourceInfos);
-				this.chatContainer.addChild(new Text(`${theme.fg("warning", "[Skill conflicts]")}\n${warningLines}`, 0, 0));
-				this.chatContainer.addChild(new Spacer(1));
-			}
-
-			const promptDiagnostics = promptsResult.diagnostics;
-			if (promptDiagnostics.length > 0) {
-				const warningLines = this.formatDiagnostics(promptDiagnostics, sourceInfos);
-				this.chatContainer.addChild(
-					new Text(`${theme.fg("warning", "[Prompt conflicts]")}\n${warningLines}`, 0, 0),
-				);
-				this.chatContainer.addChild(new Spacer(1));
-			}
-
-			const extensionDiagnostics: ResourceDiagnostic[] = [];
-			const extensionErrors = this.session.resourceLoader.getExtensions().errors;
-			if (extensionErrors.length > 0) {
-				for (const error of extensionErrors) {
-					extensionDiagnostics.push({ type: "error", message: error.error, path: error.path });
-				}
-			}
-
-			const commandDiagnostics = this.session.extensionRunner.getCommandDiagnostics();
-			extensionDiagnostics.push(...commandDiagnostics);
-			extensionDiagnostics.push(...this.getBuiltInCommandConflictDiagnostics(this.session.extensionRunner));
-
-			const shortcutDiagnostics = this.session.extensionRunner.getShortcutDiagnostics();
-			extensionDiagnostics.push(...shortcutDiagnostics);
-
-			if (extensionDiagnostics.length > 0) {
-				const warningLines = this.formatDiagnostics(extensionDiagnostics, sourceInfos);
-				this.chatContainer.addChild(
-					new Text(`${theme.fg("warning", "[Extension issues]")}\n${warningLines}`, 0, 0),
-				);
-				this.chatContainer.addChild(new Spacer(1));
-			}
-
-			const themeDiagnostics = themesResult.diagnostics;
-			if (themeDiagnostics.length > 0) {
-				const warningLines = this.formatDiagnostics(themeDiagnostics, sourceInfos);
-				this.chatContainer.addChild(new Text(`${theme.fg("warning", "[Theme conflicts]")}\n${warningLines}`, 0, 0));
-				this.chatContainer.addChild(new Spacer(1));
-			}
-		}
 	}
 
 	/**
@@ -1554,8 +948,6 @@ export class InteractiveMode {
 
 		const extensionRunner = this.session.extensionRunner;
 		this.setupExtensionShortcuts(extensionRunner);
-		this.showLoadedResources({ force: false, showDiagnosticsWhenQuiet: true });
-		this.showStartupNoticesIfNeeded();
 		this.initResourceChecker();
 	}
 
@@ -1574,8 +966,10 @@ export class InteractiveMode {
 			projectExtensions: [path.join(cwd, ".misul", "extensions")],
 			globalPrompts: [path.join(agentDir, "prompts")],
 			projectPrompts: [path.join(cwd, ".misul", "prompts")],
-			globalAddons: path.join(agentDir, "addons"),
-			projectAddons: path.join(cwd, ".misul", "addons"),
+			globalMcpConfig: path.join(agentDir, "mcp.json"),
+			projectMcpConfig: path.join(cwd, ".misul", "mcp.json"),
+			globalAcpConfig: path.join(agentDir, "acp.json"),
+			projectAcpConfig: path.join(cwd, ".misul", "acp.json"),
 		};
 		this.session.initResourceChecker(dirs);
 	}
@@ -2438,6 +1832,7 @@ export class InteractiveMode {
 		this.defaultEditor.onAction("app.model.select", () => this.showModelSelector());
 		this.defaultEditor.onAction("app.tools.expand", () => this.toggleToolOutputExpansion());
 		this.defaultEditor.onAction("app.editor.external", () => this.openExternalEditor());
+		this.defaultEditor.onAction("app.mouse.toggle", () => this.toggleMouseCapture());
 		this.defaultEditor.onAction("app.message.followUp", () => this.handleFollowUp());
 		this.defaultEditor.onAction("app.message.dequeue", () => this.handleDequeue());
 		this.defaultEditor.onAction("app.session.new", () => this.handleClearCommand());
@@ -2485,13 +1880,13 @@ export class InteractiveMode {
 	private setupMouseListener(): void {
 		this.ui.addMouseListener((event) => {
 			if (process.env.MISUL_MOUSE_DEBUG) {
-				fs.appendFileSync("/tmp/misul-mouse.log", `LISTENER: type=${event.type} button=${event.button} col=${event.col} row=${event.row}\n`);
+				fs.appendFileSync(path.join(os.tmpdir(), "misul-mouse.log"), `LISTENER: type=${event.type} button=${event.button} col=${event.col} row=${event.row}\n`);
 			}
 			if (event.type !== "press") return;
 
 			const lineIndex = this.ui.terminalRowToLineIndex(event.row);
 			if (process.env.MISUL_MOUSE_DEBUG) {
-				fs.appendFileSync("/tmp/misul-mouse.log", `  lineIndex=${lineIndex}\n`);
+				fs.appendFileSync(path.join(os.tmpdir(), "misul-mouse.log"), `  lineIndex=${lineIndex}\n`);
 			}
 			if (lineIndex < 0) return;
 
@@ -2506,7 +1901,7 @@ export class InteractiveMode {
 			const stripped = clickedLine.replace(/\x1b\[[0-9;]*m/g, "").replace(/\x1b\][^\x07]*\x07/g, "");
 
 			if (process.env.MISUL_MOUSE_DEBUG) {
-				fs.appendFileSync("/tmp/misul-mouse.log", `  stripped=${JSON.stringify(stripped)}\n`);
+				fs.appendFileSync(path.join(os.tmpdir(), "misul-mouse.log"), `  stripped=${JSON.stringify(stripped)}\n`);
 			}
 
 			// CollapsibleHeader pattern: " {label}  {−|+}"
@@ -2526,7 +1921,7 @@ export class InteractiveMode {
 			}
 
 			if (process.env.MISUL_MOUSE_DEBUG) {
-				fs.appendFileSync("/tmp/misul-mouse.log", `  headerIndex=${headerIndex} items=${items.length}\n`);
+				fs.appendFileSync(path.join(os.tmpdir(), "misul-mouse.log"), `  headerIndex=${headerIndex} items=${items.length}\n`);
 			}
 
 			if (headerIndex >= 0 && headerIndex < items.length) {
@@ -2639,15 +2034,14 @@ export class InteractiveMode {
 			text = text.trim();
 			if (!text) return;
 
+			// Any pending text selection is tied to screen coordinates that become
+			// invalid once the chat scrolls with new content; clear it now.
+			this.ui.clearSelection();
+
 			// Handle commands
 			if (text === "/settings") {
 				this.showSettingsSelector();
 				this.editor.setText("");
-				return;
-			}
-			if (text === "/scoped-models") {
-				this.editor.setText("");
-				await this.showModelsSelector();
 				return;
 			}
 			if (text === "/model" || text.startsWith("/model ")) {
@@ -2659,11 +2053,6 @@ export class InteractiveMode {
 			if (text === "/thinking") {
 				this.editor.setText("");
 				this.showThinkingSelector();
-				return;
-			}
-			if (text === "/probe-thinking") {
-				this.editor.setText("");
-				await this.handleProbeThinkingCommand();
 				return;
 			}
 			if (text === "/skills") {
@@ -2678,11 +2067,6 @@ export class InteractiveMode {
 			}
 			if (text === "/import" || text.startsWith("/import ")) {
 				await this.handleImportCommand(text);
-				this.editor.setText("");
-				return;
-			}
-			if (text === "/share") {
-				await this.handleShareCommand();
 				this.editor.setText("");
 				return;
 			}
@@ -2711,11 +2095,6 @@ export class InteractiveMode {
 				this.editor.setText("");
 				return;
 			}
-			if (text === "/changelog") {
-				this.handleChangelogCommand();
-				this.editor.setText("");
-				return;
-			}
 			if (text === "/hotkeys") {
 				this.handleHotkeysCommand();
 				this.editor.setText("");
@@ -2733,11 +2112,6 @@ export class InteractiveMode {
 			}
 			if (text === "/tree") {
 				this.showTreeSelector();
-				this.editor.setText("");
-				return;
-			}
-			if (text === "/trust") {
-				this.showTrustSelector();
 				this.editor.setText("");
 				return;
 			}
@@ -2791,6 +2165,32 @@ export class InteractiveMode {
 			if (text === "/quit") {
 				this.editor.setText("");
 				await this.shutdown();
+				return;
+			}
+
+			// Instant built-in tools: read, grep, edit, todo.
+			if (
+				text === "/read" ||
+				text.startsWith("/read ") ||
+				text === "/grep" ||
+				text.startsWith("/grep ") ||
+				text === "/edit" ||
+				text.startsWith("/edit ") ||
+				text === "/todo" ||
+				text.startsWith("/todo ")
+			) {
+				this.editor.setText("");
+				await handleInstantToolCommand(text, {
+					cwd: this.sessionManager.getCwd(),
+					chatContainer: this.chatContainer,
+					requestRender: () => this.ui.requestRender(),
+					showError: (message) => this.showError(message),
+					showStatus: (message) => this.showStatus(message),
+					getTodos: () => this.instantTodos,
+					setTodos: (todos) => {
+						this.instantTodos = todos;
+					},
+				});
 				return;
 			}
 
@@ -3063,7 +2463,8 @@ export class InteractiveMode {
 				const component = this.pendingTools.get(event.toolCallId);
 				if (component) {
 					component.updateResult({ ...event.result, isError: event.isError });
-					this.pendingTools.delete(event.toolCallId);
+					// Keep the component in pendingTools until the assistant message ends
+					// so message_end can collapse it. agent_start/agent_end clear the map.
 					this.ui.requestRender();
 				}
 				break;
@@ -3467,7 +2868,7 @@ export class InteractiveMode {
 			new Text(
 				theme.fg(
 					"warning",
-					"This project is not trusted. Project .misul resources and packages are ignored. Use /trust to save a trust decision, then restart Misul.",
+					"This project is not trusted. Project .misul resources and packages are ignored. Use /settings to change the default project trust, then restart Misul.",
 				),
 				1,
 				0,
@@ -3688,6 +3089,19 @@ export class InteractiveMode {
 			clearInterval(suspendKeepAlive);
 			process.removeListener("SIGINT", ignoreSigint);
 			throw error;
+		}
+	}
+
+	private toggleMouseCapture(): void {
+		const currentlyDisabled = this.settingsManager.getDisableMouseCapture();
+		const newValue = !currentlyDisabled;
+		this.settingsManager.setDisableMouseCapture(newValue);
+		if (newValue) {
+			this.ui.terminal.disableMouseCapture();
+			this.showStatus("Mouse capture off - drag to select text, then press again to re-enable clicks/scroll");
+		} else {
+			this.ui.terminal.enableMouseCapture();
+			this.showStatus("Mouse capture on - clicks and wheel scroll work");
 		}
 	}
 
@@ -4136,7 +3550,6 @@ export class InteractiveMode {
 					currentTheme: this.settingsManager.getTheme() || "dark",
 					availableThemes: getAvailableThemes(),
 					hideThinkingBlock: this.hideThinkingBlock,
-					collapseChangelog: this.settingsManager.getCollapseChangelog(),
 					enableInstallTelemetry: this.settingsManager.getEnableInstallTelemetry(),
 					doubleEscapeAction: this.settingsManager.getDoubleEscapeAction(),
 					treeFilterMode: this.settingsManager.getTreeFilterMode(),
@@ -4147,6 +3560,7 @@ export class InteractiveMode {
 					quietStartup: this.settingsManager.getQuietStartup(),
 					clearOnShrink: this.settingsManager.getClearOnShrink(),
 					showTerminalProgress: this.settingsManager.getShowTerminalProgress(),
+					disableMouseCapture: this.settingsManager.getDisableMouseCapture(),
 					warnings: this.settingsManager.getWarnings(),
 					cacheAggressiveness: this.settingsManager.getCacheAggressiveness(),
 					soloMode: this.settingsManager.getSoloMode(),
@@ -4229,9 +3643,6 @@ export class InteractiveMode {
 						this.chatContainer.clear();
 						this.rebuildChatFromMessages();
 					},
-					onCollapseChangelogChange: (collapsed) => {
-						this.settingsManager.setCollapseChangelog(collapsed);
-					},
 					onEnableInstallTelemetryChange: (enabled) => {
 						this.settingsManager.setEnableInstallTelemetry(enabled);
 					},
@@ -4271,6 +3682,16 @@ export class InteractiveMode {
 					},
 					onShowTerminalProgressChange: (enabled) => {
 						this.settingsManager.setShowTerminalProgress(enabled);
+					},
+					onDisableMouseCaptureChange: (enabled) => {
+						this.settingsManager.setDisableMouseCapture(enabled);
+						if (enabled) {
+							this.ui.terminal.disableMouseCapture();
+							this.showStatus("Text selection enabled");
+						} else {
+							this.ui.terminal.enableMouseCapture();
+							this.showStatus("Mouse capture enabled");
+						}
 					},
 					onWarningsChange: (warnings) => {
 						this.settingsManager.setWarnings(warnings);
@@ -4403,31 +3824,6 @@ export class InteractiveMode {
 		}
 	}
 
-	private showTrustSelector(): void {
-		const cwd = this.sessionManager.getCwd();
-		const trustStore = new ProjectTrustStore(this.runtimeHost.services.agentDir);
-		const savedDecision = trustStore.getEntry(cwd);
-		this.showSelector((done) => {
-			const selector = new TrustSelectorComponent({
-				cwd,
-				savedDecision,
-				projectTrusted: this.settingsManager.isProjectTrusted(),
-				onSelect: (selection) => {
-					trustStore.setMany(selection.updates);
-					done();
-					this.showStatus(
-						`Saved trust decision: ${selection.trusted ? "trusted" : "untrusted"}. Restart Misul for this to take effect.`,
-					);
-				},
-				onCancel: () => {
-					done();
-					this.ui.requestRender();
-				},
-			});
-			return { component: selector, focus: selector };
-		});
-	}
-
 	private showSkillsSelector(): void {
 		const skills = this.session.resourceLoader.getSkills().skills;
 		if (skills.length === 0) {
@@ -4477,61 +3873,6 @@ export class InteractiveMode {
 		});
 	}
 
-	/**
-	 * Probe the current model to discover which reasoning-effort tiers it
-	 * actually accepts. Sends a minimal 1-token request per tier and records
-	 * the results, so the selector reflects runtime-discovered capabilities
-	 * instead of relying solely on build-time heuristics.
-	 */
-	private async handleProbeThinkingCommand(): Promise<void> {
-		const model = this.session.model;
-		if (!model) {
-			this.showWarning("No model selected.");
-			return;
-		}
-		if (!model.reasoning) {
-			this.showWarning(`${model.name} is not a reasoning model; nothing to probe.`);
-			return;
-		}
-
-		const apiKey = await this.session.modelRegistry.getApiKeyForProvider(model.provider);
-		if (!apiKey) {
-			this.showWarning(`No API key configured for ${model.provider}. Run /login first.`);
-			return;
-		}
-
-		this.showStatus(`Probing ${model.name} reasoning efforts…`);
-
-		const context = {
-			systemPrompt: "Reply with: ok",
-			messages: [{ role: "user" as const, content: "Hi", timestamp: Date.now() }],
-			tools: [],
-		};
-
-		const supported: ThinkingLevel[] = [];
-		for (const tier of PROBE_TIERS) {
-			try {
-				await completeSimple(model, context, {
-					apiKey,
-					reasoning: tier,
-					maxTokens: 5,
-				});
-				supported.push(tier);
-			} catch {
-				// 400 or other error → this tier is not accepted by the provider.
-			}
-		}
-
-		if (supported.length === 0) {
-			this.showWarning(`${model.name} accepts no reasoning-effort tiers (reasons by default or not at all).`);
-			return;
-		}
-
-		recordProbedThinkingLevels(model, supported);
-		const labels = supported.map((t) => thinkingLevelLabel(model, t)).join(", ");
-		this.showStatus(`Probed ${model.name}: ${labels}. Use /thinking to select.`);
-	}
-
 	private showModelSelector(initialSearchInput?: string): void {
 		this.showSelector((done) => {
 			const selector = new ModelSelectorComponent(
@@ -4558,83 +3899,6 @@ export class InteractiveMode {
 					this.ui.requestRender();
 				},
 				initialSearchInput,
-			);
-			return { component: selector, focus: selector };
-		});
-	}
-
-	private async showModelsSelector(): Promise<void> {
-		// Get all available models
-		this.session.modelRegistry.refresh();
-		const allModels = this.session.modelRegistry.getAvailable();
-
-		if (allModels.length === 0) {
-			this.showStatus("No models available");
-			return;
-		}
-
-		// Check if session has scoped models (from previous session-only changes or CLI --models)
-		const sessionScopedModels = this.session.scopedModels;
-		const hasSessionScope = sessionScopedModels.length > 0;
-
-		// Build enabled model IDs from session state or settings
-		let currentEnabledIds: string[] | null = null;
-
-		if (hasSessionScope) {
-			// Use current session's scoped models
-			currentEnabledIds = sessionScopedModels.map((scoped) => `${scoped.model.provider}/${scoped.model.id}`);
-		} else {
-			// Fall back to settings
-			const patterns = this.settingsManager.getEnabledModels();
-			if (patterns !== undefined && patterns.length > 0) {
-				const scopedModels = await resolveModelScope(patterns, this.session.modelRegistry);
-				currentEnabledIds = scopedModels.map((scoped) => `${scoped.model.provider}/${scoped.model.id}`);
-			}
-		}
-
-		// Helper to update session's scoped models (session-only, no persist)
-		const updateSessionModels = async (enabledIds: string[] | null) => {
-			currentEnabledIds = enabledIds === null ? null : [...enabledIds];
-			if (enabledIds && enabledIds.length > 0 && enabledIds.length < allModels.length) {
-				const newScopedModels = await resolveModelScope(enabledIds, this.session.modelRegistry);
-				this.session.setScopedModels(
-					newScopedModels.map((sm) => ({
-						model: sm.model,
-						thinkingLevel: sm.thinkingLevel,
-					})),
-				);
-			} else {
-				// All enabled or none enabled = no filter
-				this.session.setScopedModels([]);
-			}
-			await this.updateAvailableProviderCount();
-			this.ui.requestRender();
-		};
-
-		this.showSelector((done) => {
-			const selector = new ScopedModelsSelectorComponent(
-				{
-					allModels,
-					enabledModelIds: currentEnabledIds,
-				},
-				{
-					onChange: async (enabledIds) => {
-						await updateSessionModels(enabledIds);
-					},
-					onPersist: (enabledIds) => {
-						// Persist to settings
-						const newPatterns =
-							enabledIds === null || enabledIds.length === allModels.length
-								? undefined // All enabled = clear filter
-								: enabledIds;
-						this.settingsManager.setEnabledModels(newPatterns ? [...newPatterns] : undefined);
-						this.showStatus("Model selection saved to settings");
-					},
-					onCancel: () => {
-						done();
-						this.ui.requestRender();
-					},
-				},
 			);
 			return { component: selector, focus: selector };
 		});
@@ -5387,10 +4651,6 @@ export class InteractiveMode {
 			this.setupExtensionShortcuts(runner);
 			this.rebuildChatFromMessages();
 			dismissReloadBox(this.editor as Component);
-			this.showLoadedResources({
-				force: false,
-				showDiagnosticsWhenQuiet: true,
-			});
 			const savedImplicitProjectTrust = this.maybeSaveImplicitProjectTrustAfterReload();
 			const modelsJsonError = this.session.modelRegistry.getError();
 			if (modelsJsonError) {
@@ -5499,100 +4759,6 @@ export class InteractiveMode {
 				return;
 			}
 			await this.handleFatalRuntimeError("Failed to import session", error);
-		}
-	}
-
-	private async handleShareCommand(): Promise<void> {
-		// Check if gh is available and logged in
-		try {
-			const authResult = spawnSync("gh", ["auth", "status"], { encoding: "utf-8" });
-			if (authResult.status !== 0) {
-				this.showError("GitHub CLI is not logged in. Run 'gh auth login' first.");
-				return;
-			}
-		} catch {
-			this.showError("GitHub CLI (gh) is not installed. Install it from https://cli.github.com/");
-			return;
-		}
-
-		// Export to a temp file
-		const tmpFile = path.join(os.tmpdir(), "session.html");
-		try {
-			await this.session.exportToHtml(tmpFile);
-		} catch (error: unknown) {
-			this.showError(`Failed to export session: ${error instanceof Error ? error.message : "Unknown error"}`);
-			return;
-		}
-
-		// Show cancellable loader, replacing the editor
-		const loader = new BorderedLoader(this.ui, theme, "Creating gist...");
-		this.editorContainer.clear();
-		this.editorContainer.addChild(loader);
-		this.ui.setFocus(loader);
-		this.ui.requestRender();
-
-		const restoreEditor = () => {
-			loader.dispose();
-			this.editorContainer.clear();
-			this.editorContainer.addChild(this.editor);
-			this.ui.setFocus(this.editor);
-			try {
-				fs.unlinkSync(tmpFile);
-			} catch {
-				// Ignore cleanup errors
-			}
-		};
-
-		// Create a secret gist asynchronously
-		let proc: ReturnType<typeof spawn> | null = null;
-
-		loader.onAbort = () => {
-			proc?.kill();
-			restoreEditor();
-			this.showStatus("Share cancelled");
-		};
-
-		try {
-			const result = await new Promise<{ stdout: string; stderr: string; code: number | null }>((resolve) => {
-				proc = spawn("gh", ["gist", "create", "--public=false", tmpFile]);
-				let stdout = "";
-				let stderr = "";
-				proc.stdout?.on("data", (data) => {
-					stdout += data.toString();
-				});
-				proc.stderr?.on("data", (data) => {
-					stderr += data.toString();
-				});
-				proc.on("close", (code) => resolve({ stdout, stderr, code }));
-			});
-
-			if (loader.signal.aborted) return;
-
-			restoreEditor();
-
-			if (result.code !== 0) {
-				const errorMsg = result.stderr?.trim() || "Unknown error";
-				this.showError(`Failed to create gist: ${errorMsg}`);
-				return;
-			}
-
-			// Extract gist ID from the URL returned by gh
-			// gh returns something like: https://gist.github.com/username/GIST_ID
-			const gistUrl = result.stdout?.trim();
-			const gistId = gistUrl?.split("/").pop();
-			if (!gistId) {
-				this.showError("Failed to parse gist ID from gh output");
-				return;
-			}
-
-			// Create the preview URL
-			const previewUrl = getShareViewerUrl(gistId);
-			this.showStatus(`Share URL: ${previewUrl}\nGist: ${gistUrl}`);
-		} catch (error: unknown) {
-			if (!loader.signal.aborted) {
-				restoreEditor();
-				this.showError(`Failed to create gist: ${error instanceof Error ? error.message : "Unknown error"}`);
-			}
 		}
 	}
 
@@ -5760,27 +4926,6 @@ export class InteractiveMode {
 		this.ui.requestRender();
 	}
 
-	private handleChangelogCommand(): void {
-		const changelogPath = getChangelogPath();
-		const allEntries = parseChangelog(changelogPath);
-
-		const changelogMarkdown =
-			allEntries.length > 0
-				? allEntries
-						.reverse()
-						.map((e) => normalizeChangelogLinks(e.content, e))
-						.join("\n\n")
-				: "No changelog entries found.";
-
-		this.chatContainer.addChild(new Spacer(1));
-		this.chatContainer.addChild(new DynamicBorder());
-		this.chatContainer.addChild(new Text(theme.bold(theme.fg("accent", "What's New")), 1, 0));
-		this.chatContainer.addChild(new Spacer(1));
-		this.chatContainer.addChild(new Markdown(changelogMarkdown, 1, 1, this.getMarkdownThemeWithSettings()));
-		this.chatContainer.addChild(new DynamicBorder());
-		this.ui.requestRender();
-	}
-
 	/**
 	 * Get capitalized display string for an app keybinding action.
 	 */
@@ -5836,6 +4981,7 @@ export class InteractiveMode {
 		const followUp = this.getAppKeyDisplay("app.message.followUp");
 		const dequeue = this.getAppKeyDisplay("app.message.dequeue");
 		const pasteImage = this.getAppKeyDisplay("app.clipboard.pasteImage");
+		const toggleMouse = this.getAppKeyDisplay("app.mouse.toggle");
 
 		let hotkeys = `
 **Navigation**
@@ -5878,6 +5024,7 @@ export class InteractiveMode {
 | \`${followUp}\` | Queue follow-up message |
 | \`${dequeue}\` | Restore queued messages |
 | \`${pasteImage}\` | Paste image from clipboard |
+| \`${toggleMouse}\` | Toggle native text selection (mouse capture off/on) |
 | \`/\` | Slash commands |
 | \`!\` | Run bash command |
 | \`!!\` | Run bash command (excluded from context) |

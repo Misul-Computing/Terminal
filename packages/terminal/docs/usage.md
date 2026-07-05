@@ -8,7 +8,7 @@ This page collects day-to-day usage details that do not fit on the quickstart pa
 
 The interface has four main areas:
 
-- **Startup header** - shortcuts, loaded context files, prompt templates, skills, and extensions
+- **Startup header** - logo, version, and tagline
 - **Messages** - user messages, assistant responses, tool calls, tool results, notifications, errors, and extension UI
 - **Editor** - where you type; border color indicates the current thinking level
 - **Footer** - working directory, session name, token/cache usage, cost, context usage, and current model
@@ -37,7 +37,6 @@ Type `/` in the editor to open command completion. Extensions can register custo
 |---------|-------------|
 | `/login`, `/logout` | Manage OAuth or API-key credentials |
 | `/model` | Switch models |
-| `/scoped-models` | Enable/disable models for Ctrl+P cycling |
 | `/settings` | Thinking level, theme, message delivery, transport |
 | `/resume` | Pick from previous sessions |
 | `/new` | Start a new session |
@@ -49,10 +48,12 @@ Type `/` in the editor to open command completion. Extensions can register custo
 | `/compact [prompt]` | Manually compact context, optionally with custom instructions |
 | `/copy` | Copy last assistant message to clipboard |
 | `/export [file]` | Export session to HTML |
-| `/share` | Upload as private GitHub gist with shareable HTML link |
 | `/reload` | Reload keybindings, extensions, skills, prompts, and context files |
 | `/hotkeys` | Show all keyboard shortcuts |
-| `/changelog` | Display version history |
+| `/read <path>` | Read a file instantly and display its contents |
+| `/grep <pattern> [path]` | Search file contents instantly |
+| `/edit <path> "<old>" "<new>"` | Apply a simple edit instantly |
+| `/todo [text]` | Show or add to the local task list |
 | `/quit` | Quit misul |
 
 ## Message Queue
@@ -122,14 +123,10 @@ If no extension or saved decision applies, `defaultProjectTrust` controls the fa
 
 `misul config` and package commands use the same project trust flow, except `misul update` never prompts. Pass `--approve` to trust project-local settings for one command or `--no-approve` to ignore them.
 
-Use `/trust` in interactive mode to save a project trust decision for future sessions, including trust for the immediate parent folder. It writes `~/.misul/agent/trust.json` only; the current session is not reloaded, so restart misul for changes to take effect.
 
-
-## Exporting and Sharing Sessions
+## Exporting Sessions
 
 Use `/export [file]` to write a session to HTML.
-
-Use `/share` to upload a private GitHub gist with a shareable HTML link.
 
 ## CLI Reference
 
@@ -298,4 +295,4 @@ misul --exclude-tools ask_question
 
 Misul Terminal keeps the core small and pushes workflow-specific behavior into extensions, skills, prompt templates, and packages.
 
-It intentionally does not include built-in MCP, sub-agents, permission popups, plan mode, to-dos, or background bash. You can build or install those workflows as extensions or packages, or use external tools such as containers and tmux.
+It intentionally does not include built-in MCP, sub-agents, permission popups, plan mode, or background bash. You can build or install those workflows as extensions or packages, or use external tools such as containers and tmux.

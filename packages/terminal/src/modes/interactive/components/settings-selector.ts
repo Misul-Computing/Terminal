@@ -59,7 +59,6 @@ export interface SettingsConfig {
 	currentTheme: string;
 	availableThemes: string[];
 	hideThinkingBlock: boolean;
-	collapseChangelog: boolean;
 	enableInstallTelemetry: boolean;
 	doubleEscapeAction: "fork" | "tree" | "none";
 	treeFilterMode: "default" | "no-tools" | "user-only" | "labeled-only" | "all";
@@ -70,6 +69,7 @@ export interface SettingsConfig {
 	defaultProjectTrust: DefaultProjectTrust;
 	clearOnShrink: boolean;
 	showTerminalProgress: boolean;
+	disableMouseCapture: boolean;
 	warnings: WarningSettings;
 	cacheAggressiveness: CacheAggressivenessSetting;
 	soloMode: boolean;
@@ -91,7 +91,6 @@ export interface SettingsCallbacks {
 	onThemeChange: (theme: string) => void;
 	onThemePreview?: (theme: string) => void;
 	onHideThinkingBlockChange: (hidden: boolean) => void;
-	onCollapseChangelogChange: (collapsed: boolean) => void;
 	onEnableInstallTelemetryChange: (enabled: boolean) => void;
 	onDoubleEscapeActionChange: (action: "fork" | "tree" | "none") => void;
 	onTreeFilterModeChange: (mode: "default" | "no-tools" | "user-only" | "labeled-only" | "all") => void;
@@ -102,6 +101,7 @@ export interface SettingsCallbacks {
 	onDefaultProjectTrustChange: (defaultProjectTrust: DefaultProjectTrust) => void;
 	onClearOnShrinkChange: (enabled: boolean) => void;
 	onShowTerminalProgressChange: (enabled: boolean) => void;
+	onDisableMouseCaptureChange: (enabled: boolean) => void;
 	onWarningsChange: (warnings: WarningSettings) => void;
 	onCacheAggressivenessChange: (value: CacheAggressivenessSetting) => void;
 	onSoloModeChange: (enabled: boolean) => void;
@@ -296,13 +296,6 @@ export class SettingsSelectorComponent extends Container {
 				label: "Hide thinking",
 				description: "Hide thinking blocks in assistant responses",
 				currentValue: config.hideThinkingBlock ? "true" : "false",
-				values: ["true", "false"],
-			},
-			{
-				id: "collapse-changelog",
-				label: "Collapse changelog",
-				description: "Show condensed changelog after updates",
-				currentValue: config.collapseChangelog ? "true" : "false",
 				values: ["true", "false"],
 			},
 			{
@@ -528,6 +521,16 @@ export class SettingsSelectorComponent extends Container {
 			values: ["true", "false"],
 		});
 
+		// Mouse capture toggle (insert after terminal-progress)
+		const terminalProgressIndex = items.findIndex((item) => item.id === "terminal-progress");
+		items.splice(terminalProgressIndex + 1, 0, {
+			id: "disable-mouse-capture",
+			label: "Native text selection",
+			description: "Default (off) uses Misul's in-app selection; turn on to disable mouse capture and let the terminal handle selection/copy directly.",
+			currentValue: config.disableMouseCapture ? "true" : "false",
+			values: ["true", "false"],
+		});
+
 		// Add borders
 		this.addChild(new DynamicBorder());
 
@@ -574,24 +577,20 @@ export class SettingsSelectorComponent extends Container {
 					case "hide-thinking":
 						callbacks.onHideThinkingBlockChange(newValue === "true");
 						break;
-					case "collapse-changelog":
-						callbacks.onCollapseChangelogChange(newValue === "true");
-						break;
 					case "quiet-startup":
 						callbacks.onQuietStartupChange(newValue === "true");
 						break;
 					case "install-telemetry":
 						callbacks.onEnableInstallTelemetryChange(newValue === "true");
 						break;
-					case "default-project-trust": {
+					case "default-project-trust":
 						const defaultProjectTrust = DEFAULT_PROJECT_TRUST_BY_LABEL.get(newValue);
 						if (defaultProjectTrust) {
 							callbacks.onDefaultProjectTrustChange(defaultProjectTrust);
 						}
 						break;
-					}
 					case "double-escape-action":
-						callbacks.onDoubleEscapeActionChange(newValue as "fork" | "tree");
+						callbacks.onDoubleEscapeActionChange(newValue as "fork" | "tree" | "none");
 						break;
 					case "tree-filter-mode":
 						callbacks.onTreeFilterModeChange(
@@ -612,6 +611,9 @@ export class SettingsSelectorComponent extends Container {
 						break;
 					case "terminal-progress":
 						callbacks.onShowTerminalProgressChange(newValue === "true");
+						break;
+					case "disable-mouse-capture":
+						callbacks.onDisableMouseCaptureChange(newValue === "true");
 						break;
 					case "cache-aggressiveness":
 						callbacks.onCacheAggressivenessChange(newValue as CacheAggressivenessSetting);

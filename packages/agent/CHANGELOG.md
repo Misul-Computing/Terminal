@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-07-03
+
+### Changed
+
+- Local development version aligned with terminal package dependency range.
+
 ## [0.79.5] - 2026-06-16
 
 ## [0.79.4] - 2026-06-15

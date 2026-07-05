@@ -180,9 +180,8 @@ function createMinimalResourceLoader(systemPrompt: string): ResourceLoader {
 		getMemory: () => undefined,
 		getSystemPrompt: () => systemPrompt,
 		getAppendSystemPrompt: () => [],
-		getAddons: () => [],
-		getAddonMcpServers: () => ({}),
-		getAddonAcpAgents: () => ({}),
+		getMcpServers: () => ({}),
+		getAcpAgents: () => ({}),
 		extendResources: () => {},
 		reload: async () => {},
 	};

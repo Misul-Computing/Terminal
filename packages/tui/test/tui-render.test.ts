@@ -764,4 +764,65 @@ describe("TUI differential rendering", () => {
 
 		tui.stop();
 	});
+
+	it("force a full redraw when returning from internal scroll so the input area is not cut off", async () => {
+		const terminal = new VirtualTerminal(40, 10);
+		const tui = new TUI(terminal);
+		const chat = new TestComponent();
+		const editor = new TestComponent();
+		tui.addChild(chat);
+		tui.addChild(editor);
+
+		chat.lines = Array.from({ length: 20 }, (_, i) => `Chat ${i}`);
+		editor.lines = ["Input 0", "Input 1"];
+		tui.start();
+		await terminal.waitForRender();
+
+		assert.deepStrictEqual(terminal.getViewport(), [
+			"Chat 12",
+			"Chat 13",
+			"Chat 14",
+			"Chat 15",
+			"Chat 16",
+			"Chat 17",
+			"Chat 18",
+			"Chat 19",
+			"Input 0",
+			"Input 1",
+		]);
+
+		tui.scroll("up");
+		await terminal.waitForRender();
+
+		assert.deepStrictEqual(terminal.getViewport(), [
+			"Chat 9",
+			"Chat 10",
+			"Chat 11",
+			"Chat 12",
+			"Chat 13",
+			"Chat 14",
+			"Chat 15",
+			"Chat 16",
+			"Chat 17",
+			"Chat 18",
+		]);
+
+		tui.scroll("down");
+		await terminal.waitForRender();
+
+		assert.deepStrictEqual(terminal.getViewport(), [
+			"Chat 12",
+			"Chat 13",
+			"Chat 14",
+			"Chat 15",
+			"Chat 16",
+			"Chat 17",
+			"Chat 18",
+			"Chat 19",
+			"Input 0",
+			"Input 1",
+		]);
+
+		tui.stop();
+	});
 });

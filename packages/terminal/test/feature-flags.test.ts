@@ -139,7 +139,7 @@ describe.skipIf(!HAS_AUTH)("Feature flags: all features enabled", () => {
 		expect(lastAssistant?.stopReason).toBe("stop");
 
 		session.dispose();
-	}, 30000);
+	}, 60000);
 
 	it("assistantPrefill: prefill text applied", async () => {
 		const settingsManager = SettingsManager.create(tempDir, tempDir);
@@ -160,7 +160,7 @@ describe.skipIf(!HAS_AUTH)("Feature flags: all features enabled", () => {
 		expect(lastAssistant).toBeDefined();
 
 		session.dispose();
-	}, 30000);
+	}, 60000);
 
 	it("steeringMode: all mode set", async () => {
 		const settingsManager = SettingsManager.create(tempDir, tempDir);

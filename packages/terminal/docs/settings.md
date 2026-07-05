@@ -19,8 +19,6 @@ If no extension or saved decision applies, `defaultProjectTrust` controls the fa
 
 `misul config` and package commands use the same project trust flow, except `misul update` never prompts. Pass `--approve` to trust project-local settings for one command or `--no-approve` to ignore them.
 
-Use `/trust` in interactive mode to save a project trust decision for future sessions, including trust for the immediate parent folder. It writes `~/.misul/agent/trust.json` only; the current session is not reloaded, so restart misul for changes to take effect.
-
 ## All Settings
 
 ### Model & Thinking
@@ -53,8 +51,7 @@ Use `/trust` in interactive mode to save a project trust decision for future ses
 | `theme` | string | `"dark"` | Theme name (`"dark"`, `"light"`, or custom) |
 | `quietStartup` | boolean | `false` | Hide startup header |
 | `defaultProjectTrust` | string | `"ask"` | Fallback project trust behavior: `"ask"`, `"always"`, or `"never"`. Global setting only |
-| `collapseChangelog` | boolean | `false` | Show condensed changelog after updates |
-| `enableInstallTelemetry` | boolean | `true` | Send an anonymous install/update version ping after first install or changelog-detected updates. This does not control update checks |
+| `enableInstallTelemetry` | boolean | `true` | Send an anonymous install/update version ping after first install or updates. This does not control update checks |
 | `enableAnalytics` | boolean | `false` | Opt-in analytics data sharing. Currently only asked for during the experimental first-time setup (`MISUL_EXPERIMENTAL=1`) |
 | `trackingId` | string | - | Analytics tracking identifier, generated when `enableAnalytics` is turned on |
 | `doubleEscapeAction` | string | `"tree"` | Action for double-escape: `"tree"`, `"fork"`, or `"none"` |

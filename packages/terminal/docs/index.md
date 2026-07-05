@@ -40,6 +40,7 @@ For the full first-run flow, see [Quickstart](quickstart.md).
 
 - [Quickstart](quickstart.md) - install, authenticate, and run a first session.
 - [Using Misul Terminal](usage.md) - interactive mode, slash commands, context files, and CLI reference.
+- [Instant Tools](instant-tools.md) - local /read, /grep, /edit, and /todo commands.
 - [Providers](providers.md) - subscription and API-key setup for built-in providers.
 - [Security](security.md) - project trust, sandbox boundaries, and vulnerability reporting.
 - [Containerization](containerization.md) - sandbox misul with Gondolin, Docker, or OpenShell.

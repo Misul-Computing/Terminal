@@ -13,6 +13,7 @@ type SubmitContext = {
 		isBashRunning: boolean;
 		prompt: (text: string, options?: unknown) => Promise<void>;
 	};
+	ui: { clearSelection: () => void };
 	flushPendingBashComponents: () => void;
 	onInputCallback?: (text: string) => void;
 	pendingUserInputs: string[];
@@ -43,6 +44,7 @@ function createSubmitContext(): SubmitContext {
 			isBashRunning: false,
 			prompt: vi.fn(async () => {}),
 		},
+		ui: { clearSelection: vi.fn() },
 		flushPendingBashComponents: vi.fn(),
 		pendingUserInputs: [],
 	};

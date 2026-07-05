@@ -1,4 +1,3 @@
-// UI Components for extensions
 export { AssistantMessageComponent } from "./assistant-message.ts";
 export { BashExecutionComponent } from "./bash-execution.ts";
 export { BorderedLoader } from "./bordered-loader.ts";
@@ -22,7 +21,6 @@ export { keyHint, keyText, rawKeyHint } from "./keybinding-hints.ts";
 export { LoginDialogComponent } from "./login-dialog.ts";
 export { ModelSelectorComponent } from "./model-selector.ts";
 export { OAuthSelectorComponent } from "./oauth-selector.ts";
-export { type ModelsCallbacks, type ModelsConfig, ScopedModelsSelectorComponent } from "./scoped-models-selector.ts";
 export { SessionSelectorComponent } from "./session-selector.ts";
 export { type SettingsCallbacks, type SettingsConfig, SettingsSelectorComponent } from "./settings-selector.ts";
 export { ShowImagesSelectorComponent } from "./show-images-selector.ts";
@@ -32,7 +30,6 @@ export { ThinkingBrowserComponent, type ThinkingBrowserEntry } from "./thinking-
 export { ThinkingSelectorComponent } from "./thinking-selector.ts";
 export { ToolExecutionComponent, type ToolExecutionOptions } from "./tool-execution.ts";
 export { TreeSelectorComponent } from "./tree-selector.ts";
-export { TrustSelectorComponent } from "./trust-selector.ts";
 export { UserMessageComponent } from "./user-message.ts";
 export { UserMessageSelectorComponent } from "./user-message-selector.ts";
 export { truncateToVisualLines, type VisualTruncateResult } from "./visual-truncate.ts";

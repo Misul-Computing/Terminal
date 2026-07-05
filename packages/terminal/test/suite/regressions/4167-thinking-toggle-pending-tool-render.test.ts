@@ -143,7 +143,9 @@ describe("InteractiveMode.renderSessionContext", () => {
 			isError: false,
 		});
 
-		expect(fakeThis.pendingTools.has(TOOL_CALL_ID)).toBe(false);
+		// Completed tools stay registered until the assistant message ends so
+		// message_end can collapse them. The result is still rendered.
+		expect(fakeThis.pendingTools.has(TOOL_CALL_ID)).toBe(true);
 		expect(renderChat(fakeThis.chatContainer)).toContain("FINAL_RESULT");
 	});
 

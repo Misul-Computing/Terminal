@@ -22,12 +22,14 @@ export interface ResourceDirs {
 	projectExtensions?: string[];
 	globalPrompts?: string[];
 	projectPrompts?: string[];
-	globalAddons?: string;
-	projectAddons?: string;
+	globalMcpConfig?: string;
+	projectMcpConfig?: string;
+	globalAcpConfig?: string;
+	projectAcpConfig?: string;
 }
 
 /** What changed, for granular reload. */
-export type ReloadScope = "skills" | "extensions" | "prompts" | "themes" | "addons" | "all";
+export type ReloadScope = "skills" | "extensions" | "prompts" | "themes" | "mcp" | "acp" | "all";
 
 /**
  * On-demand change checker for resource directories.
@@ -62,8 +64,10 @@ export class ResourceChangeChecker {
 		for (const d of dirs.projectExtensions ?? []) add(d, "extensions");
 		for (const d of dirs.globalPrompts ?? []) add(d, "prompts");
 		for (const d of dirs.projectPrompts ?? []) add(d, "prompts");
-		add(dirs.globalAddons, "addons");
-		add(dirs.projectAddons, "addons");
+		add(dirs.globalMcpConfig, "mcp");
+		add(dirs.projectMcpConfig, "mcp");
+		add(dirs.globalAcpConfig, "acp");
+		add(dirs.projectAcpConfig, "acp");
 
 		this._recordMtimes();
 	}

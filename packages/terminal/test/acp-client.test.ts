@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { AcpManager, AcpAgentInstance } from "../src/core/acp-client.ts";
-import type { AcpAgentConfig } from "../src/core/addons.ts";
+import type { AcpAgentConfig } from "../src/core/acp-config.ts";
 
 const TEST_AGENT_SCRIPT = `
 const readline = require('readline');

@@ -107,4 +107,4 @@ export {
 	type MouseListener,
 } from "./tui.ts";
 // Utilities
-export { truncateToWidth, visibleWidth, wrapTextWithAnsi } from "./utils.ts";
+export { applyBackgroundToRange, stripAnsi, truncateToWidth, visibleWidth, wrapTextWithAnsi } from "./utils.ts";

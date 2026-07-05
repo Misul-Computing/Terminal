@@ -11,7 +11,7 @@ import type { Terminal } from "./terminal.ts";
 import type { MouseEvent } from "./terminal.ts";
 import { isOsc11BackgroundColorResponse, parseOsc11BackgroundColor, type RgbColor } from "./terminal-colors.ts";
 import { deleteKittyImage, getCapabilities, isImageLine, setCellDimensions } from "./terminal-image.ts";
-import { extractSegments, normalizeTerminalOutput, sliceByColumn, sliceWithWidth, visibleWidth } from "./utils.ts";
+import { applyBackgroundToRange, extractSegments, normalizeTerminalOutput, sliceByColumn, sliceWithWidth, stripAnsi, visibleWidth } from "./utils.ts";
 
 const KITTY_SEQUENCE_PREFIX = "\x1b_G";
 
@@ -321,11 +321,14 @@ export class TUI extends Container {
 	private pendingOsc11BackgroundReplies = 0;
 	private pendingOsc11BackgroundQueries: PendingOsc11BackgroundQuery[] = [];
 
-	// Internal scroll: when > 0, the viewport is shifted up by this many lines
-	// into the current rendered UI. Reset to 0 on any new render.
 	private scrollOffset = 0;
+	private wasScrolledFlag = false;
 
-	// Overlay stack for modal components rendered on top of base content
+	private selectionStart?: { row: number; col: number };
+	private selectionEnd?: { row: number; col: number };
+	private selectionBgCode?: string;
+	private selectionResetBgCode?: string;
+
 	private focusOrderCounter = 0;
 	private overlayStack: OverlayStackEntry[] = [];
 	private overlayFocusRestore: OverlayFocusRestoreState = { status: "inactive" };
@@ -366,6 +369,24 @@ export class TUI extends Container {
 	 */
 	setClearOnShrink(enabled: boolean): void {
 		this.clearOnShrink = enabled;
+	}
+
+	/**
+	 * Configure the ANSI background code used for in-app text selection highlights.
+	 * Pass the codes themselves, e.g. theme.bg("selectedBg") and "\x1b[49m".
+	 */
+	setSelectionBackground(bgCode: string, resetBgCode: string): void {
+		this.selectionBgCode = bgCode;
+		this.selectionResetBgCode = resetBgCode;
+	}
+
+	/** Clear any in-app text selection. */
+	clearSelection(): void {
+		if (this.selectionStart || this.selectionEnd) {
+			this.selectionStart = undefined;
+			this.selectionEnd = undefined;
+			this.requestRender();
+		}
 	}
 
 	setFocus(component: Component | null): void {
@@ -719,16 +740,119 @@ export class TUI extends Container {
 	}
 
 	private handleMouse(event: MouseEvent): void {
-		// Wheel events control internal scroll. Other events go to listeners.
 		if (event.type === "wheel") {
 			const direction = event.button === 64 ? "up" : "down";
 			this.scroll(direction);
 			return;
 		}
+		if (event.type === "press" && (this.selectionStart || this.selectionEnd)) {
+			this.selectionStart = undefined;
+			this.selectionEnd = undefined;
+			this.requestRender();
+		}
 		for (const listener of this.mouseListeners) {
 			const result = listener(event);
 			if (result?.consume) return;
 		}
+		// No listener consumed the event; use it for in-app text selection.
+		this.handleSelectionMouse(event);
+	}
+
+	private handleSelectionMouse(event: MouseEvent): void {
+		if (event.type === "press") {
+			this.selectionStart = { row: event.row, col: event.col };
+			this.selectionEnd = { row: event.row, col: event.col };
+			this.requestRender();
+			return;
+		}
+		if (event.type === "drag") {
+			if (!this.selectionStart) {
+				this.selectionStart = { row: event.row, col: event.col };
+			}
+			this.selectionEnd = { row: event.row, col: event.col };
+			this.requestRender();
+			return;
+		}
+		if (event.type === "release") {
+			if (this.selectionStart && this.selectionEnd) {
+				this.copySelection();
+				// Keep the selection highlighted so the user can see what was copied.
+				// It will be cleared on the next press or content change.
+			}
+		}
+	}
+
+	private normalizeSelection(): { start: { row: number; col: number }; end: { row: number; col: number } } | undefined {
+		if (!this.selectionStart || !this.selectionEnd) return undefined;
+		let start = this.selectionStart;
+		let end = this.selectionEnd;
+		if (start.row > end.row || (start.row === end.row && start.col > end.col)) {
+			[start, end] = [end, start];
+		}
+		return { start, end };
+	}
+
+	private viewportTopForLines(lines: string[]): number {
+		const height = this.terminal.rows;
+		if (this.scrollOffset > 0) {
+			return Math.max(0, lines.length - this.scrollOffset - height);
+		}
+		return Math.max(0, lines.length - height);
+	}
+
+	private applySelectionToLines(lines: string[], _width: number): string[] {
+		if (!this.selectionBgCode || !this.selectionResetBgCode) return lines;
+		const selection = this.normalizeSelection();
+		if (!selection) return lines;
+
+		const viewportTop = this.viewportTopForLines(lines);
+		const startLine = viewportTop + (selection.start.row - 1);
+		const endLine = viewportTop + (selection.end.row - 1);
+		if (startLine >= lines.length || endLine < 0) return lines;
+
+		const result = [...lines];
+		for (let i = Math.max(0, startLine); i <= Math.min(lines.length - 1, endLine); i++) {
+			const lineStart = i === startLine ? selection.start.col - 1 : 0;
+			const lineEnd = i === endLine ? selection.end.col : Infinity;
+			result[i] = applyBackgroundToRange(result[i]!, lineStart, lineEnd, this.selectionBgCode, this.selectionResetBgCode);
+		}
+		return result;
+	}
+
+	private extractSelectionText(lines: string[]): string {
+		const selection = this.normalizeSelection();
+		if (!selection) return "";
+
+		const viewportTop = this.viewportTopForLines(lines);
+		const startLine = viewportTop + (selection.start.row - 1);
+		const endLine = viewportTop + (selection.end.row - 1);
+
+		const selected: string[] = [];
+		for (let i = Math.max(0, startLine); i <= Math.min(lines.length - 1, endLine); i++) {
+			const line = lines[i] ?? "";
+			const lineWidth = visibleWidth(line);
+			const lineStart = i === startLine ? selection.start.col - 1 : 0;
+			const lineEnd = i === endLine ? Math.min(selection.end.col, lineWidth) : lineWidth;
+			if (lineStart < lineEnd) {
+				selected.push(stripAnsi(sliceByColumn(line, lineStart, lineEnd - lineStart)));
+			}
+		}
+		return selected.join("\n");
+	}
+
+	private copySelection(): void {
+		if (
+			this.selectionStart &&
+			this.selectionEnd &&
+			this.selectionStart.row === this.selectionEnd.row &&
+			this.selectionStart.col === this.selectionEnd.col
+		) {
+			return;
+		}
+		const text = this.extractSelectionText(this.previousLines);
+		if (!text) return;
+		const base64 = Buffer.from(text, "utf8").toString("base64");
+		this.terminal.write(`\x1b]52;c;${base64}\x1b\\`);
 	}
 
 	/** Scroll the internal viewport up or down by one row. */
@@ -736,11 +860,13 @@ export class TUI extends Container {
 		if (direction === "up") {
 			const maxOffset = Math.max(0, this.previousLines.length - this.terminal.rows);
 			if (this.scrollOffset < maxOffset) {
+				this.wasScrolledFlag = true;
 				this.scrollOffset = Math.min(this.scrollOffset + 3, maxOffset);
 				this.renderScrolled();
 			}
 		} else {
 			if (this.scrollOffset > 0) {
+				this.wasScrolledFlag = true;
 				this.scrollOffset = Math.max(0, this.scrollOffset - 3);
 				if (this.scrollOffset === 0) {
 					this.requestRender();
@@ -758,18 +884,29 @@ export class TUI extends Container {
 	 */
 	private renderScrolled(): void {
 		if (this.scrollOffset === 0 || this.previousLines.length === 0) {
+			this.wasScrolledFlag = true;
 			this.requestRender();
 			return;
 		}
+		this.wasScrolledFlag = true;
 		const height = this.terminal.rows;
 		const end = this.previousLines.length - this.scrollOffset;
 		const start = Math.max(0, end - height);
 		const lines = this.previousLines.slice(start, end);
 
-		let buffer = "\x1b[?2026h\x1b[2J\x1b[H";
-		for (let i = 0; i < lines.length; i++) {
+		// Re-render the viewport without a full screen clear to avoid blanking.
+		// Each line is cleared before writing; any unused rows below the slice are
+		// also cleared so the old slice does not bleed through.
+		let buffer = "\x1b[?2026h\x1b[H";
+		for (let i = 0; i < height; i++) {
 			if (i > 0) buffer += "\r\n";
-			buffer += lines[i];
+			const line = lines[i];
+			if (line) {
+				buffer += "\x1b[2K";
+				buffer += line;
+			} else {
+				buffer += "\x1b[2K";
+			}
 		}
 		buffer += "\x1b[?2026l";
 		this.terminal.write(buffer);
@@ -1341,8 +1478,8 @@ export class TUI extends Container {
 
 	private doRender(): void {
 		if (this.stopped) return;
-		const wasScrolled = this.scrollOffset > 0;
-		// New content arrives: reset scroll to bottom.
+		const wasScrolled = this.wasScrolledFlag;
+		this.wasScrolledFlag = false;
 		this.scrollOffset = 0;
 		const width = this.terminal.columns;
 		const height = this.terminal.rows;
@@ -1358,29 +1495,24 @@ export class TUI extends Container {
 			return targetScreenRow - currentScreenRow;
 		};
 
-		// Render all components to get new lines
 		let newLines = this.render(width);
 
-		// Composite overlays into the rendered lines (before differential compare)
 		if (this.overlayStack.length > 0) {
 			newLines = this.compositeOverlays(newLines, width, height);
 		}
 
-		// Extract cursor position before applying line resets (marker must be found first)
+		newLines = this.applySelectionToLines(newLines, width);
+
 		const cursorPos = this.extractCursorPosition(newLines, height);
 
 		newLines = this.applyLineResets(newLines);
 
-		// Helper to clear viewport and render all new lines.
-		// Note: \x1b[3J (clear scrollback) is intentionally omitted so the
-		// terminal's native scrollback is preserved and the user can scroll
-		// up to review history. \x1b[2J only clears the visible screen.
 		const fullRender = (clear: boolean): void => {
 			this.fullRedrawCount += 1;
-			let buffer = "\x1b[?2026h"; // Begin synchronized output
+			let buffer = "\x1b[?2026h";
 			if (clear) {
 				buffer += this.deleteKittyImages(this.previousKittyImageIds);
-				buffer += "\x1b[2J\x1b[H"; // Clear screen, home (preserve scrollback)
+				buffer += "\x1b[2J\x1b[H";
 			}
 			for (let i = 0; i < newLines.length; i++) {
 				if (i > 0) buffer += "\r\n";
@@ -1399,11 +1531,10 @@ export class TUI extends Container {
 				}
 				buffer += line;
 			}
-			buffer += "\x1b[?2026l"; // End synchronized output
+			buffer += "\x1b[?2026l";
 			this.terminal.write(buffer);
 			this.cursorRow = Math.max(0, newLines.length - 1);
 			this.hardwareCursorRow = this.cursorRow;
-			// Reset max lines when clearing, otherwise track growth
 			if (clear) {
 				this.maxLinesRendered = newLines.length;
 			} else {
@@ -1426,49 +1557,36 @@ export class TUI extends Container {
 			fs.appendFileSync(logPath, msg);
 		};
 
-		// First render - clear screen and render from top so that terminal
-		// row coordinates map directly to rendered line indices.
 		if (this.previousLines.length === 0 && !widthChanged && !heightChanged) {
 			logRedraw("first render");
 			fullRender(true);
 			return;
 		}
 
-		// Returning from scrolled state: terminal shows history lines that
-		// don't match previousLines, so differential render would produce
-		// garbage. Force a full clear.
 		if (wasScrolled) {
 			logRedraw("was scrolled, forcing full clear");
 			fullRender(true);
 			return;
 		}
 
-		// Width changes always need a full re-render because wrapping changes.
 		if (widthChanged) {
 			logRedraw(`terminal width changed (${this.previousWidth} -> ${width})`);
 			fullRender(true);
 			return;
 		}
 
-		// Height changes normally need a full re-render to keep the visible viewport aligned,
-		// but Termux changes height when the software keyboard shows or hides.
-		// In that environment, a full redraw causes the entire history to replay on every toggle.
 		if (heightChanged && !isTermuxSession()) {
 			logRedraw(`terminal height changed (${this.previousHeight} -> ${height})`);
 			fullRender(true);
 			return;
 		}
 
-		// Content shrunk below the working area and no overlays - re-render to clear empty rows
-		// (overlays need the padding, so only do this when no overlays are active)
-		// Configurable via setClearOnShrink() or MISUL_CLEAR_ON_SHRINK=0 env var
 		if (this.clearOnShrink && newLines.length < this.maxLinesRendered && this.overlayStack.length === 0) {
 			logRedraw(`clearOnShrink (maxLinesRendered=${this.maxLinesRendered})`);
 			fullRender(true);
 			return;
 		}
 
-		// Find first and last changed lines
 		let firstChanged = -1;
 		let lastChanged = -1;
 		const maxLines = Math.max(newLines.length, this.previousLines.length);
@@ -1562,9 +1680,7 @@ export class TUI extends Container {
 			return;
 		}
 
-		// Render from first changed line to end
-		// Build buffer with all updates wrapped in synchronized output
-		let buffer = "\x1b[?2026h"; // Begin synchronized output
+		let buffer = "\x1b[?2026h";
 		buffer += this.deleteChangedKittyImages(firstChanged, lastChanged);
 		const prevViewportBottom = prevViewportTop + height - 1;
 		const moveTargetRow = appendStart ? firstChanged - 1 : firstChanged;
@@ -1581,18 +1697,15 @@ export class TUI extends Container {
 			hardwareCursorRow = moveTargetRow;
 		}
 
-		// Move cursor to first changed line (use hardwareCursorRow for actual position)
 		const lineDiff = computeLineDiff(moveTargetRow);
 		if (lineDiff > 0) {
-			buffer += `\x1b[${lineDiff}B`; // Move down
+			buffer += `\x1b[${lineDiff}B`;
 		} else if (lineDiff < 0) {
-			buffer += `\x1b[${-lineDiff}A`; // Move up
+			buffer += `\x1b[${-lineDiff}A`;
 		}
 
-		buffer += appendStart ? "\r\n" : "\r"; // Move to column 0
+		buffer += appendStart ? "\r\n" : "\r";
 
-		// Only render changed lines (firstChanged to lastChanged), not all lines to end
-		// This reduces flicker when only a single line changes (e.g., spinner animation)
 		const renderEnd = Math.min(lastChanged, newLines.length - 1);
 		for (let i = firstChanged; i <= renderEnd; i++) {
 			if (i > firstChanged) buffer += "\r\n";
@@ -1652,12 +1765,9 @@ export class TUI extends Container {
 			buffer += line;
 		}
 
-		// Track where cursor ended up after rendering
 		let finalCursorRow = renderEnd;
 
-		// If we had more lines before, clear them and move cursor back
 		if (this.previousLines.length > newLines.length) {
-			// Move to end of new content first if we stopped before it
 			if (renderEnd < newLines.length - 1) {
 				const moveDown = newLines.length - 1 - renderEnd;
 				buffer += `\x1b[${moveDown}B`;
@@ -1667,11 +1777,10 @@ export class TUI extends Container {
 			for (let i = newLines.length; i < this.previousLines.length; i++) {
 				buffer += "\r\n\x1b[2K";
 			}
-			// Move cursor back to end of new content
 			buffer += `\x1b[${extraLines}A`;
 		}
 
-		buffer += "\x1b[?2026l"; // End synchronized output
+		buffer += "\x1b[?2026l";
 
 		if (process.env.MISUL_TUI_DEBUG === "1") {
 			const debugDir = "/tmp/tui";
@@ -1702,19 +1811,13 @@ export class TUI extends Container {
 			fs.writeFileSync(debugPath, debugData);
 		}
 
-		// Write entire buffer at once
 		this.terminal.write(buffer);
 
-		// Track cursor position for next render
-		// cursorRow tracks end of content (for viewport calculation)
-		// hardwareCursorRow tracks actual terminal cursor position (for movement)
 		this.cursorRow = Math.max(0, newLines.length - 1);
 		this.hardwareCursorRow = finalCursorRow;
-		// Track terminal's working area (grows but doesn't shrink unless cleared)
 		this.maxLinesRendered = Math.max(this.maxLinesRendered, newLines.length);
 		this.previousViewportTop = Math.max(prevViewportTop, finalCursorRow - height + 1);
 
-		// Position hardware cursor for IME
 		this.positionHardwareCursor(cursorPos, newLines.length);
 
 		this.previousLines = newLines;
@@ -1723,30 +1826,22 @@ export class TUI extends Container {
 		this.previousHeight = height;
 	}
 
-	/**
-	 * Position the hardware cursor for IME candidate window.
-	 * @param cursorPos The cursor position extracted from rendered output, or null
-	 * @param totalLines Total number of rendered lines
-	 */
 	private positionHardwareCursor(cursorPos: { row: number; col: number } | null, totalLines: number): void {
 		if (!cursorPos || totalLines <= 0) {
 			this.terminal.hideCursor();
 			return;
 		}
 
-		// Clamp cursor position to valid range
 		const targetRow = Math.max(0, Math.min(cursorPos.row, totalLines - 1));
 		const targetCol = Math.max(0, cursorPos.col);
 
-		// Move cursor from current position to target
 		const rowDelta = targetRow - this.hardwareCursorRow;
 		let buffer = "";
 		if (rowDelta > 0) {
-			buffer += `\x1b[${rowDelta}B`; // Move down
+			buffer += `\x1b[${rowDelta}B`;
 		} else if (rowDelta < 0) {
-			buffer += `\x1b[${-rowDelta}A`; // Move up
+			buffer += `\x1b[${-rowDelta}A`;
 		}
-		// Move to absolute column (1-indexed)
 		buffer += `\x1b[${targetCol + 1}G`;
 
 		if (buffer) {
