@@ -1,9 +1,77 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="1200" height="400">
-  <rect width="1200" height="400" fill="#000000"/>
-  <g transform="translate(600, 200)" text-anchor="middle">
-    <g transform="translate(0, -40) scale(6)">
-      <path fill="#ffffff" d="M5 27 V15 a6 6 0 0 1 12 0 a6 6 0 0 1 12 0 V27 H22 V18 a2.5 2.5 0 0 0 -5 0 V27 H12 V15 a1 1 0 0 0 -2 0 V27 Z"/>
-    </g>
-    <text x="0" y="90" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="28" fill="#ffffff" letter-spacing="0.06em">MISUL TERMINAL</text>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 144" width="384" height="144">
+<rect width="384" height="144" fill="#000"/>
+<rect x="24" y="12" width="24" height="12" fill="#fff"/>
+<rect x="48" y="0" width="24" height="24" fill="#fff"/>
+<rect x="72" y="0" width="24" height="24" fill="#fff"/>
+<rect x="96" y="0" width="24" height="24" fill="#fff"/>
+<rect x="120" y="0" width="24" height="24" fill="#fff"/>
+<rect x="144" y="12" width="24" height="12" fill="#fff"/>
+<rect x="216" y="12" width="24" height="12" fill="#fff"/>
+<rect x="240" y="0" width="24" height="24" fill="#fff"/>
+<rect x="264" y="0" width="24" height="24" fill="#fff"/>
+<rect x="288" y="0" width="24" height="24" fill="#fff"/>
+<rect x="312" y="0" width="24" height="24" fill="#fff"/>
+<rect x="336" y="12" width="24" height="12" fill="#fff"/>
+<rect x="0" y="24" width="24" height="24" fill="#fff"/>
+<rect x="24" y="24" width="24" height="24" fill="#fff"/>
+<rect x="48" y="24" width="24" height="24" fill="#fff"/>
+<rect x="72" y="24" width="24" height="24" fill="#fff"/>
+<rect x="96" y="24" width="24" height="24" fill="#fff"/>
+<rect x="120" y="24" width="24" height="24" fill="#fff"/>
+<rect x="144" y="24" width="24" height="24" fill="#fff"/>
+<rect x="168" y="24" width="24" height="24" fill="#fff"/>
+<rect x="192" y="24" width="24" height="24" fill="#fff"/>
+<rect x="216" y="24" width="24" height="24" fill="#fff"/>
+<rect x="240" y="24" width="24" height="24" fill="#fff"/>
+<rect x="264" y="24" width="24" height="24" fill="#fff"/>
+<rect x="288" y="24" width="24" height="24" fill="#fff"/>
+<rect x="312" y="24" width="24" height="24" fill="#fff"/>
+<rect x="336" y="24" width="24" height="24" fill="#fff"/>
+<rect x="360" y="24" width="24" height="24" fill="#fff"/>
+<rect x="0" y="48" width="24" height="24" fill="#fff"/>
+<rect x="24" y="48" width="24" height="24" fill="#fff"/>
+<rect x="48" y="48" width="24" height="24" fill="#fff"/>
+<rect x="120" y="48" width="24" height="24" fill="#fff"/>
+<rect x="144" y="48" width="24" height="24" fill="#fff"/>
+<rect x="168" y="48" width="24" height="24" fill="#fff"/>
+<rect x="192" y="48" width="24" height="12" fill="#fff"/>
+<rect x="240" y="48" width="24" height="12" fill="#fff"/>
+<rect x="264" y="48" width="24" height="24" fill="#fff"/>
+<rect x="288" y="48" width="24" height="24" fill="#fff"/>
+<rect x="312" y="48" width="24" height="24" fill="#fff"/>
+<rect x="336" y="48" width="24" height="24" fill="#fff"/>
+<rect x="360" y="48" width="24" height="24" fill="#fff"/>
+<rect x="0" y="72" width="24" height="24" fill="#fff"/>
+<rect x="24" y="72" width="24" height="24" fill="#fff"/>
+<rect x="48" y="72" width="24" height="24" fill="#fff"/>
+<rect x="120" y="72" width="24" height="24" fill="#fff"/>
+<rect x="144" y="72" width="24" height="24" fill="#fff"/>
+<rect x="168" y="72" width="24" height="24" fill="#fff"/>
+<rect x="264" y="72" width="24" height="24" fill="#fff"/>
+<rect x="288" y="72" width="24" height="24" fill="#fff"/>
+<rect x="312" y="72" width="24" height="24" fill="#fff"/>
+<rect x="336" y="72" width="24" height="24" fill="#fff"/>
+<rect x="360" y="72" width="24" height="24" fill="#fff"/>
+<rect x="0" y="96" width="24" height="24" fill="#fff"/>
+<rect x="24" y="96" width="24" height="24" fill="#fff"/>
+<rect x="48" y="96" width="24" height="24" fill="#fff"/>
+<rect x="120" y="96" width="24" height="24" fill="#fff"/>
+<rect x="144" y="96" width="24" height="24" fill="#fff"/>
+<rect x="168" y="96" width="24" height="24" fill="#fff"/>
+<rect x="264" y="96" width="24" height="24" fill="#fff"/>
+<rect x="288" y="96" width="24" height="24" fill="#fff"/>
+<rect x="312" y="96" width="24" height="24" fill="#fff"/>
+<rect x="336" y="96" width="24" height="24" fill="#fff"/>
+<rect x="360" y="96" width="24" height="24" fill="#fff"/>
+<rect x="0" y="120" width="24" height="24" fill="#fff"/>
+<rect x="24" y="120" width="24" height="24" fill="#fff"/>
+<rect x="48" y="120" width="24" height="24" fill="#fff"/>
+<rect x="120" y="120" width="24" height="24" fill="#fff"/>
+<rect x="144" y="120" width="24" height="24" fill="#fff"/>
+<rect x="168" y="120" width="24" height="24" fill="#fff"/>
+<rect x="264" y="120" width="24" height="24" fill="#fff"/>
+<rect x="288" y="120" width="24" height="24" fill="#fff"/>
+<rect x="312" y="120" width="24" height="24" fill="#fff"/>
+<rect x="336" y="120" width="24" height="24" fill="#fff"/>
+<rect x="360" y="120" width="24" height="24" fill="#fff"/>
 </svg>

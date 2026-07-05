@@ -5,7 +5,7 @@
   <a href="https://misul.org/terminal/"><img alt="website" src="https://img.shields.io/badge/website-misul.org%2Fterminal-171e2b?style=flat-square" /></a>
 </p>
 
-Misul Terminal is a minimal agent harness for the terminal. It keeps the core small and extends through TypeScript extensions, skills, prompt templates, and themes.
+Misul Terminal is a minimal terminal coding harness. Adapt misul to your workflows, not the other way around, without having to fork and modify Misul Terminal internals. Extend it with TypeScript extensions, skills, prompt templates, and themes. Put your extensions, skills, prompt templates, and themes in Misul Packages and share them with others via npm or git.
 
 - [Quickstart](https://misul.org/terminal/docs/quickstart)
 - [Usage](https://misul.org/terminal/docs/usage)
