@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/images/misul-logo-header.svg" alt="Misul Terminal" width="100%"></p>
+<p align="center"><img src="docs/images/misul-logo-header.svg" alt="Misul Terminal"></p>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@misul/terminal"><img alt="npm" src="https://img.shields.io/npm/v/@misul/terminal?style=flat-square" /></a>
